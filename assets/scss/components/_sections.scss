@@ -1,3 +1,5 @@
+@import '../base/variables';
+
 /* =========================================
    Global Utilities & Buttons
    ========================================= */
@@ -95,10 +97,10 @@
   padding: 1rem 1.75rem; 
   border-radius: 24px; 
   font-weight: 700; 
-  font-size: 1.5rem; /* Adjusted for better mobile fit */
-  max-width: 90%; /* Increased max-width to prevent early wrapping */
+  font-size: 1.5rem;
+  max-width: 90%;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-  display: inline-block; /* Forces the background to wrap tight to text */
+  display: inline-block;
 }
 
 .header-pill-white { 
@@ -255,27 +257,6 @@
   border: none; 
 }
 
-/* Mobile Overrides for Section 2 */
-@media (max-width: 1024px) {
-  /* On smaller screens, stack the layout: Features on top, phone below */
-  .phone-feature-layout { 
-    grid-template-columns: 1fr; 
-    gap: 3rem;
-  }
-  
-  /* Reset the left column alignment so both columns look consistent */
-  .left-col .feature-item { 
-    justify-content: flex-start; 
-    text-align: left; 
-    flex-direction: row-reverse; /* Put icon on the left */
-  }
-
-  .center-phone-mockup { 
-    max-width: 350px; 
-    margin: 0 auto; 
-    height: 600px; /* Adjust height slightly for mobile */
-  }
-}
 /* =========================================
    Section 3: Inbox UI & 3-Step Process
    ========================================= */
@@ -322,7 +303,7 @@
   border: 1px solid $color-border-dark; 
   padding: 2.5rem; 
   border-radius: 20px; 
-  background: $color-ink; /* Ensure dark background */
+  background: $color-ink;
 }
 
 .process-card .process-icon { 
@@ -356,14 +337,6 @@
   font-size: 1rem; 
   line-height: 1.6; 
   margin: 0;
-}
-
-/* Mobile Overrides for Sections 2 & 3 */
-@media (max-width: 900px) {
-  .phone-feature-layout { grid-template-columns: 1fr; }
-  .left-col .feature-item { justify-content: flex-start; text-align: left; flex-direction: row-reverse; }
-  .center-phone-mockup { height: 500px; max-width: 350px; margin: 0 auto; }
-  .process-grid { grid-template-columns: 1fr; }
 }
 
 /* =========================================
@@ -437,7 +410,6 @@
 .tier-label { font-size: 0.75rem; letter-spacing: 1px; font-weight: 700; opacity: 0.8;}
 .tier-card h3 { font-size: 1.75rem; margin: 16px 0; line-height: 1.2;}
 .tier-card p { font-size: 0.95rem; opacity: 0.9; margin-bottom: 2rem; line-height: 1.5;}
-/* Restoring the gradients */
 .tier-1 { background: linear-gradient(135deg, #7C92B8, #6079A3); }
 .tier-2 { background: linear-gradient(135deg, #6B8DF2, #5579E6); }
 .tier-3 { background: linear-gradient(135deg, #3B6BF2, #2554E6); }
@@ -452,36 +424,11 @@
 .filter-btn { background: $color-white; border: 1px solid $color-border; padding: 8px 20px; border-radius: 50px; color: $color-text-muted; font-weight: 600; cursor: pointer; transition: all $transition-fast; &.active, &:hover { background: $color-cobalt; color: $color-white; border-color: $color-cobalt; } }
 .faq-chat-box { background: $color-white; border-radius: 24px; padding: 3rem; border: 1px solid $color-border; }
 
-/* Restoring the internal chat bubble logic */
 .faq-chat-box .chat-pill { padding: 1rem 1.5rem; border-radius: 20px; font-size: 1.05rem; line-height: 1.5; max-width: 80%;}
 .faq-chat-box .dark-pill { background: $color-ink; color: $color-white; border-bottom-right-radius: 4px; display: inline-block;}
 .faq-chat-box .gray-pill { background: #F3F4F6; color: $color-ink; border-bottom-left-radius: 4px; display: inline-block;}
 
 .faq-footer-prompt .pricing-footer-prompt { background: $color-ink; span { color: $color-white; } }
-
-/* =========================================
-   Responsive Overrides
-   ========================================= */
-@media (max-width: 1024px) {
-  .process-grid, .mode-grid, .deployment-split, .footer-split { grid-template-columns: 1fr; }
-  .value-bento-grid, .pricing-tier-grid { grid-template-columns: repeat(2, 1fr); }
-  .col-span-2 { grid-column: span 2; }
-}
-
-@media (max-width: 768px) {
-  .value-bento-grid, .pricing-tier-grid { grid-template-columns: 1fr; }
-  .col-span-2 { grid-column: span 1; }
-  .phone-feature-layout { grid-template-columns: 1fr; }
-  .left-col .feature-item { justify-content: flex-start; text-align: left; flex-direction: row-reverse; }
-}
-
-/* =========================================
-   Section 9: FAQ Chat Box
-   ========================================= */
-.faq-filters { display: flex; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
-.filter-btn { background: $color-white; border: 1px solid $color-border; padding: 8px 20px; border-radius: 50px; color: $color-text-muted; font-weight: 500; cursor: pointer; transition: all $transition-fast; &.active, &:hover { background: $color-cobalt; color: $color-white; border-color: $color-cobalt; } }
-.faq-chat-box { background: $color-white; border-radius: 24px; padding: 3rem; border: 1px solid $color-border; }
-.gray-pill { background: #E5E7EB; color: $color-ink; border-bottom-left-radius: 4px; }
 
 /* =========================================
    Section 10: Footer & Form
@@ -495,74 +442,4 @@
 .interest-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .interest-pill { background: $color-white; border: 1px solid $color-border; padding: 8px 16px; border-radius: 50px; font-size: 0.85rem; color: $color-text-muted; cursor: pointer; &.active { background: rgba(37,99,235,0.1); color: $color-cobalt; border-color: $color-cobalt; } }
 .full-width { width: 100%; padding: 14px; border-radius: 12px; margin-top: 8px; font-size: 1.1rem; }
-.privacy-text { text-align: center; font-size: 0.75rem; color: $color-text-muted; margin-top: 12px; a { color: $color-cobalt; } }
-
-.footer-bottom-links { background: $color-paper; padding: 1rem 1.5rem; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; .right-links a { color: $color-text-muted; text-decoration: none; margin-left: 1.5rem; font-size: 0.9rem; font-weight: 500; } }
-.footer-legal { display: flex; justify-content: space-between; align-items: center; color: $color-text-muted; font-size: 0.85rem; .legal-logo { font-weight: 800; color: $color-white; font-size: 1.25rem; small { font-weight: 400; color: $color-text-muted; font-size: 0.8rem; margin-left: 8px; } } .legal-links a { color: $color-text-muted; text-decoration: none; margin: 0 12px; } }
-
-/* =========================================
-   Fluid Responsive Handling for Complex Sections
-   ========================================= */
-
-/* Make asymmetrical split areas wrap naturally rather than snapping */
-.hero-split-area,
-.deployment-split,
-.footer-split {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $space-6;
-  
-  > * {
-    /* Elements will sit side-by-side but grow to 100% when space runs out */
-    flex: 1 1 min(100%, 450px);
-  }
-}
-
-/* Make the Center Phone layout fluidly wrap */
-.phone-feature-layout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $space-6;
-  justify-content: center;
-}
-
-.center-phone-mockup {
-  flex: 0 1 350px; /* Locks phone to 350px wide, but allows shrinking */
-  max-width: 100%;
-  order: 2; /* Keeps phone in the middle visually */
-}
-
-.feature-col {
-  flex: 1 1 min(100%, 300px);
-  display: flex;
-  flex-direction: column;
-  gap: $space-5;
-}
-
-.left-col { order: 1; }
-.right-col { order: 3; }
-
-/* Dynamic spacing and text alignment for smaller screens */
-@media (max-width: 1024px) {
-  /* Restores left alignment for feature text when wrapped */
-  .left-col .feature-item { 
-    justify-content: flex-start; 
-    text-align: left; 
-    flex-direction: row-reverse; 
-  }
-  
-  .chat-section-header { margin-bottom: $space-5; }
-  .header-pill { font-size: 1.25rem; }
-  
-  .footer-bottom-links {
-    flex-direction: column;
-    gap: $space-4;
-    text-align: center;
-    .right-links a { margin: 0 8px; display: inline-block; padding: 4px 0;}
-  }
-  
-  .footer-legal {
-    flex-direction: column;
-    gap: $space-4;
-  }
-}
+.privacy-text { text-align: center; font-size: 0.75rem; color:
