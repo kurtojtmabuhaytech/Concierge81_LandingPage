@@ -1,0 +1,50 @@
+/* =========================================
+   Modern CSS Reset
+   ========================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: $font-family-base;
+  font-size: $font-size-base;
+  line-height: $line-height-base;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: $color-white;
+  color: $color-text-dark;
+  font-weight: $font-weight-normal;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  margin-bottom: $space-3;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: $space-3;
+}
+
+a {
+  color: $color-primary;
+  text-decoration: none;
+  transition: color $transition-fast;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+code, kbd, samp, pre {
+  font-family: $font-family-mono;
+  font-size: 1em;
+}

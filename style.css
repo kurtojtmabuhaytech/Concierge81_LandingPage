@@ -1,0 +1,39 @@
+/*
+Theme Name: Concierge81
+Theme URI: https://example.com/concierge81
+Author: Concierge81 Team
+Author URI: https://example.com
+Description: Modern, responsive landing page prototype for Concierge81 AI customer assistance platform. Prepared for WordPress theme integration.
+Version: 1.0.0
+Tested up to: 6.5
+Requires at least: 6.0
+Requires PHP: 8.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: concierge81
+Tags: one-column, custom-colors, full-site-editing, landing-page, clean-design
+*/
+
+/**
+ * Root theme styles
+ * Note: Core layout and component styling is modularly compiled into assets/css/landing.css
+ */
+:root {
+  --wp-theme-name: "Concierge81";
+  --wp-theme-version: "1.0.0";
+}
+/*
+Theme Name: Concierge81 Theme
+Theme URI: https://example.com/concierge81
+Author: OJT Front-End Team
+Author URI: https://example.com
+Description: Prototype landing page for Concierge81 AI assistant, prepared for WordPress conversion.
+Version: 1.0.0
+*/
+
+/* Base reset placeholder for standard WordPress root stylesheet */
+html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
