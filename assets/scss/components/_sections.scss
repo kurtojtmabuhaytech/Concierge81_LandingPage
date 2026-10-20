@@ -48,7 +48,7 @@
   .mobile-toggle { display: flex; }
   .desktop-only-cta { display: none; }
   .nav-menu {
-    position: absolute; top: 100%; left: 0; width: 100%; background: #ffff;
+    position: absolute; top: 100%; left: 0; width: 100%; background: #ffffff;
     flex-direction: column; padding: 1.5rem 0;
     opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.3s ease;
   }
