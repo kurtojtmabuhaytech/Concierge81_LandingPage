@@ -1,0 +1,33 @@
+/* =========================================
+   Scroll Reveal
+   main.js tags elements with .reveal (+ a variant) on pages whose <body> has .reveal-page,
+   then toggles .is-visible as they enter and leave the viewport (fade in, fade out).
+   Without JS nothing is tagged, so content stays visible.
+   ========================================= */
+$reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+.reveal {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s $reveal-ease;
+  transition-delay: var(--reveal-delay, 0s);
+
+  &.is-visible { opacity: 1; transform: none; }
+}
+
+// Chat headers and highlighted text: messages "arrive" — rise further and grow from their tail corner
+.reveal--emphasis {
+  transform: translateY(2rem) scale(0.94);
+  transform-origin: left bottom;
+  transition-duration: 0.85s;
+}
+.chat-header-row.right.reveal--emphasis,
+.msg-row--user.reveal--emphasis { transform-origin: right bottom; }
+.cta-title.reveal--emphasis,
+.status-line.reveal--emphasis { transform-origin: center bottom; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal--emphasis { opacity: 1; transform: none; transition: none; }
+}

@@ -44,6 +44,12 @@ img, svg {
   height: auto;
 }
 
+// Components set their own display, which would otherwise override the hidden attribute
+[hidden] { display: none !important; }
+
+// In-page anchors land below the sticky header
+[id] { scroll-margin-top: 5.5rem; }
+
 code, kbd, samp, pre {
   font-family: $font-family-mono;
   font-size: 1em;

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog - Concierge81</title>
+  <meta name="description" content="Guides, case studies, and tips for teams using AI chat and voice.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="assets/css/landing.css">
+  <script src="assets/js/main.js" defer></script>
+</head>
+<body class="page-cream">
+
+  <!-- Navigation / Header -->
+  <header class="site-header">
+    <div class="container header-container">
+      <a href="index.html" class="brand-logo">concierge<span>81</span></a>
+
+      <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="navMenu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+      <nav class="nav-menu" id="navMenu">
+        <a href="news.html">news</a>
+        <a href="blog.html" class="is-current" aria-current="page">blog</a>
+        <a href="#contact">contact</a>
+        <button type="button" class="lang-btn" aria-label="Language: English">🌐 EN</button>
+        <a href="#contact" class="btn btn-primary btn-small mobile-only-cta">Request a Demo</a>
+      </nav>
+
+      <div class="header-actions desktop-only-cta">
+        <a href="#contact" class="btn btn-primary btn-small">Request a Demo</a>
+      </div>
+    </div>
+  </header>
+  <div class="nav-backdrop" aria-hidden="true"></div>
+
+  <main>
+    <!-- 1. Blog Intro -->
+    <section class="section theme-cream blog-hero">
+      <div class="container">
+        <div class="chat-section-header">
+          <div class="chat-header-row left">
+            <h1 class="header-pill header-pill--ai">Ideas for smarter customer service.</h1>
+          </div>
+          <p class="sub-pill-text">Guides, case studies, and tips for teams using AI chat and voice.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Featured Story -->
+    <section class="section theme-cream blog-section">
+      <div class="container">
+        <h2 class="blog-section-title">Featured</h2>
+        <article class="featured-card">
+          <a href="blog-post.html" class="story-media-wrap" aria-label="Read: How AI concierges cut front-desk wait times by half">
+            <div class="story-media">
+              <div class="placeholder-box story-photo"><span>[ assets/images/blog/featured-hotel-concierge.jpg ]</span></div>
+              <div class="story-chat" aria-hidden="true">
+                <span class="story-meta">concierge81 · 9:12 AM</span>
+                <p class="bubble bubble--frost">Hello! I'm concierge81. How can I help you with your hotel or resort stay today?</p>
+                <span class="story-meta story-meta--end">You · 9:12 AM</span>
+                <p class="bubble bubble--ai">Do you have any beachfront resorts in Palawan?</p>
+                <div class="story-suggest">
+                  <span class="suggest-label">✦ SUGGESTED</span>
+                  <div class="chip-row">
+                    <span class="chip chip--glass">What are your top hotel &amp; resort destinations?</span>
+                    <span class="chip chip--glass">Do you offer airport transfers?</span>
+                    <span class="chip chip--glass">What amenities are included?</span>
+                  </div>
+                </div>
+                <div class="story-input">Ask concierge81…
+                  <span class="send-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>
+                </div>
+              </div>
+            </div>
+          </a>
+          <div class="featured-body">
+            <div class="featured-main">
+              <span class="post-eyebrow">Case study · Hospitality</span>
+              <h3 class="featured-title"><a href="blog-post.html">How AI concierges cut front-desk wait times by half.</a></h3>
+            </div>
+            <div class="featured-side">
+              <p>Six months of lobby data from partner hotels — and how a chat-and-voice concierge took the repetitive 80% off the desk.</p>
+              <div class="featured-foot">
+                <div class="author-row">
+                  <span class="placeholder-box author-avatar" aria-hidden="true"></span>
+                  <div>
+                    <div class="author-name">Carlo Mendoza</div>
+                    <div class="author-meta">Sep 22, 2026 · 8 min read</div>
+                  </div>
+                </div>
+                <a href="blog-post.html" class="btn btn-primary btn-small">Read the story</a>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 3. Latest Articles -->
+    <section class="section theme-cream blog-section">
+      <div class="container">
+        <h2 class="blog-section-title">Latest articles</h2>
+
+        <div class="post-filters" id="postFilters">
+          <button type="button" class="filter-btn is-active" data-filter="all">All posts</button>
+          <button type="button" class="filter-btn" data-filter="guides">Guides</button>
+          <button type="button" class="filter-btn" data-filter="tutorials">Tutorials</button>
+          <button type="button" class="filter-btn" data-filter="case-studies">Case studies</button>
+          <button type="button" class="filter-btn" data-filter="industry">Industry</button>
+          <button type="button" class="filter-btn" data-filter="product">Product</button>
+        </div>
+
+        <div class="post-grid" id="postGrid">
+          <a href="blog-post.html" class="post-card" data-cat="case-studies">
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/resort-lobby-kiosk.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Case study</span>
+              <h3>12,000 guest questions. One season. No extra staff.</h3>
+              <p>How a Palawan resort handled late-night check-ins, ferry schedules, and spa bookings in three languages.</p>
+              <span class="post-meta">Sep 15, 2026 · 6 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="tutorials">
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/office-reception-kiosk.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Tutorial</span>
+              <h3>Set up your first FAQ topics in 15 minutes.</h3>
+              <p>Import the answers you already have, group them into topics, and go live the same afternoon.</p>
+              <span class="post-meta">Sep 8, 2026 · 4 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="guides">
+            <div class="post-card-media post-card-media--portrait"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Tips</span>
+              <h3>Write answers your concierge can say out loud.</h3>
+              <p>Short sentences, clear numbers, no tables — a style guide for voice-first replies.</p>
+              <span class="post-meta">Aug 30, 2026 · 5 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="industry">
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/hospital-lobby-kiosk.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Industry</span>
+              <h3>What hospital lobbies need from a kiosk concierge.</h3>
+              <p>Wayfinding, visiting hours, and knowing exactly when to hand off to a real person.</p>
+              <span class="post-meta">Aug 21, 2026 · 7 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="product">
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/retail-store-kiosk.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Product</span>
+              <h3>Chat or voice? Pick the right mode for your space.</h3>
+              <p>Noise level, privacy, and foot traffic decide more than you'd think.</p>
+              <span class="post-meta">Aug 12, 2026 · 5 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="industry">
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/airport-kiosk.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Trends</span>
+              <h3>Multilingual support, without a multilingual team.</h3>
+              <p>Why language coverage is becoming the baseline for every service desk.</p>
+              <span class="post-meta">Jul 30, 2026 · 6 min read</span>
+            </div>
+          </a>
+
+          <!-- Revealed by "Load more articles" (WordPress will paginate these) -->
+          <a href="blog-post.html" class="post-card" data-cat="guides" data-more hidden>
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/handoff-rules.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Guide</span>
+              <h3>Hand-off rules that keep guests happy.</h3>
+              <p>When to route a conversation to staff — and how to pass along the full context.</p>
+              <span class="post-meta">Jul 22, 2026 · 5 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="case-studies" data-more hidden>
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/clinic-kiosk.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Case study</span>
+              <h3>A clinic cut front-desk calls by 40%.</h3>
+              <p>How a Cebu outpatient clinic moved visiting-hour and lab questions to a lobby kiosk.</p>
+              <span class="post-meta">Jul 14, 2026 · 6 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="tutorials" data-more hidden>
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/faq-spreadsheet.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Tutorial</span>
+              <h3>Connect your FAQ spreadsheet in five steps.</h3>
+              <p>Keep answers in the sheet your team already updates — concierge81 syncs the rest.</p>
+              <span class="post-meta">Jul 3, 2026 · 4 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="product" data-more hidden>
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/smart-suggestions.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Product</span>
+              <h3>What's new: categories and smart suggestions.</h3>
+              <p>Guide guests to the right topic before they even finish typing.</p>
+              <span class="post-meta">Jun 25, 2026 · 3 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="industry" data-more hidden>
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/airport-wayfinding.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Industry</span>
+              <h3>Airports, wayfinding, and the last 100 meters.</h3>
+              <p>Why gate directions are the most asked — and most time-sensitive — question.</p>
+              <span class="post-meta">Jun 16, 2026 · 6 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card" data-cat="guides" data-more hidden>
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/measuring-savings.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Guide</span>
+              <h3>Measuring what your concierge actually saves.</h3>
+              <p>The three numbers to track in your first month: repeats, queue time, and hand-offs.</p>
+              <span class="post-meta">Jun 5, 2026 · 5 min read</span>
+            </div>
+          </a>
+        </div>
+
+        <p class="empty-state" id="postEmpty" hidden>No articles in this category yet.</p>
+
+        <div class="load-more">
+          <span class="load-count" id="loadCount">Showing 6 of 12 articles</span>
+          <button type="button" class="btn btn-primary btn-small" id="loadMore">
+            Load more articles
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<!-- Contact -->
+  <section id="contact" class="section theme-dark">
+    <div class="container">
+      <div class="chat-section-header">
+        <div class="chat-header-row right">
+          <div class="header-pill header-pill--user">How do I get started?</div>
+          <span class="timestamp">You · 9:12 PM</span>
+        </div>
+        <div class="chat-header-row left">
+          <h2 class="header-pill header-pill--ai header-pill--lg">Leave your email.<br>We'll take it from here.</h2>
+        </div>
+      </div>
+
+      <div class="contact-split">
+        <div class="next-steps">
+          <span class="eyebrow">What happens next</span>
+          <ol class="step-list">
+            <li class="step-item"><span class="step-number">1</span>We reply to schedule a short call.</li>
+            <li class="step-item"><span class="step-number">2</span>We show Concierge81 working with your business.</li>
+            <li class="step-item"><span class="step-number">3</span>We recommend the setup that fits.</li>
+          </ol>
+        </div>
+
+        <div class="footer-form-card">
+          <form id="leadForm">
+            <div class="form-group">
+              <label for="leadName">Full name</label>
+              <input id="leadName" type="text" placeholder="Your name" required>
+            </div>
+            <div class="form-group">
+              <label for="leadEmail">Work email</label>
+              <input id="leadEmail" type="email" placeholder="you@company.com" required>
+            </div>
+            <div class="form-group">
+              <label for="leadCompany">Company</label>
+              <input id="leadCompany" type="text" placeholder="Company name">
+            </div>
+            <div class="form-group">
+              <span class="form-label">I'm interested in</span>
+              <div class="interest-pills" id="interestPills">
+                <button type="button" class="interest-pill">Basic</button>
+                <button type="button" class="interest-pill">Professional</button>
+                <button type="button" class="interest-pill">Business</button>
+                <button type="button" class="interest-pill">Enterprise</button>
+                <button type="button" class="interest-pill is-active">Not sure yet</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="leadNotes">Anything else?</label>
+              <input id="leadNotes" type="text" placeholder="Anything else we should know? (optional)">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Send</button>
+            <p class="privacy-text">By submitting, you agree to our <a href="#">Privacy Policy</a>.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="mail-pill">
+          <a href="mailto:info@mabuhaytech.com">Write us: info@mabuhaytech.com</a>
+          <button type="button" class="copy-btn" data-copy="info@mabuhaytech.com" aria-label="Copy email address">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+          </button>
+        </div>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="index.html#how">How it works</a>
+          <a href="index.html#industries">Industries</a>
+          <a href="index.html#pricing">Plans</a>
+          <a href="index.html#faq">FAQ</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+      <div class="footer-legal">
+        <span class="legal-logo">concierge81 <small>© 2026</small></span>
+        <div class="legal-links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Disclaimer</a>
+          <a href="#">Commercial Transactions Act</a>
+          <button type="button" class="lang-btn" aria-label="Language: English">🌐 EN</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
