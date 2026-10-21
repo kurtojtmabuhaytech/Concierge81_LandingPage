@@ -1,27 +1,29 @@
-@import '../base/variables';
-
 /* =========================================
    Blog Pages (listing + single post)
    ========================================= */
-[hidden] { display: none !important; } // components like .btn set display, which would override the attribute
 .page-cream { background: $color-cream; }
 .page-cream .site-header { background: rgba(243, 241, 235, 0.95); border-bottom-color: $neutral-200; }
 
 // Current page in the nav: dot before the label
 .nav-menu a.is-current { color: $color-ink; font-weight: $font-weight-semibold;
-  &::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #22C55E; margin-right: 6px; vertical-align: middle; }
+  &::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: $color-success; margin-right: 6px; vertical-align: middle; }
 }
 
-.blog-hero { padding-bottom: clamp(1.5rem, 4vw, 2.5rem); }
-.blog-section { padding-top: 0; }
+.blog-hero { padding-top: clamp(2.5rem, 6vw, 4rem); padding-bottom: clamp(1.5rem, 4vw, 2.5rem); }
+.blog-section { padding-top: 0; padding-bottom: clamp(2.5rem, 5vw, 4rem); }
+main > .blog-section:last-child { padding-bottom: $space-section; }
 .blog-section-title { font-size: $type-subtitle; font-weight: $font-weight-semibold; letter-spacing: -0.02em; margin-bottom: 1rem; }
 
-.post-eyebrow { display: block; font-size: $type-eyebrow; font-weight: $font-weight-semibold; letter-spacing: 0.1em; text-transform: uppercase; color: $color-cobalt-bright; }
+// Article prose (blog + news): direct paragraphs only, so chat bubbles keep their own colors
+.post-body > p, .news-body > p { color: $color-text-secondary; font-size: 0.95rem; line-height: 1.65; }
+.post-hero figcaption, .news-hero figcaption { font-size: 0.7rem; color: $neutral-500; margin-top: 0.6rem; }
+
+.post-eyebrow { @extend %eyebrow; display: block; color: $color-cobalt-bright; }
 
 /* =========================================
    Story Media (hero image + chat overlay)
    ========================================= */
-.story-media-wrap { container-type: inline-size; }
+.story-media-wrap { display: block; container-type: inline-size; }
 .story-media {
   position: relative;
   aspect-ratio: 16 / 7;
@@ -49,12 +51,12 @@
 .story-suggest { margin-top: auto;
   .suggest-label { color: rgba(255, 255, 255, 0.7); letter-spacing: 0.1em; font-size: 0.55rem; margin-bottom: 6px; }
 }
-.chip--glass { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.35); color: $color-white; font-size: 0.62rem; padding: 0.35rem 0.7rem; backdrop-filter: blur(6px); }
+.chip--glass { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.35); color: $color-white; font-size: 0.62rem; padding: 0.35rem 0.7rem; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 
 .story-input {
   display: flex; align-items: center; justify-content: space-between;
   border: 1px solid rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px); border-radius: 50px; padding: 0.35rem 0.35rem 0.35rem 1rem;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: $radius-full; padding: 0.35rem 0.35rem 0.35rem 1rem;
   font-size: 0.7rem; color: rgba(255, 255, 255, 0.7);
 }
 .send-dot { width: 22px; height: 22px; border-radius: 50%; background: $color-cobalt-bright; color: $color-white; display: grid; place-items: center; svg { width: 12px; height: 12px; } }
@@ -76,7 +78,6 @@
 .featured-title { font-size: $type-title; font-weight: $font-weight-semibold; letter-spacing: -0.02em; line-height: 1.18; margin: 0.6rem 0 0;
   a { color: $color-ink; &:hover { color: $color-cobalt-bright; } }
 }
-.story-media-wrap { display: block; }
 .featured-side { flex: 1 1 0; min-width: min(100%, 16rem); display: flex; flex-direction: column; gap: 1.25rem;
   p { color: $color-text-secondary; font-size: 0.9rem; line-height: 1.55; margin: 0; }
 }
@@ -90,7 +91,6 @@
 /* =========================================
    Latest Articles Grid
    ========================================= */
-.post-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
 
 .post-grid {
   display: grid;
@@ -106,7 +106,6 @@
   color: $color-ink;
   transition: transform $transition-fast, box-shadow $transition-fast;
   &:hover { transform: translateY(-3px); box-shadow: $shadow-soft; color: $color-ink; }
-  &[hidden] { display: none; }
 }
 .post-card-media { aspect-ratio: 16 / 10; overflow: hidden; background: $neutral-200;
   &.placeholder-box { border: none; border-radius: 0; }
@@ -129,7 +128,7 @@
 .load-count { display: block; font-size: 0.75rem; color: $neutral-500; margin-bottom: 0.75rem; }
 .load-more .btn svg { width: 14px; height: 14px; }
 
-.empty-state { text-align: center; color: $neutral-500; font-size: 0.9rem; padding: 2rem 0; &[hidden] { display: none; } }
+.empty-state { text-align: center; color: $neutral-500; font-size: 0.9rem; padding: 2rem 0; }
 
 /* =========================================
    Single Post
@@ -143,7 +142,6 @@
 
 .post-hero { margin: clamp(1.5rem, 4vw, 2.5rem) 0 0;
   .story-media { border-radius: $radius-card; }
-  figcaption { font-size: 0.7rem; color: $neutral-500; margin-top: 0.6rem; }
 }
 
 .post-layout-wrap { container-type: inline-size; }
@@ -171,7 +169,6 @@
 
   h2 { font-size: $type-subtitle; font-weight: $font-weight-semibold; letter-spacing: -0.02em; margin: 3rem 0 1rem; scroll-margin-top: 6rem; }
   > h2:first-child { margin-top: 0; }
-  > p { color: $color-text-secondary; font-size: 0.95rem; line-height: 1.65; } // direct paragraphs only, so chat bubbles keep their colors
 }
 
 @container (max-width: 760px) {
@@ -191,7 +188,7 @@
   th { text-align: left; font-size: 0.62rem; font-weight: $font-weight-semibold; letter-spacing: 0.1em; text-transform: uppercase; color: $neutral-500; padding: 0.9rem 0.5rem 0.9rem 0; }
   td { padding: 0.85rem 0.5rem 0.85rem 0; border-top: 1px solid $neutral-200; font-size: 0.85rem; color: $color-ink; }
 }
-.badge { display: inline-block; font-size: 0.65rem; padding: 2px 8px; border-radius: 50px; white-space: nowrap; }
+.badge { display: inline-block; font-size: 0.65rem; padding: 2px 8px; border-radius: $radius-full; white-space: nowrap; }
 .badge--accent { background: $cobalt-50; color: $cobalt-600; }
 .badge--muted { background: $neutral-200; color: $color-ink; }
 
@@ -203,7 +200,7 @@
 .topic-steps { list-style: none; margin: 1.5rem 0; padding: 0; display: flex; flex-direction: column; gap: 1rem;
   li { display: grid; grid-template-columns: 1.4rem 1fr; gap: 0.75rem; align-items: start; }
   strong { display: block; font-size: 0.95rem; color: $color-ink; }
-  span { font-size: 0.82rem; color: $color-text-secondary; }
+  div > span { font-size: 0.82rem; color: $color-text-secondary; } // description only — not the .topic-num circle
 }
 .topic-num { width: 1.4rem; height: 1.4rem; border-radius: 50%; background: $color-cobalt-bright; color: $color-white; font-size: 0.7rem; font-weight: $font-weight-semibold; display: grid; place-items: center; }
 
@@ -225,11 +222,11 @@
   ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; }
   li { display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.88rem; }
 }
-.check-dot { width: 1.05rem; height: 1.05rem; flex-shrink: 0; margin-top: 2px; border-radius: 50%; background: $color-cobalt-bright; display: grid; place-items: center; svg { width: 10px; height: 10px; } }
+.check-dot { width: 1.05rem; height: 1.05rem; flex-shrink: 0; margin-top: 2px; border-radius: 50%; background: $color-cobalt-bright; color: $color-white; display: grid; place-items: center; svg { width: 10px; height: 10px; } }
 
 .helpful-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; margin-top: 2rem; font-size: 0.75rem; color: $color-text-secondary;
   div { display: flex; gap: 0.5rem; }
-  button { background: $color-white; border: 1px solid $neutral-300; border-radius: 50px; padding: 0.4rem 1rem; font: inherit; font-size: 0.75rem; cursor: pointer;
+  button { background: $color-white; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 0.4rem 1rem; font: inherit; font-size: 0.75rem; cursor: pointer;
     &.is-active { border-color: $color-cobalt-bright; color: $color-cobalt-bright; background: $cobalt-50; }
   }
 }

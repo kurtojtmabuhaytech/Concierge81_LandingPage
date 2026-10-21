@@ -3,8 +3,8 @@
 /* =========================================
    Global Utilities & Buttons
    ========================================= */
-.text-center { text-align: center; }
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+// V2/Eyebrow: shared by every small uppercase label (.eyebrow, .process-label, .bento-label, ...)
+%eyebrow { font-size: $type-eyebrow; font-weight: $font-weight-semibold; letter-spacing: 0.1em; text-transform: uppercase; }
 
 .section { padding: $space-section 0; }
 
@@ -14,7 +14,7 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  border-radius: 50px;
+  border-radius: $radius-full;
   font: inherit;
   font-weight: $font-weight-semibold;
   font-size: 0.95rem;
@@ -35,7 +35,7 @@
 .lang-btn {
   display: inline-flex; align-items: center; gap: 4px;
   background: $color-white; border: 1px solid $color-border; color: $color-ink;
-  border-radius: 50px; padding: 4px 12px; font: inherit; font-size: 0.75rem; font-weight: $font-weight-semibold; cursor: pointer;
+  border-radius: $radius-full; padding: 4px 12px; font: inherit; font-size: 0.75rem; font-weight: $font-weight-semibold; cursor: pointer;
 }
 
 /* =========================================
@@ -49,7 +49,6 @@
 
   .header-pill--user { background: $color-white; color: $color-ink; }
   .sub-pill-text { background: $color-night-card; color: $neutral-300; }
-  .timestamp { color: $neutral-500; }
 }
 
 /* =========================================
@@ -59,7 +58,7 @@
   position: sticky;
   top: 0;
   background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   border-bottom: 1px solid $color-border;
   z-index: 100;
   padding: 0.85rem 0;
@@ -80,8 +79,7 @@
   inset: 0;
   z-index: 99;
   background: rgba(14, 16, 19, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   opacity: 0;
   visibility: hidden;
   transition: opacity $transition-base, visibility $transition-base;
@@ -137,14 +135,15 @@
   color: $color-white;
   padding: 0.55em 0.8em;
   border-radius: 18px 18px 18px 6px;
-  font-size: $type-message;
+  font-size: $type-title; // section concierge bubbles measure ~32px in the Figma frames
   font-weight: $font-weight-semibold;
   letter-spacing: -0.027em;
   line-height: 1.14;
   margin: 0;
 }
 
-.header-pill--xl { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; border-radius: 24px 24px 24px 8px; }
+.header-pill--lg { font-size: $type-message; line-height: 1.14; border-radius: 22px 22px 22px 8px; max-width: min(100%, 40rem); } // contact "Leave your email."
+.header-pill--xl { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; border-radius: 24px 24px 24px 8px; max-width: min(100%, 40rem); } // intro h1
 
 .sub-pill-text {
   align-self: flex-start;
@@ -182,7 +181,7 @@
 .chip {
   display: inline-flex; align-items: center; gap: 4px;
   background: $neutral-100; border: 1px solid transparent; color: $color-ink;
-  padding: 0.4rem 0.85rem; border-radius: 50px;
+  padding: 0.4rem 0.85rem; border-radius: $radius-full;
   font: inherit; font-size: 0.8rem; cursor: pointer;
 }
 .chip--soft { background: $color-cobalt-soft; color: $cobalt-700; }
@@ -214,7 +213,7 @@
   aspect-ratio: 3 / 4.4;
   border-radius: 18px;
   overflow: hidden;
-  background: linear-gradient(180deg, #F5F7FF 0%, #ECEFFB 100%);
+  background: linear-gradient(180deg, $color-screen-tint 0%, #ECEFFB 100%);
 }
 .kiosk-screen .kiosk-logo { position: absolute; top: 14px; left: 14px; font-size: 0.7rem; z-index: 1; }
 // Avatar fills the screen under the logo, cropped at the hands (Figma product shot)
@@ -224,8 +223,9 @@
 .avatar-circle, .handoff-avatar, .msg-avatar {
   display: block;
   overflow: hidden;
-  background: linear-gradient(180deg, #F5F7FF, $cobalt-100);
-  img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
+  background: linear-gradient(180deg, $color-screen-tint, $cobalt-100);
+  // Zoom in on the face so small circles read as a portrait, not a tiny full figure
+  img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; transform: scale(1.6); transform-origin: 50% 22%; }
 }
 .kiosk-base { height: clamp(50px, 9vw, 90px); }
 
@@ -246,9 +246,9 @@
 .hero-card-tools { display: flex; align-items: center; gap: 0.5rem; }
 
 .mode-toggle {
-  display: inline-flex; background: $cobalt-50; border-radius: 50px; padding: 3px;
+  display: inline-flex; background: $cobalt-50; border-radius: $radius-full; padding: 3px;
   button {
-    background: transparent; border: none; border-radius: 50px; padding: 4px 14px;
+    background: transparent; border: none; border-radius: $radius-full; padding: 4px 14px;
     font: inherit; font-size: 0.72rem; color: $neutral-500; cursor: pointer;
     &.is-active { background: $color-white; color: $color-cobalt-bright; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
   }
@@ -299,14 +299,14 @@
 .composer-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
 .category-btn {
   justify-self: start; display: inline-flex; align-items: center; gap: 6px;
-  background: $color-white; border: 1px solid $color-border; border-radius: 50px; padding: 6px 12px;
+  background: $color-white; border: 1px solid $color-border; border-radius: $radius-full; padding: 6px 12px;
   font: inherit; font-size: 0.75rem; font-weight: $font-weight-semibold; color: $color-ink; cursor: pointer;
 }
 .mic-btn {
   width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
   background: $color-cobalt-bright; color: $color-white;
   display: grid; place-items: center;
-  box-shadow: 0 8px 20px rgba(39, 111, 248, 0.35);
+  box-shadow: 0 8px 20px rgba($color-cobalt-bright, 0.35);
 }
 
 /* =========================================
@@ -345,7 +345,7 @@
   align-items: center;
   gap: 0.9rem;
 
-  h4 { margin: 0 0 2px; font-size: 0.95rem; font-weight: $font-weight-semibold; color: $color-ink; }
+  h3 { margin: 0 0 2px; font-size: 0.95rem; font-weight: $font-weight-semibold; color: $color-ink; }
   p { margin: 0; font-size: 0.8rem; color: $color-text-secondary; line-height: 1.4; }
 }
 .left-col .feature-item { justify-content: flex-end; text-align: right; }
@@ -378,8 +378,8 @@
 .inbox-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; position: relative; z-index: 2; }
 .inbox-title { display: flex; align-items: center; gap: 0.6rem; font-weight: $font-weight-semibold; font-size: 0.95rem; }
 .inbox-meta { color: $neutral-500; font-size: 0.75rem; font-weight: $font-weight-normal; }
-.badge-red { background: $color-critical; padding: 3px 10px; border-radius: 50px; font-size: 0.65rem; font-weight: $font-weight-bold; }
-.drag-hint { border: 1px solid $color-night-line; background: $color-night-card; border-radius: 50px; padding: 5px 12px; font-size: 0.7rem; color: $neutral-300; }
+.badge-red { background: $color-critical; padding: 3px 10px; border-radius: $radius-full; font-size: 0.65rem; font-weight: $font-weight-bold; }
+.drag-hint { border: 1px solid $color-night-line; background: $color-night-card; border-radius: $radius-full; padding: 5px 12px; font-size: 0.7rem; color: $neutral-300; }
 
 .q-pile { position: relative; height: clamp(16.25rem, 36vw, 22.5rem); margin-top: 1rem; }
 
@@ -390,13 +390,13 @@
   transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--r, 0deg));
   white-space: nowrap;
   padding: 0.5rem 1rem;
-  border-radius: 50px;
+  border-radius: $radius-full;
   background: $neutral-800;
   color: $neutral-200;
   font-size: clamp(0.68rem, 1.4vw, 0.82rem);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
   cursor: grab;
-  user-select: none;
+  -webkit-user-select: none; user-select: none;
   touch-action: none;
   &.is-dragging { cursor: grabbing; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6); }
 }
@@ -441,7 +441,7 @@ $q-pile: (
     content: '';
     position: absolute; top: 50%; left: calc(100% / 6); right: calc(100% / 6);
     height: 2px; margin-top: -1px; border-radius: 2px;
-    background: rgba(39, 111, 248, 0.6); // solid cobalt line joining all three steps
+    background: rgba($color-cobalt-bright, 0.6); // solid cobalt line joining all three steps
   }
 }
 .step-dot {
@@ -450,7 +450,7 @@ $q-pile: (
   display: grid; place-items: center;
   background: $color-night-card; border: 1px solid $neutral-700;
   font-size: 0.65rem; color: $neutral-300;
-  &.is-active { background: $color-cobalt-bright; border-color: $color-cobalt-bright; color: $color-white; box-shadow: 0 0 18px 4px rgba(39, 111, 248, 0.55); }
+  &.is-active { background: $color-cobalt-bright; border-color: $color-cobalt-bright; color: $color-white; box-shadow: 0 0 18px 4px rgba($color-cobalt-bright, 0.55); }
 }
 
 .process-grid {
@@ -476,18 +476,18 @@ $q-pile: (
   width: 110px; height: 110px; margin: 0 auto 1.75rem;
   border-radius: 50%;
   display: grid; place-items: center;
-  background: radial-gradient(circle, rgba(39, 111, 248, 0.35) 0%, rgba(39, 111, 248, 0.08) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba($color-cobalt-bright, 0.35) 0%, rgba($color-cobalt-bright, 0.08) 45%, transparent 70%);
 }
 .process-glyph {
   width: 54px; height: 54px; border-radius: 14px;
   display: grid; place-items: center;
   background: linear-gradient(160deg, $cobalt-400, $cobalt-600);
   color: $color-white;
-  box-shadow: 0 8px 24px rgba(39, 111, 248, 0.45);
+  box-shadow: 0 8px 24px rgba($color-cobalt-bright, 0.45);
   svg { width: 26px; height: 26px; }
 }
 .process-glyph--round { border-radius: 50%; }
-.process-label { display: block; color: $color-text-accent-dark; font-size: $type-eyebrow; letter-spacing: 0.1em; font-weight: $font-weight-bold; text-transform: uppercase; margin-bottom: 0.6rem; }
+.process-label { @extend %eyebrow; display: block; color: $color-text-accent-dark; margin-bottom: 0.6rem; }
 
 /* =========================================
    Section 6: Interaction Modes
@@ -509,14 +509,13 @@ $q-pile: (
   h3 { font-size: $type-headline; font-weight: $font-weight-semibold; letter-spacing: -0.025em; margin: 0.6rem 0; }
   .mode-header p { max-width: 30ch; margin: 0 auto; font-size: 0.95rem; line-height: 1.5; }
 }
-.mode-tag { font-size: $type-eyebrow; font-weight: $font-weight-semibold; letter-spacing: 0.1em; color: $color-cobalt-bright; }
+.mode-tag { @extend %eyebrow; color: $color-cobalt-bright; }
 // Description colors scoped to .mode-header so the mini-chat bubbles keep their own colors
 .mode-card--chat { background: $color-cream; color: $color-ink; .mode-header p { color: $color-text-secondary; } }
 .mode-card--voice { background: $color-night; color: $color-white; .mode-header p { color: $neutral-400; } .mode-tag { color: $color-text-accent-dark; } }
 
 .mini-chat {
-  margin: 2rem auto 0;
-  margin-top: auto;
+  margin: auto auto 0;
   width: min(100%, 21.25rem);
   background: $color-white;
   border-radius: 18px 18px 0 0;
@@ -529,7 +528,7 @@ $q-pile: (
 .mode-card--chat .mode-header { margin-bottom: 2rem; }
 .mini-chat-head { font-size: 0.8rem; font-weight: $font-weight-semibold; padding-bottom: 0.5rem; border-bottom: 1px solid $color-border; }
 .online-dot { display: inline-flex; align-items: center; gap: 4px; font-size: 0.65rem; color: $neutral-500; font-weight: $font-weight-normal;
-  &::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #22C55E; }
+  &::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: $color-success; }
 }
 
 .voice-stage {
@@ -538,7 +537,7 @@ $q-pile: (
   height: 18.75rem;
   display: grid;
   place-items: center;
-  background: radial-gradient(circle at 50% 55%, rgba(39, 111, 248, 0.55) 0%, rgba(39, 111, 248, 0.15) 35%, transparent 65%);
+  background: radial-gradient(circle at 50% 55%, rgba($color-cobalt-bright, 0.55) 0%, rgba($color-cobalt-bright, 0.15) 35%, transparent 65%);
 }
 .voice-ring {
   position: absolute; top: 50%; left: 50%;
@@ -555,7 +554,7 @@ $q-pile: (
   width: 84px; height: 84px; border-radius: 50%;
   display: grid; place-items: center;
   background: radial-gradient(circle at 35% 30%, $cobalt-300, $cobalt-600 70%);
-  box-shadow: 0 0 60px rgba(39, 111, 248, 0.8);
+  box-shadow: 0 0 60px rgba($color-cobalt-bright, 0.8);
   color: $color-white;
 }
 .listening { position: absolute; bottom: 1.25rem; left: 0; right: 0; font-size: 0.7rem; color: $neutral-400;
@@ -580,7 +579,7 @@ $q-pile: (
   scroll-snap-type: x mandatory;
   scroll-padding-inline: $space-4;
   padding: 0 $space-4 0.5rem;
-  margin: 0 (-$space-4);
+  margin: 0 calc(50% - 50vw) 0 (-$space-4); // bleeds past the container to the right screen edge (Figma)
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   &::-webkit-scrollbar { display: none; }
@@ -601,21 +600,27 @@ $q-pile: (
   &::after { // legibility overlay over the photo
     content: '';
     position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.55) 100%);
+    background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 22%, rgba(0,0,0,0) 42%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.5) 100%);
   }
   > *:not(.industry-photo) { position: relative; z-index: 1; }
 
-  h3 { font-size: clamp(1.3rem, 2.2vw, 1.55rem); font-weight: $font-weight-semibold; line-height: 1.1; letter-spacing: -0.02em; margin: 0.25rem 0 0; max-width: 10ch; }
+  h3 { font-size: clamp(1.3rem, 2.2vw, 1.55rem); font-weight: $font-weight-semibold; line-height: 1.1; letter-spacing: -0.02em; margin: 0.25rem 0 0; max-width: 13ch; }
 }
+.industries-section { overflow-x: clip; } // contains the gallery bleed so the page never scrolls sideways
+// Landscape photos cropped to the portrait card; each keeps its kiosk + visitors in frame (Figma)
 .industry-photo {
   position: absolute; inset: 0;
-  border: none; border-radius: 0;
-  background: linear-gradient(160deg, #7C8597, #3B4252);
-  color: rgba(255, 255, 255, 0.6);
-  align-items: center;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  background: linear-gradient(160deg, #7C8597, #3B4252); // shows while the photo loads
 }
+.industry-photo--hotel { object-position: 60% 50%; }
+.industry-photo--office { object-position: 40% 50%; }
+.industry-photo--airport { object-position: 42% 50%; }
+.industry-photo--healthcare { object-position: 47% 50%; }
+.industry-photo--retail { object-position: 58% 50%; }
 .industry-label { font-size: 0.65rem; opacity: 0.85; }
-.industry-plus {
+.industry-card .industry-plus { // needs the card prefix to beat the `> *` position: relative above
   position: absolute; top: 0.85rem; right: 0.85rem;
   width: 26px; height: 26px; border-radius: 50%;
   border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.15);
@@ -624,7 +629,7 @@ $q-pile: (
 .industry-chat { margin-top: auto; display: flex; flex-direction: column; gap: 0.4rem;
   .bubble { font-size: 0.68rem; padding: 0.45rem 0.7rem; border-radius: 10px; max-width: 80%; }
 }
-.bubble--glass { align-self: flex-end; background: rgba(255,255,255,0.22); color: $color-white; backdrop-filter: blur(6px); border-bottom-right-radius: 4px; }
+.bubble--glass { align-self: flex-end; background: rgba(255,255,255,0.22); color: $color-white; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-bottom-right-radius: 4px; }
 
 .industry-card--cta {
   background: linear-gradient(165deg, $cobalt-400 0%, $cobalt-600 55%, $cobalt-800 100%);
@@ -637,7 +642,7 @@ $q-pile: (
 
 .gallery-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
 .gallery-dots { display: flex; gap: 5px;
-  span { width: 6px; height: 6px; border-radius: 50px; background: $neutral-300; }
+  span { width: 6px; height: 6px; border-radius: $radius-full; background: $neutral-300; }
   .is-active { width: 22px; background: $color-ink; }
 }
 .gallery-arrows { display: flex; gap: 6px;
@@ -666,7 +671,7 @@ $q-pile: (
   p { color: $neutral-400; font-size: 0.8rem; line-height: 1.5; margin: 0; }
 }
 .bento-card--wide { flex: 2 1 0; min-width: min(100%, 28.75rem); }
-.bento-label { font-size: $type-eyebrow; letter-spacing: 0.1em; color: $color-text-accent-dark; text-transform: uppercase; font-weight: $font-weight-bold; }
+.bento-label { @extend %eyebrow; color: $color-text-accent-dark; }
 .bento-graphic { margin-top: auto; padding-top: 1.5rem; }
 
 // Availability
@@ -674,9 +679,9 @@ $q-pile: (
 .big-247 { font-size: clamp(4rem, 10vw, 6.5rem); font-weight: $font-weight-semibold; color: $color-cobalt-bright; line-height: 0.9; letter-spacing: -0.04em; }
 .timeline { flex: 1 1 13.75rem; position: relative; padding-top: 2.25rem; }
 .timeline-track { height: 2px; background: linear-gradient(90deg, $color-cobalt-bright 25%, $color-night-line 25%); border-radius: 2px; position: relative;
-  &::after { content: ''; position: absolute; left: 25%; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: $color-white; box-shadow: 0 0 0 4px rgba(39,111,248,0.35); }
+  &::after { content: ''; position: absolute; left: 25%; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: $color-white; box-shadow: 0 0 0 4px rgba($color-cobalt-bright, 0.35); }
 }
-.timeline-tip { position: absolute; top: 0; left: 25%; transform: translateX(-50%); white-space: nowrap; background: $color-night-line; color: $color-white; font-size: 0.62rem; padding: 3px 8px; border-radius: 50px; }
+.timeline-tip { position: absolute; top: 0; left: 25%; transform: translateX(-50%); white-space: nowrap; background: $color-night-line; color: $color-white; font-size: 0.62rem; padding: 3px 8px; border-radius: $radius-full; }
 .timeline-labels { display: flex; justify-content: space-between; margin-top: 0.6rem; font-size: 0.6rem; color: $neutral-500; }
 
 // Handoff
@@ -686,13 +691,13 @@ $q-pile: (
 .handoff-team { width: 44px; height: 44px; border-radius: 50%; background: $color-night-line; display: grid; place-items: center; color: $neutral-300; svg { width: 20px; height: 20px; } }
 .handoff-link { flex: 1; position: relative; display: grid; place-items: center;
   &::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dashed $neutral-700; }
-  span { position: relative; background: $color-night-line; color: $color-white; padding: 3px 8px; border-radius: 50px; white-space: nowrap; }
+  span { position: relative; background: $color-night-line; color: $color-white; padding: 3px 8px; border-radius: $radius-full; white-space: nowrap; }
 }
 
 // Accuracy
 .info-tree { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
 .info-box { background: $color-night-line; border-radius: 10px; padding: 0.6rem 0.85rem; font-size: 0.65rem; color: $color-white; width: min(100%, 190px);
-  small { display: block; margin-top: 4px; background: rgba(39,111,248,0.2); color: #9DB8FF; border-radius: 4px; padding: 2px 6px; }
+  small { display: block; margin-top: 4px; background: rgba($color-cobalt-bright, 0.2); color: $cobalt-200; border-radius: 4px; padding: 2px 6px; }
 }
 .info-nodes { display: flex; gap: 1.5rem; position: relative; padding-top: 1rem; font-size: 0.6rem; color: $neutral-400; text-align: center;
   &::before { content: ''; position: absolute; top: 0; left: 18px; right: 18px; height: 1rem; border: 1px solid $neutral-700; border-bottom: none; border-radius: 6px 6px 0 0; }
@@ -702,7 +707,7 @@ $q-pile: (
 
 // Languages
 .lang-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 1rem;
-  span { font-size: 0.6rem; padding: 3px 8px; border-radius: 50px; background: $color-night-line; color: $neutral-400; }
+  span { font-size: 0.6rem; padding: 3px 8px; border-radius: $radius-full; background: $color-night-line; color: $neutral-400; }
   .is-active { background: $color-cobalt-bright; color: $color-white; }
 }
 .hello { font-size: clamp(1.8rem, 3.5vw, 2.4rem); font-weight: $font-weight-semibold; line-height: 1.1; color: $color-white; text-align: center;
@@ -719,13 +724,13 @@ $q-pile: (
 .insight-kicker { font-size: 0.62rem; color: $neutral-500; }
 .insight-word { font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: $font-weight-semibold; color: $color-white; line-height: 1; letter-spacing: -0.03em; margin: 0.25rem 0; }
 .insight-quote { font-size: 0.75rem; color: $neutral-400; margin-bottom: 0.6rem; }
-.trend-chip { display: inline-block; font-size: 0.62rem; padding: 3px 9px; border-radius: 50px; background: $color-night-line; color: $neutral-300; }
+.trend-chip { display: inline-block; font-size: 0.62rem; padding: 3px 9px; border-radius: $radius-full; background: $color-night-line; color: $neutral-300; }
 .bars-wrap { flex: 1 1 13.75rem; }
 .bars-caption { font-size: 0.6rem; color: $neutral-500; text-align: center; margin-bottom: 0.5rem; }
 .bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; }
 .bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; height: 100%; font-size: 0.55rem; color: $neutral-500;
   &::before { content: ''; width: 100%; height: var(--h); border-radius: 4px 4px 2px 2px; background: $neutral-700; }
-  &:last-child::before { background: linear-gradient(180deg, $cobalt-300, $color-cobalt-bright); box-shadow: 0 0 20px rgba(39,111,248,0.5); }
+  &:last-child::before { background: linear-gradient(180deg, $cobalt-300, $color-cobalt-bright); box-shadow: 0 0 20px rgba($color-cobalt-bright, 0.5); }
 }
 $bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
 @each $h in $bar-heights {
@@ -760,7 +765,7 @@ $bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
 .platform-list { flex: 1 1 0; min-width: min(100%, 16.25rem); display: flex; flex-direction: column; gap: 0.75rem; }
 .platform-card {
   background: $color-white; border: 1px solid $color-border; border-radius: 14px; padding: 1rem 1.25rem;
-  h4 { margin: 0; font-size: 1rem; font-weight: $font-weight-semibold; }
+  h3 { margin: 0; font-size: 1rem; font-weight: $font-weight-semibold; }
   p { margin: 0.4rem 0 0; color: $color-text-secondary; font-size: 0.82rem; line-height: 1.5; }
 }
 .platform-header { display: flex; align-items: center; gap: 10px; }
@@ -792,7 +797,7 @@ $bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
   p { font-size: 0.78rem; opacity: 0.85; line-height: 1.5; margin-bottom: 1.5rem; }
   .btn { margin-top: auto; align-self: flex-start; }
 }
-.tier-label { font-size: $type-eyebrow; letter-spacing: 0.1em; font-weight: $font-weight-bold; opacity: 0.85; }
+.tier-label { @extend %eyebrow; opacity: 0.85; }
 .tier-1 { background: linear-gradient(160deg, #94A7CB, #6B80A9); }
 .tier-2 { background: linear-gradient(160deg, #84A1F6, #5A7FEF); }
 .tier-3 { background: linear-gradient(160deg, #3F77FF, #2456EE); }
@@ -814,10 +819,10 @@ $bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
 /* =========================================
    Section 11: FAQ (Chat Card)
    ========================================= */
-.faq-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
+.faq-filters, .post-filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
 .filter-btn {
   background: $color-white; border: 1px solid $neutral-300; color: $color-ink;
-  padding: 0.45rem 1.5rem; border-radius: 50px;
+  padding: 0.45rem 1.5rem; border-radius: $radius-full;
   font: inherit; font-size: 0.82rem; cursor: pointer; transition: all $transition-fast;
   &:hover { border-color: $color-cobalt-bright; }
   &.is-active { background: $color-cobalt-bright; color: $color-white; border-color: $color-cobalt-bright; }
@@ -830,18 +835,18 @@ $bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
   .timestamp { display: block; text-align: center; margin-bottom: 1.25rem; }
 }
-.faq-pair { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; &[hidden] { display: none; } }
+.faq-pair { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
 .faq-chat-box .bubble { font-size: 0.88rem; max-width: min(80%, 32rem); }
 
 .msg-ai { display: flex; align-items: flex-end; gap: 0.5rem; }
 .msg-avatar { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; }
 .helpful { display: flex; align-items: center; gap: 0.4rem; margin-left: 34px; font-size: 0.7rem; color: $neutral-500;
-  button { background: $color-white; border: 1px solid $color-border; border-radius: 50px; padding: 2px 10px; font: inherit; font-size: 0.7rem; cursor: pointer; }
+  button { background: $color-white; border: 1px solid $color-border; border-radius: $radius-full; padding: 2px 10px; font: inherit; font-size: 0.7rem; cursor: pointer; }
 }
 
 .faq-suggested { border-top: 1px solid $color-border; margin-top: 1rem; padding-top: 1rem;
   .suggest-label { color: $neutral-500; letter-spacing: 0.1em; font-size: $type-eyebrow; }
-  .chip { background: $neutral-100; border-radius: 8px; padding: 0.5rem 0.8rem; &::before { content: '↳'; color: $neutral-400; } }
+  .chip { border-radius: $radius-lg; padding: 0.5rem 0.8rem; &::before { content: '↳'; color: $neutral-400; } }
   .chip--soft { background: $color-cobalt-soft; }
 }
 
@@ -851,7 +856,7 @@ $bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
 .cta-hero { text-align: center; } // keeps the section's bottom padding so the kiosk doesn't touch the dark contact section
 .status-line { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: $font-weight-semibold; margin-bottom: 1rem; }
 .cta-title { font-size: $type-display; font-weight: $font-weight-semibold; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 1rem;
-  span { display: block; color: $cobalt-400; }
+  span { display: block; background: $gradient-brand; -webkit-background-clip: text; background-clip: text; color: transparent; } // brand gradient (DS: hero words)
 }
 .cta-sub { color: $color-text-secondary; max-width: 34ch; margin: 0 auto 1.5rem; }
 .cta-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1.25rem; margin-bottom: clamp(2rem, 5vw, 3rem); }
@@ -862,7 +867,7 @@ $bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
    ========================================= */
 .contact-split { display: flex; flex-wrap: wrap; gap: clamp(2rem, 6vw, 5rem); align-items: flex-start; }
 .next-steps { flex: 1 1 0; min-width: min(100%, 16.25rem); padding-top: 1rem; }
-.eyebrow { display: block; font-size: $type-eyebrow; letter-spacing: 0.1em; font-weight: $font-weight-bold; color: $color-text-accent-dark; text-transform: uppercase; margin-bottom: 1.25rem; }
+.eyebrow { @extend %eyebrow; display: block; color: $color-text-accent-dark; margin-bottom: 1.25rem; }
 .step-list { list-style: none; margin: 0; padding: 0; }
 .step-item { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.1rem; font-size: 0.9rem; color: $neutral-200; }
 .step-number { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: $color-night-card; border: 1px solid $color-night-line; display: grid; place-items: center; font-size: 0.72rem; }
@@ -870,7 +875,7 @@ $bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
 .footer-form-card {
   flex: 1 1 0;
   min-width: min(100%, 20rem);
-  max-width: 28.75rem;
+  max-width: 38rem; // ~43% of the Figma frame, right-aligned to the container
   margin-left: auto;
   background: $neutral-100;
   color: $color-ink;
@@ -884,11 +889,11 @@ $bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
   border: 1px solid $neutral-300; border-radius: 10px; background: transparent;
   font: inherit; font-size: 0.85rem; color: $color-ink;
   transition: border-color $transition-fast, box-shadow $transition-fast;
-  &:focus { outline: none; border-color: $color-cobalt-bright; box-shadow: 0 0 0 3px rgba(39,111,248,0.15); }
+  &:focus { outline: none; border-color: $color-cobalt-bright; box-shadow: 0 0 0 3px rgba($color-cobalt-bright, 0.15); }
 }
 .interest-pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .interest-pill {
-  background: $color-white; border: 1px solid $neutral-300; padding: 0.45rem 0.9rem; border-radius: 50px;
+  background: $color-white; border: 1px solid $neutral-300; padding: 0.45rem 0.9rem; border-radius: $radius-full;
   font: inherit; font-size: 0.75rem; color: $color-ink; cursor: pointer;
   &.is-active { background: $cobalt-50; color: $color-cobalt-bright; border-color: $color-cobalt-bright; }
 }

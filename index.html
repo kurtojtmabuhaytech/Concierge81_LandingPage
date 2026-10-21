@@ -4,16 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Concierge81 - AI Customer Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="assets/css/landing.css">
   <script src="assets/js/main.js" defer></script>
 </head>
-<body>
+<body class="reveal-page">
 
   <!-- Navigation / Header -->
   <header class="site-header">
     <div class="container header-container">
-      <a href="#" class="brand-logo">concierge<span>81</span></a>
+      <a href="index.html" class="brand-logo">concierge<span>81</span></a>
 
       <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="navMenu">
         <span class="hamburger-line"></span>
@@ -25,7 +28,7 @@
         <a href="news.html">news</a>
         <a href="blog.html">blog</a>
         <a href="#contact">contact</a>
-        <button class="lang-btn">🌐 EN</button>
+        <button type="button" class="lang-btn" aria-label="Language: English">🌐 EN</button>
         <a href="#contact" class="btn btn-primary btn-small mobile-only-cta">Request a Demo</a>
       </nav>
 
@@ -36,6 +39,7 @@
   </header>
   <div class="nav-backdrop" aria-hidden="true"></div>
 
+  <main>
   <!-- 1. Hero Card (2D Avatar + Live Chat) -->
   <section id="hero" class="section theme-light chat-hero-section">
     <div class="container">
@@ -47,7 +51,7 @@
               <button type="button" class="is-active">Avatar</button>
               <button type="button">Chat</button>
             </div>
-            <button class="lang-btn">🌐 EN</button>
+            <button type="button" class="lang-btn" aria-label="Language: English">🌐 EN</button>
           </div>
         </div>
 
@@ -132,23 +136,23 @@
           <!-- Left Features: text then icon -->
           <div class="feature-col left-col">
             <div class="feature-item">
-              <div class="feature-text"><h4>Lifelike avatar</h4><p>A friendly face for every guest.</p></div>
+              <div class="feature-text"><h3>Lifelike avatar</h3><p>A friendly face for every guest.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19a7 7 0 0 1 13 0"/><rect x="2.5" y="2.5" width="19" height="19" rx="5"/></svg></div>
             </div>
             <div class="feature-item">
-              <div class="feature-text"><h4>Voice conversation</h4><p>Guests just talk and listen.</p></div>
+              <div class="feature-text"><h3>Voice conversation</h3><p>Guests just talk and listen.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg></div>
             </div>
             <div class="feature-item">
-              <div class="feature-text"><h4>Speak translation</h4><p>Replies in the guest's language.</p></div>
+              <div class="feature-text"><h3>Speak translation</h3><p>Replies in the guest's language.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5.5 5c0 4 3 7 6.5 8M10.5 5c-.5 4-3 7-6.5 9"/><path d="M13 21l4-9 4 9M14.5 18h5"/></svg></div>
             </div>
             <div class="feature-item">
-              <div class="feature-text"><h4>Avatar or chat</h4><p>Talk to her, or type instead.</p></div>
+              <div class="feature-text"><h3>Avatar or chat</h3><p>Talk to her, or type instead.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg></div>
             </div>
             <div class="feature-item">
-              <div class="feature-text"><h4>Categories</h4><p>Topics built for your business.</p></div>
+              <div class="feature-text"><h3>Categories</h3><p>Topics built for your business.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></div>
             </div>
           </div>
@@ -166,23 +170,23 @@
           <div class="feature-col right-col">
             <div class="feature-item">
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/></svg></div>
-              <div class="feature-text"><h4>Smart suggestions</h4><p>Helpful next questions, instantly.</p></div>
+              <div class="feature-text"><h3>Smart suggestions</h3><p>Helpful next questions, instantly.</p></div>
             </div>
             <div class="feature-item">
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
-              <div class="feature-text"><h4>Your own knowledge</h4><p>Answers from your information.</p></div>
+              <div class="feature-text"><h3>Your own knowledge</h3><p>Answers from your information.</p></div>
             </div>
             <div class="feature-item">
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-              <div class="feature-text"><h4>Always on</h4><p>Open 24/7, holidays included.</p></div>
+              <div class="feature-text"><h3>Always on</h3><p>Open 24/7, holidays included.</p></div>
             </div>
             <div class="feature-item">
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></div>
-              <div class="feature-text"><h4>Human handoff</h4><p>Hands complex requests to staff.</p></div>
+              <div class="feature-text"><h3>Human handoff</h3><p>Hands complex requests to staff.</p></div>
             </div>
             <div class="feature-item">
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="13" height="10" rx="1.5"/><path d="M7 18h5"/><rect x="17" y="9" width="4.5" height="11" rx="1"/></svg></div>
-              <div class="feature-text"><h4>Everywhere</h4><p>Kiosk, web, tablet, and phone.</p></div>
+              <div class="feature-text"><h3>Everywhere</h3><p>Kiosk, web, tablet, and phone.</p></div>
             </div>
           </div>
         </div>
@@ -363,7 +367,7 @@
   </section>
 
   <!-- 7. Industry Gallery -->
-  <section id="industries" class="section theme-cream">
+  <section id="industries" class="section theme-cream industries-section">
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row right">
@@ -378,50 +382,50 @@
 
       <div class="industry-gallery" id="industryGallery">
         <article class="industry-card">
-          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-hotel.jpg ]</span></div>
+          <img class="industry-photo industry-photo--hotel" src="assets/images/cards/industry-hotel.jpg" alt="A concierge81 kiosk greeting guests in a hotel lobby" width="1440" height="802" loading="lazy">
           <span class="industry-label">Hotels &amp; Resorts</span>
           <h3>Check-in help, day or night.</h3>
-          <button class="industry-plus" aria-label="More about hotels">+</button>
+          <button type="button" class="industry-plus" aria-label="More about hotels">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">What time is checkout?</p>
             <p class="bubble bubble--white">11 AM. Want me to arrange a late checkout?</p>
           </div>
         </article>
         <article class="industry-card">
-          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-office.jpg ]</span></div>
+          <img class="industry-photo industry-photo--office" src="assets/images/cards/industry-office.jpg" alt="A concierge81 kiosk welcoming visitors at a corporate reception" width="1440" height="802" loading="lazy">
           <span class="industry-label">Corporate Offices</span>
           <h3>Reception, without the wait.</h3>
-          <button class="industry-plus" aria-label="More about offices">+</button>
+          <button type="button" class="industry-plus" aria-label="More about offices">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Where is meeting room B?</p>
             <p class="bubble bubble--white">Third floor — take the lift on your left.</p>
           </div>
         </article>
         <article class="industry-card">
-          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-airport.jpg ]</span></div>
+          <img class="industry-photo industry-photo--airport" src="assets/images/cards/industry-airport.jpg" alt="A traveller asking a concierge81 kiosk for directions at an airport" width="1440" height="802" loading="lazy">
           <span class="industry-label">Airports &amp; Transit</span>
           <h3>Wayfinding in the moment.</h3>
-          <button class="industry-plus" aria-label="More about airports">+</button>
+          <button type="button" class="industry-plus" aria-label="More about airports">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Which way to Gate 12?</p>
             <p class="bubble bubble--white">Straight ahead, about 4 minutes on foot.</p>
           </div>
         </article>
         <article class="industry-card">
-          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-healthcare.jpg ]</span></div>
+          <img class="industry-photo industry-photo--healthcare" src="assets/images/cards/industry-healthcare.jpg" alt="A visitor talking to a concierge81 kiosk in a hospital waiting area" width="1440" height="802" loading="lazy">
           <span class="industry-label">Healthcare</span>
           <h3>Calm guidance for every visitor.</h3>
-          <button class="industry-plus" aria-label="More about healthcare">+</button>
+          <button type="button" class="industry-plus" aria-label="More about healthcare">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Where is Pharmacy?</p>
             <p class="bubble bubble--white">Level 2, east wing. I'll show you the way.</p>
           </div>
         </article>
         <article class="industry-card">
-          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-retail.jpg ]</span></div>
+          <img class="industry-photo industry-photo--retail" src="assets/images/cards/industry-retail.jpg" alt="Visitors asking a concierge81 kiosk for help at an information centre" width="1440" height="802" loading="lazy">
           <span class="industry-label">Retail</span>
           <h3>Answers right on the shop floor.</h3>
-          <button class="industry-plus" aria-label="More about retail">+</button>
+          <button type="button" class="industry-plus" aria-label="More about retail">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Do you have this in blue?</p>
             <p class="bubble bubble--white">Yes — sizes M and L are in aisle 4.</p>
@@ -431,7 +435,7 @@
           <span class="industry-label">Your industry</span>
           <h3>Built for yours, too.</h3>
           <p>Any business that serves customers can put me to work.</p>
-          <span class="avatar-circle"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+          <span class="avatar-circle"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
           <a href="#contact" class="btn btn-white btn-small">Tell us about yours</a>
         </article>
       </div>
@@ -482,7 +486,7 @@
             <h3>Knows when to hand off.</h3>
             <p>Complex requests reach your team with the full conversation.</p>
             <div class="bento-graphic handoff">
-              <div class="handoff-node"><span class="handoff-avatar"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>Concierge81</div>
+              <div class="handoff-node"><span class="handoff-avatar"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>Concierge81</div>
               <div class="handoff-link"><span>Full context</span></div>
               <div class="handoff-node">
                 <span class="handoff-team"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>
@@ -522,10 +526,10 @@
             <p>One branch or many — all managed from one place.</p>
             <div class="bento-graphic">
               <svg class="network" viewBox="0 0 240 150" fill="none" aria-hidden="true">
-                <g stroke="#2A2B30"><line x1="120" y1="75" x2="45" y2="28"/><line x1="120" y1="75" x2="195" y2="35"/><line x1="120" y1="75" x2="55" y2="125"/><line x1="120" y1="75" x2="190" y2="120"/></g>
-                <circle cx="120" cy="75" r="16" fill="rgba(47,107,255,0.25)"/><circle cx="120" cy="75" r="6" fill="#2F6BFF"/>
-                <g fill="#5B8CFF"><circle cx="45" cy="28" r="3.5"/><circle cx="195" cy="35" r="3.5"/><circle cx="55" cy="125" r="3.5"/><circle cx="190" cy="120" r="3.5"/></g>
-                <g fill="#9CA3AF" font-size="8" font-family="inherit"><text x="30" y="17">Shinjuku</text><text x="182" y="24">Osaka</text><text x="40" y="142">Kyoto</text><text x="176" y="138">Nagoya</text></g>
+                <g stroke="#35342F"><line x1="120" y1="75" x2="45" y2="28"/><line x1="120" y1="75" x2="195" y2="35"/><line x1="120" y1="75" x2="55" y2="125"/><line x1="120" y1="75" x2="190" y2="120"/></g>
+                <circle cx="120" cy="75" r="16" fill="rgba(39,111,248,0.25)"/><circle cx="120" cy="75" r="6" fill="#276FF8"/>
+                <g fill="#7DA7F9"><circle cx="45" cy="28" r="3.5"/><circle cx="195" cy="35" r="3.5"/><circle cx="55" cy="125" r="3.5"/><circle cx="190" cy="120" r="3.5"/></g>
+                <g fill="#A8A49A" font-size="8" font-family="inherit"><text x="30" y="17">Shinjuku</text><text x="182" y="24">Osaka</text><text x="40" y="142">Kyoto</text><text x="176" y="138">Nagoya</text></g>
               </svg>
             </div>
           </div>
@@ -552,7 +556,7 @@
             </div>
           </div>
           <div class="bento-card bento-card--cta">
-            <span class="avatar-circle"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+            <span class="avatar-circle"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
             <h3>See it in action.</h3>
             <p>A live demo with your own questions.</p>
             <a href="#contact" class="btn btn-white btn-small">Request a demo</a>
@@ -587,28 +591,28 @@
           <div class="platform-card">
             <div class="platform-header">
               <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
-              <h4>Kiosk</h4>
+              <h3>Kiosk</h3>
             </div>
             <p>A friendly face in your lobby, store, or reception — greeting every guest by voice or touch.</p>
           </div>
           <div class="platform-card">
             <div class="platform-header">
               <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></span>
-              <h4>Website</h4>
+              <h3>Website</h3>
             </div>
             <p>A chat window that answers visitors on any page, day or night.</p>
           </div>
           <div class="platform-card">
             <div class="platform-header">
               <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg></span>
-              <h4>Mobile</h4>
+              <h3>Mobile</h3>
             </div>
             <p>Help right inside your app — in your customers' pocket, wherever they are.</p>
           </div>
           <div class="platform-card">
             <div class="platform-header">
               <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
-              <h4>Custom</h4>
+              <h3>Custom</h3>
             </div>
             <p>Built into your own displays, apps, or spaces — I'll fit right in.</p>
           </div>
@@ -699,7 +703,7 @@
         <div class="faq-pair" data-cat="general">
           <div class="msg-row msg-row--user"><p class="bubble bubble--user">What is Concierge81?</p></div>
           <div class="msg-ai">
-            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
             <p class="bubble bubble--sand">I'm an AI concierge for your business. I answer the questions your team hears every day — by chat or voice — so customers get help instantly.</p>
           </div>
         </div>
@@ -707,14 +711,37 @@
         <div class="faq-pair" data-cat="general support">
           <div class="msg-row msg-row--user"><p class="bubble bubble--user">Will it replace my staff?</p></div>
           <div class="msg-ai">
-            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
             <p class="bubble bubble--sand">Not at all. I take care of routine questions so your team can focus on guests who need a personal touch. Anything complex goes straight to them, with the full conversation.</p>
           </div>
           <div class="helpful">Was this helpful? <button type="button">Yes</button><button type="button">No</button></div>
         </div>
+        <div class="faq-pair" data-cat="chat-voice" data-filter-only hidden>
+          <div class="msg-row msg-row--user"><p class="bubble bubble--user">Can customers talk instead of typing?</p></div>
+          <div class="msg-ai">
+            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
+            <p class="bubble bubble--sand">Yes. They can type or simply ask out loud — I answer in natural speech and show the reply on screen.</p>
+          </div>
+        </div>
+
+        <div class="faq-pair" data-cat="languages" data-filter-only hidden>
+          <div class="msg-row msg-row--user"><p class="bubble bubble--user">Which languages does it support?</p></div>
+          <div class="msg-ai">
+            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
+            <p class="bubble bubble--sand">English, Japanese, and Filipino today, with Korean coming next. I reply in the language your guest uses.</p>
+          </div>
+        </div>
+
+        <div class="faq-pair" data-cat="setup" data-filter-only hidden>
+          <div class="msg-row msg-row--user"><p class="bubble bubble--user">How long does setup take?</p></div>
+          <div class="msg-ai">
+            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
+            <p class="bubble bubble--sand">Most teams go live the same week. Import the answers you already have, group them into topics, and you're ready.</p>
+          </div>
+        </div>
 
         <div class="msg-ai">
-          <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+          <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
           <p class="bubble bubble--sand">Anything else I can help you with?</p>
         </div>
 
@@ -760,6 +787,8 @@
     </div>
   </section>
 
+  </main>
+
   <!-- 13. Contact -->
   <section id="contact" class="section theme-dark">
     <div class="container">
@@ -769,7 +798,7 @@
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai header-pill--xl">Leave your email.<br>We'll take it from here.</h2>
+          <h2 class="header-pill header-pill--ai header-pill--lg">Leave your email.<br>We'll take it from here.</h2>
         </div>
       </div>
 
@@ -844,7 +873,7 @@
           <a href="#">Terms</a>
           <a href="#">Disclaimer</a>
           <a href="#">Commercial Transactions Act</a>
-          <button class="lang-btn">🌐 EN</button>
+          <button type="button" class="lang-btn" aria-label="Language: English">🌐 EN</button>
         </div>
       </div>
     </div>

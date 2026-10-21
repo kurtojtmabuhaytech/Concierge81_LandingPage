@@ -54,13 +54,21 @@ img, svg {
   height: auto;
 }
 
+[hidden] {
+  display: none !important;
+}
+
+[id] {
+  scroll-margin-top: 5.5rem;
+}
+
 code, kbd, samp, pre {
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 1em;
 }
 
 /* =========================================
-   Container & Grid Layout System
+   Container
    ========================================= */
 /* Main wrapper to keep content centered and constrained */
 .container {
@@ -72,44 +80,12 @@ code, kbd, samp, pre {
   padding-right: 1.5rem;
 }
 
-/* Base grid setup */
-.grid {
-  display: grid;
-  gap: 3rem;
-}
-
-/* Mobile-first: single column by default */
-.grid-3 {
-  grid-template-columns: repeat(1, 1fr);
-}
-
-.grid-4 {
-  grid-template-columns: repeat(1, 1fr);
-}
-
-/* =========================================
-   Responsive Breakpoints
-   ========================================= */
-/* Tablet Layout */
-@media (min-width: 768px) {
-  .grid-3, .grid-4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-/* Desktop Layout */
-@media (min-width: 1024px) {
-  .grid-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .grid-4 {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
 /* =========================================
    Media & Image Placeholders
+   Labelled boxes that hold the place of artwork until the real files arrive
    ========================================= */
 .placeholder-box {
-  background-color: #f3f4f6;
+  background-color: #F3F1EB;
   border: 2px dashed #E5E2D9;
   display: flex;
   align-items: center;
@@ -117,34 +93,13 @@ code, kbd, samp, pre {
   color: #8A867B;
   font-weight: 500;
   font-size: 0.9rem;
-  border-radius: 12px; /* Replaced the missing $radius-lg */
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .placeholder-box span {
   padding: 0.5rem;
   text-align: center;
-}
-
-/* Specific Placeholder Sizes */
-.avatar-placeholder {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%; /* Circle for avatar */
-  margin: 0 auto 1.5rem auto;
-}
-
-.media-placeholder {
-  width: 100%;
-  height: 200px;
-  margin-bottom: 1rem;
-}
-
-.video-placeholder {
-  width: 100%;
-  aspect-ratio: 16/9;
-  max-width: 900px;
-  margin: 0 auto;
 }
 
 /* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
@@ -159,17 +114,11 @@ code, kbd, samp, pre {
 /* =========================================
    Global Utilities & Buttons
    ========================================= */
-.text-center {
-  text-align: center;
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
+.post-eyebrow, .eyebrow, .tier-label, .bento-label, .mode-tag, .process-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .section {
@@ -182,7 +131,7 @@ code, kbd, samp, pre {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  border-radius: 50px;
+  border-radius: 999px;
   font: inherit;
   font-weight: 600;
   font-size: 0.95rem;
@@ -243,7 +192,7 @@ code, kbd, samp, pre {
   background: #FFFFFF;
   border: 1px solid #E5E2D9;
   color: #0E1013;
-  border-radius: 50px;
+  border-radius: 999px;
   padding: 4px 12px;
   font: inherit;
   font-size: 0.75rem;
@@ -276,9 +225,6 @@ code, kbd, samp, pre {
   background: #1E1F21;
   color: #CFCBC0;
 }
-.section.theme-dark .timestamp {
-  color: #8A867B;
-}
 
 /* =========================================
    Header & Mobile Menu
@@ -287,6 +233,7 @@ code, kbd, samp, pre {
   position: sticky;
   top: 0;
   background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid #E5E2D9;
   z-index: 100;
@@ -352,8 +299,8 @@ code, kbd, samp, pre {
   inset: 0;
   z-index: 99;
   background: rgba(14, 16, 19, 0.35);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
@@ -457,11 +404,18 @@ code, kbd, samp, pre {
   color: #FFFFFF;
   padding: 0.55em 0.8em;
   border-radius: 18px 18px 18px 6px;
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
   font-weight: 600;
   letter-spacing: -0.027em;
   line-height: 1.14;
   margin: 0;
+}
+
+.header-pill--lg {
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  line-height: 1.14;
+  border-radius: 22px 22px 22px 8px;
+  max-width: min(100%, 40rem);
 }
 
 .header-pill--xl {
@@ -469,6 +423,7 @@ code, kbd, samp, pre {
   line-height: 1.07;
   letter-spacing: -0.025em;
   border-radius: 24px 24px 24px 8px;
+  max-width: min(100%, 40rem);
 }
 
 .sub-pill-text {
@@ -545,7 +500,7 @@ code, kbd, samp, pre {
   border: 1px solid transparent;
   color: #0E1013;
   padding: 0.4rem 0.85rem;
-  border-radius: 50px;
+  border-radius: 999px;
   font: inherit;
   font-size: 0.8rem;
   cursor: pointer;
@@ -629,6 +584,8 @@ code, kbd, samp, pre {
   height: 100%;
   object-fit: cover;
   object-position: 50% 0;
+  transform: scale(1.6);
+  transform-origin: 50% 22%;
 }
 
 .kiosk-base {
@@ -672,13 +629,13 @@ code, kbd, samp, pre {
 .mode-toggle {
   display: inline-flex;
   background: #EDF3FE;
-  border-radius: 50px;
+  border-radius: 999px;
   padding: 3px;
 }
 .mode-toggle button {
   background: transparent;
   border: none;
-  border-radius: 50px;
+  border-radius: 999px;
   padding: 4px 14px;
   font: inherit;
   font-size: 0.72rem;
@@ -768,7 +725,7 @@ code, kbd, samp, pre {
   gap: 6px;
   background: #FFFFFF;
   border: 1px solid #E5E2D9;
-  border-radius: 50px;
+  border-radius: 999px;
   padding: 6px 12px;
   font: inherit;
   font-size: 0.75rem;
@@ -863,7 +820,7 @@ code, kbd, samp, pre {
   align-items: center;
   gap: 0.9rem;
 }
-.feature-item h4 {
+.feature-item h3 {
   margin: 0 0 2px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -952,7 +909,7 @@ code, kbd, samp, pre {
 .badge-red {
   background: #FB3B3E;
   padding: 3px 10px;
-  border-radius: 50px;
+  border-radius: 999px;
   font-size: 0.65rem;
   font-weight: 700;
 }
@@ -960,7 +917,7 @@ code, kbd, samp, pre {
 .drag-hint {
   border: 1px solid #35342F;
   background: #1E1F21;
-  border-radius: 50px;
+  border-radius: 999px;
   padding: 5px 12px;
   font-size: 0.7rem;
   color: #CFCBC0;
@@ -979,12 +936,13 @@ code, kbd, samp, pre {
   transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--r, 0deg));
   white-space: nowrap;
   padding: 0.5rem 1rem;
-  border-radius: 50px;
+  border-radius: 999px;
   background: #1E1F21;
   color: #E5E2D9;
   font-size: clamp(0.68rem, 1.4vw, 0.82rem);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
   cursor: grab;
+  -webkit-user-select: none;
   user-select: none;
   touch-action: none;
 }
@@ -1309,10 +1267,6 @@ code, kbd, samp, pre {
 .process-label {
   display: block;
   color: #7DA7F9;
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  font-weight: 700;
-  text-transform: uppercase;
   margin-bottom: 0.6rem;
 }
 
@@ -1348,9 +1302,6 @@ code, kbd, samp, pre {
 }
 
 .mode-tag {
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
   color: #276FF8;
 }
 
@@ -1374,8 +1325,7 @@ code, kbd, samp, pre {
 }
 
 .mini-chat {
-  margin: 2rem auto 0;
-  margin-top: auto;
+  margin: auto auto 0;
   width: min(100%, 21.25rem);
   background: #FFFFFF;
   border-radius: 18px 18px 0 0;
@@ -1505,7 +1455,7 @@ code, kbd, samp, pre {
   scroll-snap-type: x mandatory;
   scroll-padding-inline: 1.5rem;
   padding: 0 1.5rem 0.5rem;
-  margin: 0 -1.5rem;
+  margin: 0 calc(50% - 50vw) 0 -1.5rem;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
@@ -1529,7 +1479,7 @@ code, kbd, samp, pre {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0) 32%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.55) 100%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.35) 22%, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0) 62%, rgba(0, 0, 0, 0.5) 100%);
 }
 .industry-card > *:not(.industry-photo) {
   position: relative;
@@ -1541,17 +1491,40 @@ code, kbd, samp, pre {
   line-height: 1.1;
   letter-spacing: -0.02em;
   margin: 0.25rem 0 0;
-  max-width: 10ch;
+  max-width: 13ch;
+}
+
+.industries-section {
+  overflow-x: clip;
 }
 
 .industry-photo {
   position: absolute;
   inset: 0;
-  border: none;
-  border-radius: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   background: linear-gradient(160deg, #7C8597, #3B4252);
-  color: rgba(255, 255, 255, 0.6);
-  align-items: center;
+}
+
+.industry-photo--hotel {
+  object-position: 60% 50%;
+}
+
+.industry-photo--office {
+  object-position: 40% 50%;
+}
+
+.industry-photo--airport {
+  object-position: 42% 50%;
+}
+
+.industry-photo--healthcare {
+  object-position: 47% 50%;
+}
+
+.industry-photo--retail {
+  object-position: 58% 50%;
 }
 
 .industry-label {
@@ -1559,7 +1532,7 @@ code, kbd, samp, pre {
   opacity: 0.85;
 }
 
-.industry-plus {
+.industry-card .industry-plus {
   position: absolute;
   top: 0.85rem;
   right: 0.85rem;
@@ -1591,6 +1564,7 @@ code, kbd, samp, pre {
   align-self: flex-end;
   background: rgba(255, 255, 255, 0.22);
   color: #FFFFFF;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   border-bottom-right-radius: 4px;
 }
@@ -1635,7 +1609,7 @@ code, kbd, samp, pre {
 .gallery-dots span {
   width: 6px;
   height: 6px;
-  border-radius: 50px;
+  border-radius: 999px;
   background: #CFCBC0;
 }
 .gallery-dots .is-active {
@@ -1706,11 +1680,7 @@ code, kbd, samp, pre {
 }
 
 .bento-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
   color: #7DA7F9;
-  text-transform: uppercase;
-  font-weight: 700;
 }
 
 .bento-graphic {
@@ -1768,7 +1738,7 @@ code, kbd, samp, pre {
   color: #FFFFFF;
   font-size: 0.62rem;
   padding: 3px 8px;
-  border-radius: 50px;
+  border-radius: 999px;
 }
 
 .timeline-labels {
@@ -1836,7 +1806,7 @@ code, kbd, samp, pre {
   background: #35342F;
   color: #FFFFFF;
   padding: 3px 8px;
-  border-radius: 50px;
+  border-radius: 999px;
   white-space: nowrap;
 }
 
@@ -1859,7 +1829,7 @@ code, kbd, samp, pre {
   display: block;
   margin-top: 4px;
   background: rgba(39, 111, 248, 0.2);
-  color: #9DB8FF;
+  color: #A9C5FB;
   border-radius: 4px;
   padding: 2px 6px;
 }
@@ -1913,7 +1883,7 @@ code, kbd, samp, pre {
 .lang-tabs span {
   font-size: 0.6rem;
   padding: 3px 8px;
-  border-radius: 50px;
+  border-radius: 999px;
   background: #35342F;
   color: #A8A49A;
 }
@@ -1982,7 +1952,7 @@ code, kbd, samp, pre {
   display: inline-block;
   font-size: 0.62rem;
   padding: 3px 9px;
-  border-radius: 50px;
+  border-radius: 999px;
   background: #35342F;
   color: #CFCBC0;
 }
@@ -2121,7 +2091,7 @@ code, kbd, samp, pre {
   border-radius: 14px;
   padding: 1rem 1.25rem;
 }
-.platform-card h4 {
+.platform-card h3 {
   margin: 0;
   font-size: 1rem;
   font-weight: 600;
@@ -2201,9 +2171,6 @@ code, kbd, samp, pre {
 }
 
 .tier-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  font-weight: 700;
   opacity: 0.85;
 }
 
@@ -2259,7 +2226,7 @@ code, kbd, samp, pre {
 /* =========================================
    Section 11: FAQ (Chat Card)
    ========================================= */
-.faq-filters {
+.faq-filters, .post-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -2271,7 +2238,7 @@ code, kbd, samp, pre {
   border: 1px solid #CFCBC0;
   color: #0E1013;
   padding: 0.45rem 1.5rem;
-  border-radius: 50px;
+  border-radius: 999px;
   font: inherit;
   font-size: 0.82rem;
   cursor: pointer;
@@ -2304,9 +2271,6 @@ code, kbd, samp, pre {
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
-.faq-pair[hidden] {
-  display: none;
-}
 
 .faq-chat-box .bubble {
   font-size: 0.88rem;
@@ -2337,7 +2301,7 @@ code, kbd, samp, pre {
 .helpful button {
   background: #FFFFFF;
   border: 1px solid #E5E2D9;
-  border-radius: 50px;
+  border-radius: 999px;
   padding: 2px 10px;
   font: inherit;
   font-size: 0.7rem;
@@ -2355,7 +2319,6 @@ code, kbd, samp, pre {
   font-size: 0.75rem;
 }
 .faq-suggested .chip {
-  background: #F3F1EB;
   border-radius: 8px;
   padding: 0.5rem 0.8rem;
 }
@@ -2392,7 +2355,10 @@ code, kbd, samp, pre {
 }
 .cta-title span {
   display: block;
-  color: #5289F8;
+  background: linear-gradient(135deg, #276FF8, #7DA7F9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .cta-sub {
@@ -2434,11 +2400,7 @@ code, kbd, samp, pre {
 
 .eyebrow {
   display: block;
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  font-weight: 700;
   color: #7DA7F9;
-  text-transform: uppercase;
   margin-bottom: 1.25rem;
 }
 
@@ -2472,7 +2434,7 @@ code, kbd, samp, pre {
 .footer-form-card {
   flex: 1 1 0;
   min-width: min(100%, 20rem);
-  max-width: 28.75rem;
+  max-width: 38rem;
   margin-left: auto;
   background: #F3F1EB;
   color: #0E1013;
@@ -2521,7 +2483,7 @@ code, kbd, samp, pre {
   background: #FFFFFF;
   border: 1px solid #CFCBC0;
   padding: 0.45rem 0.9rem;
-  border-radius: 50px;
+  border-radius: 999px;
   font: inherit;
   font-size: 0.75rem;
   color: #0E1013;
@@ -2621,22 +2583,9 @@ code, kbd, samp, pre {
   font-size: 0.72rem;
 }
 
-/* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
-/* Type Scale (Design System V2, fluid between mobile and desktop) */
-/* Primitive Scales */
-/* Color Palette (Brand: Cobalt, Ink, Paper) */
-/* Semantic Tokens (light / dark sections) */
-/* Layout & Spacing (8-point rhythm) */
-/* Radius */
-/* Elevation */
-/* Transitions */
 /* =========================================
    Blog Pages (listing + single post)
    ========================================= */
-[hidden] {
-  display: none !important;
-}
-
 .page-cream {
   background: #F3F1EB;
 }
@@ -2662,11 +2611,17 @@ code, kbd, samp, pre {
 }
 
 .blog-hero {
+  padding-top: clamp(2.5rem, 6vw, 4rem);
   padding-bottom: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 .blog-section {
   padding-top: 0;
+  padding-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+
+main > .blog-section:last-child {
+  padding-bottom: clamp(4rem, 10vw, 8rem);
 }
 
 .blog-section-title {
@@ -2676,12 +2631,20 @@ code, kbd, samp, pre {
   margin-bottom: 1rem;
 }
 
+.post-body > p, .news-body > p {
+  color: #5C5A4D;
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.post-hero figcaption, .news-hero figcaption {
+  font-size: 0.7rem;
+  color: #8A867B;
+  margin-top: 0.6rem;
+}
+
 .post-eyebrow {
   display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
   color: #276FF8;
 }
 
@@ -2689,6 +2652,7 @@ code, kbd, samp, pre {
    Story Media (hero image + chat overlay)
    ========================================= */
 .story-media-wrap {
+  display: block;
   container-type: inline-size;
 }
 
@@ -2764,6 +2728,7 @@ code, kbd, samp, pre {
   color: #FFFFFF;
   font-size: 0.62rem;
   padding: 0.35rem 0.7rem;
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
 
@@ -2773,8 +2738,9 @@ code, kbd, samp, pre {
   justify-content: space-between;
   border: 1px solid rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  border-radius: 50px;
+  border-radius: 999px;
   padding: 0.35rem 0.35rem 0.35rem 1rem;
   font-size: 0.7rem;
   color: rgba(255, 255, 255, 0.7);
@@ -2852,10 +2818,6 @@ code, kbd, samp, pre {
   color: #276FF8;
 }
 
-.story-media-wrap {
-  display: block;
-}
-
 .featured-side {
   flex: 1 1 0;
   min-width: min(100%, 16rem);
@@ -2908,13 +2870,6 @@ code, kbd, samp, pre {
 /* =========================================
    Latest Articles Grid
    ========================================= */
-.post-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-}
-
 .post-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
@@ -2934,9 +2889,6 @@ code, kbd, samp, pre {
   transform: translateY(-3px);
   box-shadow: 0 4px 24px rgba(14, 16, 19, 0.06);
   color: #0E1013;
-}
-.post-card[hidden] {
-  display: none;
 }
 
 .post-card-media {
@@ -3019,9 +2971,6 @@ code, kbd, samp, pre {
   font-size: 0.9rem;
   padding: 2rem 0;
 }
-.empty-state[hidden] {
-  display: none;
-}
 
 /* =========================================
    Single Post
@@ -3072,11 +3021,6 @@ code, kbd, samp, pre {
 }
 .post-hero .story-media {
   border-radius: 28px;
-}
-.post-hero figcaption {
-  font-size: 0.7rem;
-  color: #8A867B;
-  margin-top: 0.6rem;
 }
 
 .post-layout-wrap {
@@ -3141,11 +3085,6 @@ code, kbd, samp, pre {
 }
 .post-body > h2:first-child {
   margin-top: 0;
-}
-.post-body > p {
-  color: #5C5A4D;
-  font-size: 0.95rem;
-  line-height: 1.65;
 }
 
 @container (max-width: 760px) {
@@ -3219,7 +3158,7 @@ code, kbd, samp, pre {
   display: inline-block;
   font-size: 0.65rem;
   padding: 2px 8px;
-  border-radius: 50px;
+  border-radius: 999px;
   white-space: nowrap;
 }
 
@@ -3268,7 +3207,7 @@ code, kbd, samp, pre {
   font-size: 0.95rem;
   color: #0E1013;
 }
-.topic-steps span {
+.topic-steps div > span {
   font-size: 0.82rem;
   color: #5C5A4D;
 }
@@ -3377,6 +3316,7 @@ code, kbd, samp, pre {
   margin-top: 2px;
   border-radius: 50%;
   background: #276FF8;
+  color: #FFFFFF;
   display: grid;
   place-items: center;
 }
@@ -3402,7 +3342,7 @@ code, kbd, samp, pre {
 .helpful-row button {
   background: #FFFFFF;
   border: 1px solid #CFCBC0;
-  border-radius: 50px;
+  border-radius: 999px;
   padding: 0.4rem 1rem;
   font: inherit;
   font-size: 0.75rem;
@@ -3428,15 +3368,6 @@ code, kbd, samp, pre {
   font-size: 0.8rem;
 }
 
-/* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
-/* Type Scale (Design System V2, fluid between mobile and desktop) */
-/* Primitive Scales */
-/* Color Palette (Brand: Cobalt, Ink, Paper) */
-/* Semantic Tokens (light / dark sections) */
-/* Layout & Spacing (8-point rhythm) */
-/* Radius */
-/* Elevation */
-/* Transitions */
 /* =========================================
    News Pages (newsroom + announcement)
    Shares .post-eyebrow, .post-title, .back-link, .filter-btn, etc. with the blog
@@ -3525,9 +3456,6 @@ code, kbd, samp, pre {
 .news-row:hover .news-row-arrow {
   transform: translateX(3px);
 }
-.news-row[hidden] {
-  display: none;
-}
 
 .news-row-date {
   font-size: 0.75rem;
@@ -3588,7 +3516,7 @@ code, kbd, samp, pre {
 }
 
 .news-article .post-header {
-  max-width: 40rem;
+  max-width: 46rem;
 }
 
 .share-row {
@@ -3599,11 +3527,6 @@ code, kbd, samp, pre {
 
 .news-hero {
   margin: clamp(1.5rem, 4vw, 2.5rem) 0 0;
-}
-.news-hero figcaption {
-  font-size: 0.7rem;
-  color: #8A867B;
-  margin-top: 0.6rem;
 }
 
 .news-hero-photo {
@@ -3617,11 +3540,6 @@ code, kbd, samp, pre {
 .news-body {
   max-width: 38rem;
   margin-top: clamp(2rem, 5vw, 3rem);
-}
-.news-body > p {
-  color: #5C5A4D;
-  font-size: 0.95rem;
-  line-height: 1.65;
 }
 .news-body h2 {
   font-size: clamp(1.15rem, 2vw, 1.5rem);
@@ -3710,4 +3628,45 @@ code, kbd, samp, pre {
 }
 .press-card a:not(.btn) {
   font-size: 0.9rem;
+}
+
+/* =========================================
+   Scroll Reveal
+   main.js tags elements with .reveal (+ a variant) on pages whose <body> has .reveal-page,
+   then toggles .is-visible as they enter and leave the viewport (fade in, fade out).
+   Without JS nothing is tagged, so content stays visible.
+   ========================================= */
+.reveal {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal--emphasis {
+  transform: translateY(2rem) scale(0.94);
+  transform-origin: left bottom;
+  transition-duration: 0.85s;
+}
+
+.chat-header-row.right.reveal--emphasis,
+.msg-row--user.reveal--emphasis {
+  transform-origin: right bottom;
+}
+
+.cta-title.reveal--emphasis,
+.status-line.reveal--emphasis {
+  transform-origin: center bottom;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal--emphasis {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
