@@ -1,7 +1,9 @@
 /* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
 $font-family-base: 'SF Pro', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans JP', sans-serif;
 $font-family-mono: 'SFMono-Regular', Consolas, monospace;
-$font-size-base: 16px;
+// Fluid root size: 16px up to a 1440px screen (the Figma frame), then grows to 20px
+// so the whole rem-based layout scales up on large desktops
+$font-size-base: clamp(16px, 1.111vw, 20px); // 1.111vw = 16px at 1440px
 $line-height-base: 1.5;
 $font-weight-light: 300;
 $font-weight-normal: 400;
@@ -83,7 +85,8 @@ $color-critical: #FB3B3E;
 $gradient-brand: linear-gradient(135deg, $cobalt-500, $cobalt-300);
 
 /* Layout & Spacing (8-point rhythm) */
-$container-max-width: 1168px; // 1120 content + 2 × 24 gutter
+// 1120 content + 2 × 24 gutter at 1440px (78% of the Figma frame); keeps that ratio on wider screens
+$container-max-width: min(max(73rem, 78vw), 1800px);
 $space-1: 0.25rem;
 $space-2: 0.5rem;
 $space-3: 1rem;

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News - Concierge81</title>
+  <meta name="description" content="Product releases, partnerships, and company news from concierge81.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="assets/css/landing.css">
+  <script src="assets/js/main.js" defer></script>
+</head>
+<body class="page-cream">
+
+  <!-- Navigation / Header -->
+  <header class="site-header">
+    <div class="container header-container">
+      <a href="index.html" class="brand-logo">concierge<span>81</span></a>
+
+      <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="navMenu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+      <nav class="nav-menu" id="navMenu">
+        <a href="news.html" class="is-current" aria-current="page">news</a>
+        <a href="blog.html">blog</a>
+        <a href="#contact">contact</a>
+        <button class="lang-btn">🌐 EN</button>
+        <a href="#contact" class="btn btn-primary btn-small mobile-only-cta">Request a Demo</a>
+      </nav>
+
+      <div class="header-actions desktop-only-cta">
+        <a href="#contact" class="btn btn-primary btn-small">Request a Demo</a>
+      </div>
+    </div>
+  </header>
+  <div class="nav-backdrop" aria-hidden="true"></div>
+
+  <main>
+    <!-- 1. Newsroom Intro -->
+    <section class="section theme-cream blog-hero">
+      <div class="container">
+        <div class="chat-section-header">
+          <div class="chat-header-row left">
+            <h1 class="header-pill header-pill--ai">The latest from concierge81.</h1>
+          </div>
+          <p class="sub-pill-text">Product releases, partnerships, and company news.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Featured Story -->
+    <section class="section theme-cream blog-section">
+      <div class="container">
+        <h2 class="blog-section-title">Featured story</h2>
+        <article class="news-featured">
+          <div class="news-featured-copy">
+            <span class="post-eyebrow">Product release · Sep 22, 2026</span>
+            <h3><a href="news-article.html">Concierge81 launches Voice Mode for lobby kiosks.</a></h3>
+            <p>Guests can now simply ask out loud. Voice Mode listens, answers in natural speech, and shows the reply on screen — in English, Japanese, and Filipino.</p>
+            <a href="news-article.html" class="btn btn-primary btn-small">Read the announcement</a>
+          </div>
+          <div class="placeholder-box news-featured-photo"><span>[ assets/images/news/voice-mode-lobby-kiosk.jpg ]</span></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 3. All News -->
+    <section class="section theme-cream blog-section">
+      <div class="container">
+        <h2 class="blog-section-title">All news</h2>
+
+        <div class="post-filters" id="newsFilters">
+          <button type="button" class="filter-btn is-active" data-filter="all">All news</button>
+          <button type="button" class="filter-btn" data-filter="product">Product</button>
+          <button type="button" class="filter-btn" data-filter="partnerships">Partnerships</button>
+          <button type="button" class="filter-btn" data-filter="customers">Customers</button>
+          <button type="button" class="filter-btn" data-filter="company">Company</button>
+        </div>
+
+        <div class="news-list-wrap">
+          <div class="news-list" id="newsList">
+            <a href="news-article.html" class="news-row" data-cat="customers"><span class="news-row-date">Sep 10, 2026</span><span class="badge badge--accent">Customers</span><span class="news-row-title">Concierge81 passes 1 million answered questions</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="product"><span class="news-row-date">Aug 28, 2026</span><span class="badge badge--accent">Product</span><span class="news-row-title">Japanese and Korean voice support now available</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="partnerships"><span class="news-row-date">Aug 12, 2026</span><span class="badge badge--accent">Partnership</span><span class="news-row-title">New kiosk hardware partner program opens</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="company"><span class="news-row-date">Jul 30, 2026</span><span class="badge badge--accent">Company</span><span class="news-row-title">Concierge81 opens its Tokyo office</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="product"><span class="news-row-date">Jul 15, 2026</span><span class="badge badge--accent">Product</span><span class="news-row-title">Import your knowledge base from PDFs and spreadsheets</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="customers"><span class="news-row-date">Jun 27, 2026</span><span class="badge badge--accent">Customers</span><span class="news-row-title">Three university campuses roll out concierge81 help desks</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="partnerships"><span class="news-row-date">Jun 3, 2026</span><span class="badge badge--accent">Partnership</span><span class="news-row-title">Concierge81 joins a regional hospitality tech alliance</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="company"><span class="news-row-date">May 18, 2026</span><span class="badge badge--accent">Company</span><span class="news-row-title">Concierge81 opens its early access program</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+
+            <!-- Revealed by "Load more news" (WordPress will paginate these) -->
+            <a href="news-article.html" class="news-row" data-cat="product" data-more hidden><span class="news-row-date">May 2, 2026</span><span class="badge badge--accent">Product</span><span class="news-row-title">Smart suggestions arrive in chat</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="customers" data-more hidden><span class="news-row-date">Apr 20, 2026</span><span class="badge badge--accent">Customers</span><span class="news-row-title">A Cebu clinic moves lab questions to a lobby kiosk</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="partnerships" data-more hidden><span class="news-row-date">Apr 8, 2026</span><span class="badge badge--accent">Partnership</span><span class="news-row-title">Concierge81 partners with a regional airport operator</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+            <a href="news-article.html" class="news-row" data-cat="company" data-more hidden><span class="news-row-date">Mar 25, 2026</span><span class="badge badge--accent">Company</span><span class="news-row-title">Concierge81 announces its seed funding round</span><span class="news-row-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></a>
+          </div>
+        </div>
+
+        <p class="empty-state" id="newsEmpty" hidden>No news in this category yet.</p>
+
+        <div class="load-more">
+          <button type="button" class="btn btn-small btn-outline-accent" id="newsLoadMore">Load more news</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Contact -->
+  <section id="contact" class="section theme-dark">
+    <div class="container">
+      <div class="chat-section-header">
+        <div class="chat-header-row right">
+          <div class="header-pill header-pill--user">How do I get started?</div>
+          <span class="timestamp">You · 9:12 PM</span>
+        </div>
+        <div class="chat-header-row left">
+          <h2 class="header-pill header-pill--ai header-pill--xl">Leave your email.<br>We'll take it from here.</h2>
+        </div>
+      </div>
+
+      <div class="contact-split">
+        <div class="next-steps">
+          <span class="eyebrow">What happens next</span>
+          <ol class="step-list">
+            <li class="step-item"><span class="step-number">1</span>We reply to schedule a short call.</li>
+            <li class="step-item"><span class="step-number">2</span>We show Concierge81 working with your business.</li>
+            <li class="step-item"><span class="step-number">3</span>We recommend the setup that fits.</li>
+          </ol>
+        </div>
+
+        <div class="footer-form-card">
+          <form id="leadForm">
+            <div class="form-group">
+              <label for="leadName">Full name</label>
+              <input id="leadName" type="text" placeholder="Your name" required>
+            </div>
+            <div class="form-group">
+              <label for="leadEmail">Work email</label>
+              <input id="leadEmail" type="email" placeholder="you@company.com" required>
+            </div>
+            <div class="form-group">
+              <label for="leadCompany">Company</label>
+              <input id="leadCompany" type="text" placeholder="Company name">
+            </div>
+            <div class="form-group">
+              <span class="form-label">I'm interested in</span>
+              <div class="interest-pills" id="interestPills">
+                <button type="button" class="interest-pill">Basic</button>
+                <button type="button" class="interest-pill">Professional</button>
+                <button type="button" class="interest-pill">Business</button>
+                <button type="button" class="interest-pill">Enterprise</button>
+                <button type="button" class="interest-pill is-active">Not sure yet</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="leadNotes">Anything else?</label>
+              <input id="leadNotes" type="text" placeholder="Anything else we should know? (optional)">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Send</button>
+            <p class="privacy-text">By submitting, you agree to our <a href="#">Privacy Policy</a>.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="mail-pill">
+          <a href="mailto:info@mabuhaytech.com">Write us: info@mabuhaytech.com</a>
+          <button type="button" class="copy-btn" data-copy="info@mabuhaytech.com" aria-label="Copy email address">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+          </button>
+        </div>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="index.html#how">How it works</a>
+          <a href="index.html#industries">Industries</a>
+          <a href="index.html#pricing">Plans</a>
+          <a href="index.html#faq">FAQ</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+      <div class="footer-legal">
+        <span class="legal-logo">concierge81 <small>© 2026</small></span>
+        <div class="legal-links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Disclaimer</a>
+          <a href="#">Commercial Transactions Act</a>
+          <button class="lang-btn">🌐 EN</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

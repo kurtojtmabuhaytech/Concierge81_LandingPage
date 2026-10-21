@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How AI concierges cut front-desk wait times by half - Concierge81</title>
+  <meta name="description" content="A practical look at what hotel guests actually ask — and how a chat-and-voice concierge takes the repetitive 80% off the desk.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="assets/css/landing.css">
+  <script src="assets/js/main.js" defer></script>
+</head>
+<body class="page-cream">
+
+  <!-- Navigation / Header -->
+  <header class="site-header">
+    <div class="container header-container">
+      <a href="index.html" class="brand-logo">concierge<span>81</span></a>
+
+      <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="navMenu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+
+      <nav class="nav-menu" id="navMenu">
+        <a href="news.html">news</a>
+        <a href="blog.html" class="is-current">blog</a>
+        <a href="#contact">contact</a>
+        <button class="lang-btn">🌐 EN</button>
+        <a href="#contact" class="btn btn-primary btn-small mobile-only-cta">Request a Demo</a>
+      </nav>
+
+      <div class="header-actions desktop-only-cta">
+        <a href="#contact" class="btn btn-primary btn-small">Request a Demo</a>
+      </div>
+    </div>
+  </header>
+  <div class="nav-backdrop" aria-hidden="true"></div>
+
+  <main>
+    <article>
+      <!-- 1. Post Header + Hero -->
+      <section class="section theme-cream blog-hero">
+        <div class="container">
+          <header class="post-header">
+            <a href="blog.html" class="back-link">‹ All articles</a>
+            <span class="post-eyebrow">Guide · Hospitality</span>
+            <h1 class="post-title">How AI concierges cut front-desk wait times by half.</h1>
+            <p class="post-lead">A practical look at what hotel guests actually ask — and how a chat-and-voice concierge takes the repetitive 80% off the desk.</p>
+            <div class="post-byline">
+              <div class="author-row">
+                <span class="placeholder-box author-avatar" aria-hidden="true"></span>
+                <div>
+                  <div class="author-name">Carlo Mendoza</div>
+                  <div class="author-meta">Customer Success Lead · Sep 22, 2026 · 8 min read</div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-small share-btn" id="shareBtn">Share</button>
+            </div>
+          </header>
+
+          <figure class="post-hero story-media-wrap">
+            <div class="story-media">
+              <div class="placeholder-box story-photo"><span>[ assets/images/blog/featured-hotel-concierge.jpg ]</span></div>
+              <div class="story-chat" aria-hidden="true">
+                <span class="story-meta">concierge81 · 9:12 AM</span>
+                <p class="bubble bubble--frost">Hello! I'm concierge81. How can I help you with your hotel or resort stay today?</p>
+                <span class="story-meta story-meta--end">You · 9:12 AM</span>
+                <p class="bubble bubble--ai">Do you have any beachfront resorts in Palawan?</p>
+                <div class="story-suggest">
+                  <span class="suggest-label">✦ SUGGESTED</span>
+                  <div class="chip-row">
+                    <span class="chip chip--glass">What are your top hotel &amp; resort destinations?</span>
+                    <span class="chip chip--glass">Do you offer airport transfers?</span>
+                    <span class="chip chip--glass">What amenities are included?</span>
+                  </div>
+                </div>
+                <div class="story-input">Ask concierge81…
+                  <span class="send-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>
+                </div>
+              </div>
+            </div>
+            <figcaption>Concierge81 greeting guests at a partner resort in Palawan.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- 2. Post Body with sticky table of contents -->
+      <section class="section theme-cream blog-section">
+        <div class="container post-layout-wrap">
+          <div class="post-layout">
+            <nav class="post-toc" aria-label="On this page">
+              <span class="suggest-label">ON THIS PAGE</span>
+              <ul id="postToc">
+                <li><a href="#guests-ask" class="is-active">What guests actually ask</a></li>
+                <li><a href="#wait-time">Where wait time comes from</a></li>
+                <li><a href="#setup-topics">Set up your topics</a></li>
+                <li><a href="#chat-voice">Chat or voice at the desk</a></li>
+                <li><a href="#impact">Measuring the impact</a></li>
+                <li><a href="#common-questions">Common questions</a></li>
+                <li><a href="#takeaways">Key takeaways</a></li>
+              </ul>
+            </nav>
+
+            <div class="post-body">
+              <h2 id="guests-ask">What guests actually ask</h2>
+              <p>We reviewed six months of front-desk logs from partner hotels. Most questions weren't complicated — they were the same twenty questions, asked hundreds of times a week: Wi-Fi passwords, breakfast hours, late check-out, airport transfers.</p>
+              <p>Each one takes a staff member less than a minute to answer. Together, they add up to hours of queue time during check-in peaks — exactly when guests are least patient.</p>
+              <div class="stat-row">
+                <div class="stat-card"><strong>80%</strong><span>of questions were repeats</span></div>
+                <div class="stat-card"><strong>6.2 → 2.9</strong><span>minutes average queue time</span></div>
+                <div class="stat-card"><strong>3</strong><span>languages, no extra staff</span></div>
+              </div>
+
+              <h2 id="wait-time">Where wait time comes from</h2>
+              <p>Grouping questions by type shows how much of the load an AI concierge can take on — and where a hand-off to staff still matters.</p>
+              <div class="data-table-card">
+                <table class="data-table">
+                  <thead>
+                    <tr><th scope="col">Question type</th><th scope="col">Share</th><th scope="col">Concierge81</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Wi-Fi, amenities &amp; hours</td><td>31%</td><td><span class="badge badge--accent">Answers</span></td></tr>
+                    <tr><td>Check-in &amp; check-out times</td><td>22%</td><td><span class="badge badge--accent">Answers</span></td></tr>
+                    <tr><td>Local directions &amp; transport</td><td>18%</td><td><span class="badge badge--accent">Answers</span></td></tr>
+                    <tr><td>Special requests</td><td>20%</td><td><span class="badge badge--muted">Partly — confirms with staff</span></td></tr>
+                    <tr><td>Billing &amp; disputes</td><td>9%</td><td><span class="badge badge--muted">Hands off to staff</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <aside class="tip-callout">
+                <span class="post-eyebrow">Tip</span>
+                <p>Start with your top 20 questions. You'll cover most of the volume on day one, and add long-tail topics as real guests ask them.</p>
+              </aside>
+
+              <h2 id="setup-topics">Set up your topics in four steps</h2>
+              <ol class="topic-steps">
+                <li><span class="topic-num">1</span><div><strong>Import what you already have</strong><span>Upload FAQ docs, PDFs, or spreadsheets. concierge81 turns them into answerable topics.</span></div></li>
+                <li><span class="topic-num">2</span><div><strong>Group answers into topics</strong><span>General, Rooms, Dining, Transport — topics keep answers consistent and easy to update.</span></div></li>
+                <li><span class="topic-num">3</span><div><strong>Set your hand-off rules</strong><span>Decide which questions always go to a person, like billing or complaints.</span></div></li>
+                <li><span class="topic-num">4</span><div><strong>Go live on chat, then voice</strong><span>Start on the web or a tablet, then move to a lobby kiosk with Voice Mode.</span></div></li>
+              </ol>
+
+              <h2 id="chat-voice">Chat or voice at the desk</h2>
+              <div class="mode-mini">
+                <div class="mode-mini-card mode-mini-card--chat">
+                  <span class="post-eyebrow">Chat</span>
+                  <h3>Just type your question.</h3>
+                  <p>Best for quiet spaces, privacy, and long answers like directions or menus.</p>
+                </div>
+                <div class="mode-mini-card mode-mini-card--voice">
+                  <span class="post-eyebrow">Voice</span>
+                  <h3>Just ask out loud.</h3>
+                  <p>Best for busy lobbies and guests on the move. Replies are spoken and shown on screen.</p>
+                </div>
+              </div>
+
+              <h2 id="impact">Measuring the impact</h2>
+              <p>Across partner properties, average front-desk queue time dropped from 6.2 to 2.9 minutes within the first month. The biggest gains came during the 2–4 PM check-in window, when repeat questions used to pile up.</p>
+
+              <h2 id="common-questions">Common questions</h2>
+              <div class="post-chat">
+                <div class="msg-row msg-row--user"><p class="bubble bubble--user">Will it replace my front-desk staff?</p></div>
+                <div class="msg-row msg-row--ai"><p class="bubble bubble--sand">No. It takes the repetitive questions so your team has more time for guests who need a real person.</p></div>
+                <div class="msg-row msg-row--user"><p class="bubble bubble--user">What if it doesn't know the answer?</p></div>
+                <div class="msg-row msg-row--ai"><p class="bubble bubble--sand">It says so, and hands the guest to staff using the rules you set — no made-up answers.</p></div>
+                <div class="msg-row msg-row--user"><p class="bubble bubble--user">Which languages does it support?</p></div>
+                <div class="msg-row msg-row--ai"><p class="bubble bubble--sand">English, Japanese, Filipino, and Korean today, with more on the way.</p></div>
+              </div>
+
+              <div class="takeaways" id="takeaways">
+                <span class="post-eyebrow">Key takeaways</span>
+                <ul>
+                  <li><span class="check-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Most front-desk questions repeat — start with your top 20.</li>
+                  <li><span class="check-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Group answers into topics so updates stay consistent.</li>
+                  <li><span class="check-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Set clear hand-off rules for billing and complaints.</li>
+                  <li><span class="check-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Use chat for quiet spaces, voice for busy lobbies.</li>
+                </ul>
+              </div>
+
+              <div class="helpful-row" id="helpfulRow">
+                <span>Was this article helpful?</span>
+                <div>
+                  <button type="button">Yes</button>
+                  <button type="button">Not really</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </article>
+
+    <!-- 3. Keep Reading -->
+    <section class="section theme-cream blog-section">
+      <div class="container">
+        <div class="keep-reading-head">
+          <h2 class="blog-section-title">Keep reading</h2>
+          <a href="blog.html">All articles ›</a>
+        </div>
+        <div class="post-grid">
+          <a href="blog-post.html" class="post-card">
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/office-reception-kiosk.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Tutorial</span>
+              <h3>Set up your first FAQ topics in 15 minutes.</h3>
+              <p>Import the answers you already have, group them into topics, and go live the same afternoon.</p>
+              <span class="post-meta">Sep 8, 2026 · 4 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card">
+            <div class="post-card-media post-card-media--portrait"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Tips</span>
+              <h3>Write answers your concierge can say out loud.</h3>
+              <p>Short sentences, clear numbers, no tables — a style guide for voice-first replies.</p>
+              <span class="post-meta">Aug 30, 2026 · 5 min read</span>
+            </div>
+          </a>
+          <a href="blog-post.html" class="post-card">
+            <div class="placeholder-box post-card-media"><span>[ assets/images/blog/hospital-lobby-kiosk.jpg ]</span></div>
+            <div class="post-card-body">
+              <span class="post-eyebrow">Industry</span>
+              <h3>What hospital lobbies need from a kiosk concierge.</h3>
+              <p>Wayfinding, visiting hours, and knowing exactly when to hand off to a real person.</p>
+              <span class="post-meta">Aug 21, 2026 · 7 min read</span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<!-- Contact -->
+  <section id="contact" class="section theme-dark">
+    <div class="container">
+      <div class="chat-section-header">
+        <div class="chat-header-row right">
+          <div class="header-pill header-pill--user">How do I get started?</div>
+          <span class="timestamp">You · 9:12 PM</span>
+        </div>
+        <div class="chat-header-row left">
+          <h2 class="header-pill header-pill--ai header-pill--xl">Leave your email.<br>We'll take it from here.</h2>
+        </div>
+      </div>
+
+      <div class="contact-split">
+        <div class="next-steps">
+          <span class="eyebrow">What happens next</span>
+          <ol class="step-list">
+            <li class="step-item"><span class="step-number">1</span>We reply to schedule a short call.</li>
+            <li class="step-item"><span class="step-number">2</span>We show Concierge81 working with your business.</li>
+            <li class="step-item"><span class="step-number">3</span>We recommend the setup that fits.</li>
+          </ol>
+        </div>
+
+        <div class="footer-form-card">
+          <form id="leadForm">
+            <div class="form-group">
+              <label for="leadName">Full name</label>
+              <input id="leadName" type="text" placeholder="Your name" required>
+            </div>
+            <div class="form-group">
+              <label for="leadEmail">Work email</label>
+              <input id="leadEmail" type="email" placeholder="you@company.com" required>
+            </div>
+            <div class="form-group">
+              <label for="leadCompany">Company</label>
+              <input id="leadCompany" type="text" placeholder="Company name">
+            </div>
+            <div class="form-group">
+              <span class="form-label">I'm interested in</span>
+              <div class="interest-pills" id="interestPills">
+                <button type="button" class="interest-pill">Basic</button>
+                <button type="button" class="interest-pill">Professional</button>
+                <button type="button" class="interest-pill">Business</button>
+                <button type="button" class="interest-pill">Enterprise</button>
+                <button type="button" class="interest-pill is-active">Not sure yet</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="leadNotes">Anything else?</label>
+              <input id="leadNotes" type="text" placeholder="Anything else we should know? (optional)">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Send</button>
+            <p class="privacy-text">By submitting, you agree to our <a href="#">Privacy Policy</a>.</p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="mail-pill">
+          <a href="mailto:info@mabuhaytech.com">Write us: info@mabuhaytech.com</a>
+          <button type="button" class="copy-btn" data-copy="info@mabuhaytech.com" aria-label="Copy email address">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+          </button>
+        </div>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="index.html#how">How it works</a>
+          <a href="index.html#industries">Industries</a>
+          <a href="index.html#pricing">Plans</a>
+          <a href="index.html#faq">FAQ</a>
+          <a href="#contact">Contact</a>
+        </nav>
+      </div>
+      <div class="footer-legal">
+        <span class="legal-logo">concierge81 <small>© 2026</small></span>
+        <div class="legal-links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Disclaimer</a>
+          <a href="#">Commercial Transactions Act</a>
+          <button class="lang-btn">🌐 EN</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

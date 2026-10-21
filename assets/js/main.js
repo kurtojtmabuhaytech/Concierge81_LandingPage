@@ -152,4 +152,88 @@ document.addEventListener('DOMContentLoaded', () => {
       tag.addEventListener('pointercancel', stop);
     });
   }
+
+  // Listing pages (blog grid, news list): category filters + "Load more"
+  // Items marked data-more stay hidden until "Load more" reveals the next page of them.
+  const setupListing = ({ list, item, filters, button, count, empty, pageSize, noun }) => {
+    if (!list) return;
+    const items = [...list.querySelectorAll(item)];
+    let filter = 'all';
+
+    const render = () => {
+      const matching = items.filter(el => filter === 'all' || el.dataset.cat === filter);
+      const loaded = matching.filter(el => !el.hasAttribute('data-more'));
+      items.forEach(el => { el.hidden = !loaded.includes(el); });
+      if (count) count.textContent = `Showing ${loaded.length} of ${matching.length} ${noun}`;
+      if (button) button.hidden = loaded.length >= matching.length;
+      if (empty) empty.hidden = matching.length > 0;
+    };
+
+    button?.addEventListener('click', () => {
+      items
+        .filter(el => el.hasAttribute('data-more') && (filter === 'all' || el.dataset.cat === filter))
+        .slice(0, pageSize)
+        .forEach(el => el.removeAttribute('data-more'));
+      render();
+    });
+
+    if (filters) {
+      singleSelect(filters);
+      filters.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-filter]');
+        if (!btn) return;
+        filter = btn.dataset.filter;
+        render();
+      });
+    }
+    render();
+  };
+
+  setupListing({
+    list: document.getElementById('postGrid'), item: '.post-card',
+    filters: document.getElementById('postFilters'), button: document.getElementById('loadMore'),
+    count: document.getElementById('loadCount'), empty: document.getElementById('postEmpty'),
+    pageSize: 6, noun: 'articles'
+  });
+  setupListing({
+    list: document.getElementById('newsList'), item: '.news-row',
+    filters: document.getElementById('newsFilters'), button: document.getElementById('newsLoadMore'),
+    count: null, empty: document.getElementById('newsEmpty'), // Figma shows no count on the newsroom
+    pageSize: 8, noun: 'stories'
+  });
+
+  // Article pages: copy the page link
+  document.querySelectorAll('[data-copy-url]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!navigator.clipboard) return;
+      await navigator.clipboard.writeText(location.href);
+      btn.textContent = 'Link copied';
+      setTimeout(() => { btn.textContent = 'Copy link'; }, 2000);
+    });
+  });
+
+  // Blog post: highlight the "On this page" link for the section in view
+  const toc = document.getElementById('postToc');
+  if (toc && 'IntersectionObserver' in window) {
+    const links = [...toc.querySelectorAll('a[href^="#"]')];
+    const sections = links.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+    const setActive = (id) => links.forEach(link => link.classList.toggle('is-active', link.getAttribute('href') === `#${id}`));
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) setActive(entry.target.id); });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    sections.forEach(section => observer.observe(section));
+  }
+
+  // Blog post: share (native share sheet, falls back to copying the link)
+  const shareBtn = document.getElementById('shareBtn');
+  shareBtn?.addEventListener('click', async () => {
+    const data = { title: document.title, url: location.href };
+    try {
+      if (navigator.share) await navigator.share(data);
+      else if (navigator.clipboard) { await navigator.clipboard.writeText(data.url); shareBtn.textContent = 'Link copied'; }
+    } catch (err) { /* share sheet dismissed */ }
+  });
+
+  // Blog post: "Was this article helpful?"
+  singleSelect(document.querySelector('#helpfulRow div'));
 });
