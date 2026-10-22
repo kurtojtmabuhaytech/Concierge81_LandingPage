@@ -65,7 +65,33 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .splash-text { display: block; }
 
-// Desktop: one kiosk travels hero → intro → features (animations.js); the real kiosks stay as layout slots
+// Desktop story (animations.js adds .is-staged): hero, intro and features become layers of one
+// pinned screen; one kiosk moves between the layers' kiosk slots, which stay hidden as layout guides
+.story.is-staged {
+  --stage-h: calc(100svh - var(--header-h, 4rem)); // pinned right under the sticky header
+  position: relative;
+  height: var(--stage-h);
+  overflow: hidden;
+  background: $color-white;
+
+  > .section {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 1rem 0;
+    background: transparent;
+    pointer-events: none; // layers overlap: only visible links and buttons take clicks
+    a, button { pointer-events: auto; }
+    > .container { width: 100%; }
+  }
+
+  // Each step fits one screen: kiosk sizes follow the available height
+  .intro-split .kiosk-device { flex-basis: min(18.75rem, calc(var(--stage-h) * 0.66 - 5rem)); }
+  #features .chat-section-header { margin-bottom: 1.5rem; }
+  .feature-stage .kiosk-device { flex-basis: min(21.25rem, calc(var(--stage-h) * 0.62 - 6rem)); }
+}
+
 .kiosk-traveller {
   position: absolute;
   top: 0;
@@ -73,8 +99,8 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   z-index: 2; // above the feature columns so features slide out from behind it
   margin: 0;
   pointer-events: none;
-  will-change: transform;
-  .kiosk-screen { aspect-ratio: auto; }
+  transform-origin: 0 0;
+  will-change: transform, opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {

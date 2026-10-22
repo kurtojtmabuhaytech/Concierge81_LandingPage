@@ -30,12 +30,6 @@
   const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
   const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Element box in page coordinates, so it doesn't change while scrolling
-  const pageBox = (el) => {
-    const r = el.getBoundingClientRect();
-    return { x: r.left + scrollX, y: r.top + scrollY, width: r.width, height: r.height };
-  };
-
   // Chat thread: visitor bubble → concierge bubble (shape grows first, then its text) → everything else
   const chatThread = (scope, { trigger = scope, start = 'top 75%' } = {}) => {
     const items = $$('[data-anim]', scope);
@@ -155,95 +149,201 @@
   /* ---- Scenes: each is ({ isDesktop, isMobile }) => cleanup?, rebuilt when the breakpoint changes ---- */
   const scenes = [];
 
-  // 3–6. Desktop: one kiosk travels hero avatar → intro kiosk → features kiosk while scrolling
+  /* 3–5. Desktop story (Figma recording 11–25s): hero, intro and features share one pinned screen.
+     The kiosk stays still while the chat changes around it, and only moves at set steps.
+     Scrolling past a threshold plays the next step at its own speed (it never stops halfway);
+     scrolling back plays it in reverse. Only transforms and opacity animate. */
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
+    const story = $('.story');
     const introKiosk = $('#intro .kiosk-device');
     const featuresKiosk = $('#features .kiosk-device');
+    const featuresHeader = $('#features .chat-section-header');
+    const featuresStage = $('#features .feature-stage-wrap');
     const heroImg = $('img', hero.avatar);
+    const intro = {
+      question: $('#intro .msg-row--user'),
+      headline: $('#intro .header-pill--ai'),
+      rest: [$('#intro .bubble-lead'), $('#intro .intro-actions')]
+    };
+    const featuresHeadline = $('.header-pill--ai', featuresHeader);
+    const left = $$('#features .left-col .feature-item');
+    const right = $$('#features .right-col .feature-item');
 
-    const traveller = introKiosk.cloneNode(true);
+    const header = $('.site-header');
+    const setHeaderHeight = () => story.style.setProperty('--header-h', `${header.offsetHeight}px`);
+    story.classList.add('is-staged');
+    setHeaderHeight();
+
+    const traveller = featuresKiosk.cloneNode(true);
     traveller.removeAttribute('data-anim');
     traveller.classList.add('kiosk-traveller');
     traveller.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(traveller);
+    story.appendChild(traveller);
     gsap.set(traveller, { autoAlpha: 0 });
-    const screen = $('.kiosk-screen', traveller);
-    const base = $('.kiosk-base', traveller);
-    const logo = $('.kiosk-logo', traveller);
+    const fitTraveller = () => gsap.set(traveller, { width: featuresKiosk.offsetWidth });
+    fitTraveller();
 
-    // Where the kiosk sits at each stop; the hero stop has no frame, so it matches the hero image
-    const heroStop = () => ({ ...pageBox(heroImg), screen: heroImg.offsetHeight, base: 0, pad: 0 });
-    const kioskStop = (kiosk) => () => ({
-      ...pageBox(kiosk),
-      screen: $('.kiosk-screen', kiosk).offsetHeight,
-      base: $('.kiosk-base', kiosk).offsetHeight,
-      pad: 10
-    });
-    const introStop = kioskStop(introKiosk);
-    const featuresStop = kioskStop(featuresKiosk);
-
-    const frame = (stop, framed) => ({
-      x: () => stop().x, y: () => stop().y, width: () => stop().width,
-      paddingTop: () => stop().pad, paddingLeft: () => stop().pad, paddingRight: () => stop().pad,
-      backgroundColor: framed ? '#0E1013' : 'rgba(14, 16, 19, 0)',
-      borderRadius: framed ? '28px 28px 6px 6px' : '0px 0px 0px 0px',
-      boxShadow: `0 30px 60px rgba(11, 12, 14, ${framed ? 0.18 : 0})`
-    });
-    const parts = (stop, framed) => [
-      [screen, { height: () => stop().screen, borderRadius: framed ? 18 : 0 }],
-      [base, { height: () => stop().base }]
-    ];
-    const move = (tl, from, to) => {
-      const step = { duration: 1, ease: 'none', immediateRender: false };
-      tl.fromTo(traveller, frame(...from), { ...frame(...to), ...step }, 0);
-      parts(...from).forEach(([el, vars], i) => tl.fromTo(el, vars, { ...parts(...to)[i][1], ...step }, 0));
-      return tl;
-    };
-
-    // Hero → intro: the card dissolves and the avatar shrinks into a kiosk frame
-    const toIntro = gsap.timeline({
-      scrollTrigger: { trigger: '#hero', start: 'top top', endTrigger: introKiosk, end: 'center center', scrub: 0.6, invalidateOnRefresh: true }
-    });
-    move(toIntro, [heroStop, false], [introStop, true])
-      .fromTo(traveller, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.1, immediateRender: false }, 0)
-      .fromTo(hero.avatar, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.1, immediateRender: false }, 0)
-      .fromTo([hero.composer, hero.top], { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.3, immediateRender: false }, 0)
-      .fromTo(hero.surface, { '--hero-surface': 1 }, { '--hero-surface': 0, duration: 0.3, immediateRender: false }, 0)
-      .fromTo(logo, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2, immediateRender: false }, 0.8);
-
-    // Intro → features: the kiosk slides to the centre of the feature stage
-    move(gsap.timeline({
-      scrollTrigger: { trigger: introKiosk, start: 'center center', endTrigger: featuresKiosk, end: 'center center', scrub: 0.6, invalidateOnRefresh: true }
-    }), [introStop, true], [featuresStop, true]);
-
-    // Once the kiosk has nearly arrived: the features headline, then the features slide out from
-    // behind the kiosk, row by row (left column left, right column right)
-    chatThread($('#features .chat-section-header'), { trigger: featuresKiosk, start: 'center 60%' });
-    const kioskCentre = () => {
-      const r = featuresKiosk.getBoundingClientRect();
-      return r.left + r.width / 2;
-    };
-    const towardKiosk = (i, el) => {
+    // Positions inside the story, unaffected by scrolling or pinning
+    const within = (el) => {
+      const s = story.getBoundingClientRect();
       const r = el.getBoundingClientRect();
-      return (kioskCentre() - (r.left + r.width / 2)) * 0.6;
+      return { x: r.left - s.left, y: r.top - s.top, width: r.width, height: r.height };
     };
-    const fan = gsap.timeline({
-      scrollTrigger: { trigger: featuresKiosk, start: 'center 55%', toggleActions: 'play none none reverse', invalidateOnRefresh: true }
-    });
-    const left = $$('#features .left-col .feature-item');
-    const right = $$('#features .right-col .feature-item');
+    // Kiosk resting on a slot (the slot kiosks stay hidden as layout guides)
+    const onSlot = (slot, lift = () => 0) => {
+      const box = () => within(slot);
+      // The features slot rides on the rising stage; measure it as if the stage hadn't moved yet
+      const stageShift = () => (featuresStage.contains(slot) ? gsap.getProperty(featuresStage, 'y') : 0);
+      return {
+        x: () => box().x,
+        y: () => box().y - stageShift() - lift(),
+        scale: () => box().width / traveller.offsetWidth
+      };
+    };
+    // Kiosk screen covering the hero avatar, so the frame can form around it in place
+    const avatarFit = () => {
+      const img = within(heroImg);
+      const scale = img.height / $('.kiosk-screen', traveller).offsetHeight;
+      return { x: img.x + img.width / 2 - (traveller.offsetWidth * scale) / 2, y: img.y - 10 * scale, scale };
+    };
+    // Distance that lines one element up with another (ignoring its current transform)
+    const shift = (el, target, axis) => () => {
+      const from = el.getBoundingClientRect();
+      const to = target.getBoundingClientRect();
+      const current = gsap.getProperty(el, axis);
+      return axis === 'x' ? to.right - (from.right - current) : to.top - (from.top - current);
+    };
+    // Header out: the feature stage and kiosk rise into its space (as in the recording)
+    const rise = () => featuresHeader.offsetHeight + parseFloat(getComputedStyle(featuresHeader).marginBottom);
+    const towardKiosk = (i, el) => {
+      const k = featuresKiosk.getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      return (k.left + k.width / 2 - (r.left + r.width / 2)) * 0.6;
+    };
+    const features = [...left, ...right];
+
+    // Starting state of everything the story reveals. Set up front and animated with to() tweens:
+    // fromTo() tweens that start later in a paused timeline don't restore themselves when it rewinds.
+    // Re-applied on refresh (sizes and positions change with the window).
+    const applyStart = () => {
+      gsap.set(traveller, { autoAlpha: 0, ...avatarFit() });
+      gsap.set([intro.question, intro.headline, ...intro.rest, featuresHeadline], { autoAlpha: 0, x: 0, y: 0 });
+      gsap.set([intro.headline, featuresHeadline], { scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      gsap.set(intro.rest, { y: 16 });
+      gsap.set(featuresStage, { y: 0 });
+      gsap.set(features, { autoAlpha: 0, x: 0 });
+      gsap.set(features, { x: towardKiosk });
+    };
+    applyStart();
+
+    const bubbleIn = (tl, el, at) => tl
+      .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.base, ease: 'back.out(1.6)' }, at)
+      .to(el, { color: '#FFFFFF', duration: MOTION.bubbleText, ease: 'none' }, '-=0.2');
+
+    // Tweens start at 0.01 so resting on the first step never touches the hero the opening is building
+    const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
+    tl.addLabel('hero', 0)
+
+      // Step 1: the card dissolves; the avatar and both messages stay where they are
+      .to(hero.surface, { '--hero-surface': 0, duration: 0.6, ease: 'none' }, 0.01)
+      .to([hero.top, hero.composer], { autoAlpha: 0, duration: 0.5 }, 0.01)
+      // Step 2: the kiosk frame forms around the avatar, in place
+      .to(traveller, { autoAlpha: 1, ...onSlot(introKiosk), duration: MOTION.slow, ease: MOTION.easeInOut }, 0.5)
+      .to(hero.avatar, { autoAlpha: 0, duration: 0.4 }, 0.5)
+      .addLabel('kiosk')
+
+      // Step 3: the greeting leaves, the question moves up to the intro, the intro answers
+      .to(hero.greeting, { autoAlpha: 0, y: -40, duration: 0.4 }, 'kiosk')
+      .to(hero.question, {
+        x: shift(hero.question, intro.question, 'x'), y: shift(hero.question, intro.question, 'y'),
+        duration: 0.6, ease: MOTION.easeInOut
+      }, 'kiosk+=0.1')
+      .set(intro.question, { autoAlpha: 1 }, 'kiosk+=0.7')
+      .set(hero.question, { autoAlpha: 0 }, 'kiosk+=0.7');
+    bubbleIn(tl, intro.headline, 'kiosk+=0.8')
+      .to(intro.rest, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.25 }, '-=0.1')
+      .addLabel('intro')
+
+      // Step 4: the intro moves out, the kiosk glides to the centre, the features headline appears
+      .to([intro.question, intro.headline, ...intro.rest], { autoAlpha: 0, y: -50, duration: 0.4, stagger: 0.05, ease: 'power2.in' }, 'intro')
+      .to(traveller, { ...onSlot(featuresKiosk), duration: MOTION.slow, ease: MOTION.easeInOut }, 'intro+=0.2');
+    bubbleIn(tl, featuresHeadline, 'intro+=0.8')
+      .addLabel('features')
+
+      // Step 5: the headline moves off, everything rises, the features slide out from behind the kiosk
+      .to(featuresHeadline, { y: -40, autoAlpha: 0, duration: 0.4, ease: 'power2.in' }, 'features')
+      .to(featuresStage, { y: () => -rise(), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
+      .to(traveller, { ...onSlot(featuresKiosk, rise), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1');
     left.forEach((el, i) => {
-      fan.fromTo([el, right[i]].filter(Boolean), { autoAlpha: 0, x: towardKiosk },
-        { autoAlpha: 1, x: 0, duration: 0.7, ease: MOTION.ease }, i * MOTION.stagger);
+      tl.to([el, right[i]].filter(Boolean), { autoAlpha: 1, x: 0, duration: 0.7 }, `features+=${0.5 + i * MOTION.stagger}`);
+    });
+    tl.addLabel('fan');
+
+    // Scroll thresholds (share of the pinned distance) at which each step starts playing
+    const steps = [['hero', 0], ['kiosk', 0.05], ['intro', 0.25], ['features', 0.5], ['fan', 0.72]];
+    const stepAt = (progress) => steps.reduce((found, [, at], i) => (progress >= at ? i : found), 0);
+    let current = 0;
+    let playhead;
+    const goTo = (index, instant) => {
+      if (index === current && !instant) return;
+      current = index;
+      const label = steps[index][0];
+      playhead?.kill();
+      if (instant) {
+        tl.seek(label);
+        return;
+      }
+      // Natural speed for one step; several steps at once (fast scrolling) are compressed
+      const distance = Math.abs(tl.labels[label] - tl.time());
+      playhead = tl.tweenTo(label, { duration: Math.min(distance, 1.8), ease: 'none' });
+    };
+
+    const pin = ScrollTrigger.create({
+      trigger: story,
+      start: () => `top ${header.offsetHeight}px`,
+      end: '+=300%',
+      pin: true,
+      anticipatePin: 1,
+      onUpdate: self => goTo(stepAt(self.progress)),
+      onRefresh: self => {
+        // Rewind with the old measurements, re-measure the starting state, then return to the step
+        playhead?.kill();
+        tl.seek(0);
+        setHeaderHeight();
+        fitTraveller();
+        applyStart();
+        tl.invalidate();
+        goTo(stepAt(self.progress), true);
+      }
     });
 
-    return () => traveller.remove();
+    // In-page links to the intro and features land on their step inside the pinned story
+    const stepLinks = { '#intro': 2, '#features': 4 };
+    const stepScroll = (index) => pin.start + (pin.end - pin.start) * (steps[index][1] + 0.04);
+    const onStepLink = (e) => {
+      const link = e.target.closest('a[href^="#"]');
+      const index = link && stepLinks[link.getAttribute('href')];
+      if (index === undefined) return;
+      e.preventDefault();
+      e.stopPropagation(); // capture phase: main.js's smooth scroll would aim at the layer instead
+      scrollTo({ top: stepScroll(index), behavior: 'smooth' });
+      history.replaceState(null, '', link.getAttribute('href'));
+    };
+    document.addEventListener('click', onStepLink, true);
+    if (location.hash in stepLinks) requestAnimationFrame(() => scrollTo(0, stepScroll(stepLinks[location.hash])));
+
+    return () => {
+      document.removeEventListener('click', onStepLink, true);
+      traveller.remove();
+      story.classList.remove('is-staged');
+    };
   });
 
-  // Phones: no travelling kiosk; each kiosk rises in place and the features appear in turn
+  // Phones: no pinned story; each kiosk rises in place, the chats play and the features appear in turn
   scenes.push(({ isMobile }) => {
     if (!isMobile) return;
+    chatThread($('#intro .intro-thread'), { start: 'top 70%' });
     chatThread($('#features .chat-section-header'));
     $$('#intro .kiosk-device, #features .kiosk-device').forEach(kiosk => {
       gsap.fromTo(kiosk, { autoAlpha: 0, y: 40 }, {
@@ -257,11 +357,6 @@
       onEnter: batch => gsap.fromTo(batch, { autoAlpha: 0, y: 20 },
         { autoAlpha: 1, y: 0, duration: MOTION.base, ease: MOTION.ease, stagger: 0.1 })
     });
-  });
-
-  // Intro chat thread (all widths)
-  scenes.push(() => {
-    chatThread($('#intro .intro-thread'), { start: 'top 70%' });
   });
 
   runOpening();

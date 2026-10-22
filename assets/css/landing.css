@@ -3759,6 +3759,38 @@ main > .blog-section:last-child {
   display: block;
 }
 
+.story.is-staged {
+  --stage-h: calc(100svh - var(--header-h, 4rem));
+  position: relative;
+  height: var(--stage-h);
+  overflow: hidden;
+  background: #FFFFFF;
+}
+.story.is-staged > .section {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  background: transparent;
+  pointer-events: none;
+}
+.story.is-staged > .section a, .story.is-staged > .section button {
+  pointer-events: auto;
+}
+.story.is-staged > .section > .container {
+  width: 100%;
+}
+.story.is-staged .intro-split .kiosk-device {
+  flex-basis: min(18.75rem, var(--stage-h) * 0.66 - 5rem);
+}
+.story.is-staged #features .chat-section-header {
+  margin-bottom: 1.5rem;
+}
+.story.is-staged .feature-stage .kiosk-device {
+  flex-basis: min(21.25rem, var(--stage-h) * 0.62 - 6rem);
+}
+
 .kiosk-traveller {
   position: absolute;
   top: 0;
@@ -3766,10 +3798,8 @@ main > .blog-section:last-child {
   z-index: 2;
   margin: 0;
   pointer-events: none;
-  will-change: transform;
-}
-.kiosk-traveller .kiosk-screen {
-  aspect-ratio: auto;
+  transform-origin: 0 0;
+  will-change: transform, opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {
