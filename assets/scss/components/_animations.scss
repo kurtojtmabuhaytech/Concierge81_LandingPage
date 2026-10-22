@@ -86,10 +86,27 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
     > .container { width: 100%; }
   }
 
+  // The avatar shrinks into the kiosk screen, which can sit past the card's edge
+  .hero-card { overflow: visible; }
+
   // Each step fits one screen: kiosk sizes follow the available height
   .intro-split .kiosk-device { flex-basis: min(18.75rem, calc(var(--stage-h) * 0.66 - 5rem)); }
   #features .chat-section-header { margin-bottom: 1.5rem; }
   .feature-stage .kiosk-device { flex-basis: min(21.25rem, calc(var(--stage-h) * 0.62 - 6rem)); }
+}
+
+// Copy of the hero card surface (and its 1px edge) that shrinks into the kiosk screen.
+// Clipped rather than scaled, so the rounded corners never stretch.
+.story-morph {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #E8ECFB radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%) no-repeat;
+  // Edges and radius as separate variables: browsers shorten inset() when computing it,
+  // which would scramble a tween between two clip-path strings
+  clip-path: inset(var(--clip-top, 0) var(--clip-right, 0) var(--clip-bottom, 0) var(--clip-left, 0) round var(--clip-radius, 0));
+  will-change: clip-path;
+  &--edge { background: $cobalt-100; }
 }
 
 .kiosk-traveller {

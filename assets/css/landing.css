@@ -681,6 +681,7 @@ code, kbd, samp, pre {
   transform: translateX(-50%);
   border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(214, 222, 252, 0.6) 45%, transparent 70%);
+  opacity: var(--avatar-glow, 1);
 }
 .hero-avatar img {
   position: relative;
@@ -3781,6 +3782,9 @@ main > .blog-section:last-child {
 .story.is-staged > .section > .container {
   width: 100%;
 }
+.story.is-staged .hero-card {
+  overflow: visible;
+}
 .story.is-staged .intro-split .kiosk-device {
   flex-basis: min(18.75rem, var(--stage-h) * 0.66 - 5rem);
 }
@@ -3789,6 +3793,18 @@ main > .blog-section:last-child {
 }
 .story.is-staged .feature-stage .kiosk-device {
   flex-basis: min(21.25rem, var(--stage-h) * 0.62 - 6rem);
+}
+
+.story-morph {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #E8ECFB radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%) no-repeat;
+  clip-path: inset(var(--clip-top, 0) var(--clip-right, 0) var(--clip-bottom, 0) var(--clip-left, 0) round var(--clip-radius, 0));
+  will-change: clip-path;
+}
+.story-morph--edge {
+  background: #D4E2FD;
 }
 
 .kiosk-traveller {

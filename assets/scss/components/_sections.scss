@@ -284,6 +284,7 @@
     width: 90%; aspect-ratio: 1; transform: translateX(-50%);
     border-radius: 50%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(214, 222, 252, 0.6) 45%, transparent 70%);
+    opacity: var(--avatar-glow, 1); // faded by the hero → kiosk morph
   }
   img {
     position: relative;

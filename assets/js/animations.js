@@ -62,6 +62,7 @@
     controls: $$('#hero .chat-composer [data-anim]')
   };
   const heroParts = [hero.top, hero.avatar, hero.greeting, hero.question, hero.composer, ...hero.controls];
+  let finishOpening = () => {};
 
   /* ---- 0–2. Opening screen → hero ---------------------------------------------------------
      Plays on every visit. Runs once, outside matchMedia, so resizing never replays it.
@@ -77,6 +78,7 @@
       if (done) return;
       done = true;
       skipEvents.forEach(type => removeEventListener(type, finish));
+      finishOpening = () => {};
       tl?.kill();
       dotsLoop?.kill();
       splash?.remove();
@@ -88,6 +90,7 @@
       finish();
       return;
     }
+    finishOpening = finish;
 
     // Every visit starts at the top with the opening
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -181,6 +184,18 @@
     traveller.setAttribute('aria-hidden', 'true');
     story.appendChild(traveller);
     gsap.set(traveller, { autoAlpha: 0 });
+
+    // Copy of the card surface (with its 1px edge) that shrinks into the kiosk screen; first in the
+    // story so it paints under the avatar and messages
+    const morphEdge = Object.assign(document.createElement('div'), { className: 'story-morph story-morph--edge' });
+    const morph = Object.assign(document.createElement('div'), { className: 'story-morph' });
+    story.prepend(morphEdge, morph);
+    const kioskBody = {
+      screen: $('.kiosk-screen', traveller),
+      avatar: $('.kiosk-avatar', traveller),
+      base: $('.kiosk-base', traveller),
+      logo: $('.kiosk-logo', traveller)
+    };
     const fitTraveller = () => gsap.set(traveller, { width: featuresKiosk.offsetWidth });
     fitTraveller();
 
@@ -201,11 +216,33 @@
         scale: () => box().width / traveller.offsetWidth
       };
     };
-    // Kiosk screen covering the hero avatar, so the frame can form around it in place
+    // Clip variables for a rounded box, inset from the story's edges (grow = the 1px edge layer)
+    const clipTo = (box, radius, grow = 0) => {
+      const s = story.getBoundingClientRect();
+      return {
+        '--clip-top': `${box.y - grow}px`,
+        '--clip-right': `${s.width - (box.x + box.width) - grow}px`,
+        '--clip-bottom': `${s.height - (box.y + box.height) - grow}px`,
+        '--clip-left': `${box.x - grow}px`,
+        '--clip-radius': `${radius + grow}px`
+      };
+    };
+    // Same, measured when the tween starts (function-based values, re-measured on refresh)
+    const clipToLater = (boxFn, radius, grow) => Object.fromEntries(
+      Object.keys(clipTo({ x: 0, y: 0, width: 0, height: 0 }, 0)).map(key => [key, () => clipTo(boxFn(), radius, grow)[key]])
+    );
+    const cardBox = () => within(hero.surface);
+    const screenBox = () => within($('.kiosk-screen', introKiosk));
+    // Hero avatar scaled into the kiosk screen: centred, standing on the screen's bottom edge
     const avatarFit = () => {
       const img = within(heroImg);
-      const scale = img.height / $('.kiosk-screen', traveller).offsetHeight;
-      return { x: img.x + img.width / 2 - (traveller.offsetWidth * scale) / 2, y: img.y - 10 * scale, scale };
+      const target = within($('.kiosk-avatar', introKiosk));
+      const scale = target.height / img.height;
+      return {
+        x: target.x + target.width / 2 - (img.width * scale) / 2 - img.x,
+        y: target.y + target.height - img.height * scale - img.y,
+        scale
+      };
     };
     // Distance that lines one element up with another (ignoring its current transform)
     const shift = (el, target, axis) => () => {
@@ -227,7 +264,17 @@
     // fromTo() tweens that start later in a paused timeline don't restore themselves when it rewinds.
     // Re-applied on refresh (sizes and positions change with the window).
     const applyStart = () => {
-      gsap.set(traveller, { autoAlpha: 0, ...avatarFit() });
+      const card = cardBox();
+      gsap.set(traveller, { autoAlpha: 0, x: onSlot(introKiosk).x(), y: onSlot(introKiosk).y(), scale: onSlot(introKiosk).scale() });
+      gsap.set(morph, {
+        autoAlpha: 0, ...clipTo(card, 28),
+        backgroundSize: `${card.width}px ${card.height}px`, backgroundPosition: `${card.x}px ${card.y}px`
+      });
+      gsap.set(morphEdge, { autoAlpha: 0, ...clipTo(card, 28, 1) });
+      // The kiosk body forms around the morphed screen: frame, stand and logo fade in over it
+      gsap.set(traveller, { backgroundColor: 'rgba(14, 16, 19, 0)', boxShadow: '0 30px 60px rgba(11, 12, 14, 0)' });
+      gsap.set(kioskBody.screen, { backgroundImage: 'none' });
+      gsap.set([kioskBody.avatar, kioskBody.base, kioskBody.logo], { opacity: 0 });
       gsap.set([intro.question, intro.headline, ...intro.rest, featuresHeadline], { autoAlpha: 0, x: 0, y: 0 });
       gsap.set([intro.headline, featuresHeadline], { scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
       gsap.set(intro.rest, { y: 16 });
@@ -245,12 +292,30 @@
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     tl.addLabel('hero', 0)
 
-      // Step 1: the card dissolves; the avatar and both messages stay where they are
-      .to(hero.surface, { '--hero-surface': 0, duration: 0.6, ease: 'none' }, 0.01)
-      .to([hero.top, hero.composer], { autoAlpha: 0, duration: 0.5 }, 0.01)
-      // Step 2: the kiosk frame forms around the avatar, in place
-      .to(traveller, { autoAlpha: 1, ...onSlot(introKiosk), duration: MOTION.slow, ease: MOTION.easeInOut }, 0.5)
-      .to(hero.avatar, { autoAlpha: 0, duration: 0.4 }, 0.5)
+      // Step 1: the composer and top bar go; the card surface swaps to its morph copy (same look)
+      .to([hero.top, hero.composer], { autoAlpha: 0, duration: 0.35 }, 0.01)
+      .to([morph, morphEdge], { autoAlpha: 1, duration: 0.01 }, 0.01)
+      .to(hero.surface, { '--hero-surface': 0, duration: 0.01 }, 0.02)
+      // Step 2: the card compresses into the kiosk screen and the avatar shrinks with it;
+      // the messages stay put. Then the kiosk body forms around the screen (grey → black).
+      .to(morph, { ...clipToLater(screenBox, 18, 0), duration: MOTION.slow, ease: MOTION.easeInOut }, 0.15)
+      .to(morphEdge, { ...clipToLater(screenBox, 18, 1), duration: MOTION.slow, ease: MOTION.easeInOut }, 0.15)
+      .to(heroImg, {
+        x: () => avatarFit().x, y: () => avatarFit().y, scale: () => avatarFit().scale,
+        transformOrigin: '0 0', duration: MOTION.slow, ease: MOTION.easeInOut
+      }, 0.15)
+      .to(hero.avatar, { '--avatar-glow': 0, duration: 0.4, ease: 'none' }, 0.15)
+      // the two avatar images cross-fade inside the screen
+      .set(traveller, { autoAlpha: 1 }, 0.85)
+      .to(kioskBody.avatar, { opacity: 1, duration: 0.15, ease: 'none' }, 0.9)
+      .to(hero.avatar, { autoAlpha: 0, duration: 0.15, ease: 'none' }, 0.9)
+      // the kiosk screen takes over from the morph copy (same box, same tint)...
+      .set(kioskBody.screen, { backgroundImage: 'linear-gradient(180deg, #F5F7FF 0%, #ECEFFB 100%)' }, 1.1)
+      .set([morph, morphEdge], { autoAlpha: 0 }, 1.1)
+      // ...and the frame, stand and logo form around it (grey → black)
+      .to(traveller, { backgroundColor: '#0E1013', boxShadow: '0 30px 60px rgba(11, 12, 14, 0.18)', duration: 0.5, ease: 'power1.inOut' }, 1.1)
+      .to(kioskBody.base, { opacity: 1, duration: 0.5, ease: 'power1.inOut' }, 1.1)
+      .to(kioskBody.logo, { opacity: 1, duration: 0.3 }, 1.3)
       .addLabel('kiosk')
 
       // Step 3: the greeting leaves, the question moves up to the intro, the intro answers
@@ -287,6 +352,7 @@
     let playhead;
     const goTo = (index, instant) => {
       if (index === current && !instant) return;
+      if (index > 0) finishOpening();
       current = index;
       const label = steps[index][0];
       playhead?.kill();
@@ -336,6 +402,8 @@
     return () => {
       document.removeEventListener('click', onStepLink, true);
       traveller.remove();
+      morph.remove();
+      morphEdge.remove();
       story.classList.remove('is-staged');
     };
   });
