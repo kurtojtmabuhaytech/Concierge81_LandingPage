@@ -605,11 +605,21 @@ code, kbd, samp, pre {
 }
 
 .hero-card {
-  border: 1px solid #D4E2FD;
+  position: relative;
+  isolation: isolate;
   border-radius: 28px;
-  background: radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%);
   padding: clamp(1rem, 2.5vw, 1.5rem) clamp(1rem, 3vw, 1.5rem) 0;
   overflow: hidden;
+}
+.hero-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px solid #D4E2FD;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%);
+  opacity: var(--hero-surface, 1);
 }
 
 .hero-card-top {
@@ -3699,9 +3709,78 @@ main > .blog-section:last-child {
   visibility: hidden;
 }
 
+.js-motion .hero-card {
+  --hero-surface: 0;
+}
+
+.splash {
+  display: none;
+}
+
+.js-motion .splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: #FFFFFF;
+}
+
+.splash-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.splash-bubble {
+  position: relative;
+  overflow: hidden;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.splash-dots {
+  position: absolute;
+  left: 1.1rem;
+  top: 50%;
+  display: flex;
+  gap: 4px;
+  transform: translateY(-50%);
+}
+.splash-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.splash-text {
+  display: block;
+}
+
+.kiosk-traveller {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  margin: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.kiosk-traveller .kiosk-screen {
+  aspect-ratio: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .js-motion [data-anim] {
     visibility: visible;
+  }
+  .js-motion .hero-card {
+    --hero-surface: 1;
+  }
+  .js-motion .splash {
+    display: none;
   }
 }
 

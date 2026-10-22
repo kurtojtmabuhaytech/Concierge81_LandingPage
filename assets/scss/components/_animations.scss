@@ -38,7 +38,47 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
    elements with autoAlpha. Without JS, without GSAP, or with reduced motion, they stay visible.
    ========================================= */
 .js-motion [data-anim] { visibility: hidden; }
+.js-motion .hero-card { --hero-surface: 0; } // the opening builds the card around the greeting
+
+// Opening screen: white page, "concierge is typing…", then the greeting flies into the hero
+.splash { display: none; }
+.js-motion .splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000; // above the sticky header and the menu backdrop
+  display: grid;
+  place-items: center;
+  background: $color-white;
+}
+.splash-msg { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.splash-bubble {
+  position: relative;
+  overflow: hidden;
+  max-width: none;
+  white-space: nowrap; // keeps the two lines fixed while the bubble grows around them
+}
+.splash-dots {
+  position: absolute; left: 1.1rem; top: 50%;
+  display: flex; gap: 4px;
+  transform: translateY(-50%);
+  i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+}
+.splash-text { display: block; }
+
+// Desktop: one kiosk travels hero → intro → features (animations.js); the real kiosks stay as layout slots
+.kiosk-traveller {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2; // above the feature columns so features slide out from behind it
+  margin: 0;
+  pointer-events: none;
+  will-change: transform;
+  .kiosk-screen { aspect-ratio: auto; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .js-motion [data-anim] { visibility: visible; }
+  .js-motion .hero-card { --hero-surface: 1; }
+  .js-motion .splash { display: none; }
 }

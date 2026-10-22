@@ -23,6 +23,17 @@
 </head>
 <body class="reveal-page">
 
+  <!-- Opening screen (animations.js): "concierge is typing…" becomes the hero greeting. Shown only with GSAP motion. -->
+  <div class="splash" aria-hidden="true">
+    <div class="splash-msg">
+      <p class="bubble bubble--ai splash-bubble">
+        <span class="splash-dots"><i></i><i></i><i></i></span>
+        <span class="splash-text">Hi! I'm concierge81.<br>How may I assist you today?</span>
+      </p>
+      <span class="timestamp splash-caption">concierge is typing…</span>
+    </div>
+  </div>
+
   <!-- Navigation / Header -->
   <header class="site-header">
     <div class="container header-container">
@@ -51,10 +62,10 @@
 
   <main>
   <!-- 1. Hero Card (2D Avatar + Live Chat) -->
-  <section id="hero" class="section theme-light chat-hero-section">
+  <section id="hero" class="section theme-light chat-hero-section" data-motion>
     <div class="container">
       <div class="hero-card">
-        <div class="hero-card-top">
+        <div class="hero-card-top" data-anim>
           <span class="brand-logo">concierge<span>81</span></span>
           <div class="hero-card-tools">
             <div class="mode-toggle" role="group" aria-label="Display mode">
@@ -67,35 +78,34 @@
 
         <div class="hero-split-area">
           <!-- Left: 2D Avatar -->
-          <div class="hero-avatar"><img src="assets/images/Avatar.png" alt="Concierge81 avatar" width="1672" height="2495" fetchpriority="high"></div>
+          <div class="hero-avatar" data-anim><img src="assets/images/Avatar.png" alt="Concierge81 avatar" width="1672" height="2495" fetchpriority="high"></div>
 
           <!-- Right: Live Chat Interface -->
           <div class="hero-chat-interface">
             <div class="chat-messages-area">
-              <div class="msg-row msg-row--ai">
+              <div class="msg-row msg-row--ai" data-anim>
                 <p class="bubble bubble--ai">Hi! I'm concierge81.<br>How may I assist you today?</p>
+                <span class="timestamp">concierge · 9:12 AM</span>
               </div>
-              <div class="msg-row msg-row--user">
+              <div class="msg-row msg-row--user" data-anim>
                 <p class="bubble bubble--user">What is concierge81?</p>
                 <span class="timestamp">You · 9:12 PM</span>
               </div>
             </div>
 
-            <div class="chat-composer">
+            <div class="chat-composer" data-anim>
               <div>
                 <span class="suggest-label">✦ Suggested next</span>
                 <div class="chip-row">
-                  <button type="button" class="chip chip--soft">Where is the café?</button>
-                  <button type="button" class="chip chip--soft">Any vegetarian options?</button>
-                  <button type="button" class="chip chip--soft">Room service hours</button>
+                  <button type="button" class="chip chip--soft" data-anim>What is concierge81?</button>
                 </div>
               </div>
               <div class="composer-bar">
-                <button type="button" class="category-btn">
+                <button type="button" class="category-btn" data-anim>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
                   Categories
                 </button>
-                <button type="button" class="mic-btn" aria-label="Speak">
+                <button type="button" class="mic-btn" aria-label="Speak" data-anim>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
                 </button>
               </div>
@@ -107,9 +117,9 @@
   </section>
 
   <!-- 2. Intro (Kiosk + Headline) -->
-  <section id="intro" class="section theme-light">
+  <section id="intro" class="section theme-light" data-motion>
     <div class="container intro-split">
-      <div class="kiosk-device">
+      <div class="kiosk-device" data-anim>
         <div class="kiosk-screen">
           <span class="brand-logo kiosk-logo">concierge<span>81</span></span>
           <img class="kiosk-avatar" src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy">
@@ -118,13 +128,13 @@
       </div>
 
       <div class="intro-thread">
-        <div class="msg-row msg-row--user">
+        <div class="msg-row msg-row--user" data-anim>
           <p class="bubble bubble--user">What is concierge81?</p>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
-        <h1 class="header-pill header-pill--ai header-pill--xl">I'm concierge81, your AI concierge.</h1>
-        <p class="bubble bubble--sand bubble-lead">I help businesses give faster customer support, answering common questions, sharing accurate information, and assisting customers around the clock.</p>
-        <div class="intro-actions">
+        <h1 class="header-pill header-pill--ai header-pill--xl" data-anim>I'm concierge81, your AI concierge.</h1>
+        <p class="bubble bubble--sand bubble-lead" data-anim>I help businesses give faster customer support, answering common questions, sharing accurate information, and assisting customers around the clock.</p>
+        <div class="intro-actions" data-anim>
           <a href="#contact" class="btn btn-primary">Request a demo</a>
           <a href="#features" class="link-btn">Know more about me ›</a>
         </div>
@@ -133,11 +143,11 @@
   </section>
 
   <!-- 3. Features (Kiosk flanked by features) -->
-  <section id="features" class="section theme-light">
+  <section id="features" class="section theme-light" data-motion>
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Here's what I bring to your business.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Here's what I bring to your business.</h2>
         </div>
       </div>
 
@@ -145,30 +155,30 @@
         <div class="feature-stage">
           <!-- Left Features: text then icon -->
           <div class="feature-col left-col">
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Lifelike avatar</h3><p>A friendly face for every guest.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19a7 7 0 0 1 13 0"/><rect x="2.5" y="2.5" width="19" height="19" rx="5"/></svg></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Voice conversation</h3><p>Guests just talk and listen.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Speak translation</h3><p>Replies in the guest's language.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5.5 5c0 4 3 7 6.5 8M10.5 5c-.5 4-3 7-6.5 9"/><path d="M13 21l4-9 4 9M14.5 18h5"/></svg></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Avatar or chat</h3><p>Talk to her, or type instead.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Categories</h3><p>Topics built for your business.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></div>
             </div>
           </div>
 
           <!-- Center Kiosk -->
-          <div class="kiosk-device">
+          <div class="kiosk-device" data-anim>
             <div class="kiosk-screen">
               <span class="brand-logo kiosk-logo">concierge<span>81</span></span>
               <img class="kiosk-avatar" src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy">
@@ -178,23 +188,23 @@
 
           <!-- Right Features: icon then text -->
           <div class="feature-col right-col">
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/></svg></div>
               <div class="feature-text"><h3>Smart suggestions</h3><p>Helpful next questions, instantly.</p></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
               <div class="feature-text"><h3>Your own knowledge</h3><p>Answers from your information.</p></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
               <div class="feature-text"><h3>Always on</h3><p>Open 24/7, holidays included.</p></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></div>
               <div class="feature-text"><h3>Human handoff</h3><p>Hands complex requests to staff.</p></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="13" height="10" rx="1.5"/><path d="M7 18h5"/><rect x="17" y="9" width="4.5" height="11" rx="1"/></svg></div>
               <div class="feature-text"><h3>Everywhere</h3><p>Kiosk, web, tablet, and phone.</p></div>
             </div>

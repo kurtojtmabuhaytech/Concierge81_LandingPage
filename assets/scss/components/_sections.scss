@@ -236,11 +236,21 @@
 .chat-hero-section + .section { padding-top: clamp(2rem, 5vw, 4rem); }
 
 .hero-card {
-  border: 1px solid $cobalt-100;
+  position: relative;
+  isolation: isolate;
   border-radius: 28px;
-  background: radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%);
   padding: clamp(1rem, 2.5vw, 1.5rem) clamp(1rem, 3vw, 1.5rem) 0;
   overflow: hidden;
+
+  // Card surface on its own layer so the motion scenes can fade it without fading the chat
+  &::before {
+    content: '';
+    position: absolute; inset: 0; z-index: -1;
+    border: 1px solid $cobalt-100;
+    border-radius: inherit;
+    background: radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%);
+    opacity: var(--hero-surface, 1);
+  }
 }
 .hero-card-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
 .hero-card-tools { display: flex; align-items: center; gap: 0.5rem; }
