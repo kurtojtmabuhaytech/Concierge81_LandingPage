@@ -13,193 +13,78 @@
   <!-- Navigation / Header -->
   <header class="site-header">
     <div class="container header-container">
-      <a href="#" class="brand-logo">concierge81</a>
-      
-      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation">
+      <a href="#" class="brand-logo">concierge<span>81</span></a>
+
+      <button type="button" class="mobile-toggle" id="mobileToggle" aria-label="Toggle Navigation" aria-expanded="false" aria-controls="navMenu">
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
       </button>
 
       <nav class="nav-menu" id="navMenu">
-        <a href="#features">news</a>
-        <a href="#blog">blog</a>
+        <a href="news.html">news</a>
+        <a href="blog.html">blog</a>
         <a href="#contact">contact</a>
         <button class="lang-btn">🌐 EN</button>
-        <a href="#contact" class="btn btn-primary mobile-only-cta">Request a Demo</a>
+        <a href="#contact" class="btn btn-primary btn-small mobile-only-cta">Request a Demo</a>
       </nav>
-      
+
       <div class="header-actions desktop-only-cta">
-        <a href="#contact" class="btn btn-primary">Request a Demo</a>
+        <a href="#contact" class="btn btn-primary btn-small">Request a Demo</a>
       </div>
     </div>
   </header>
+  <div class="nav-backdrop" aria-hidden="true"></div>
 
-  <!-- 1. Hero Section (Live Chat + 2D Kiosk) -->
-  <section id="hero" class="chat-hero-section">
-    <div class="container hero-container">
-      <div class="hero-split-area">
-        
-        <!-- Left: Live Chat Interface -->
-        <div class="hero-chat-interface">
-          <div class="chat-interface-header">
-            <div class="bot-profile-info">
-              <div class="status-dot"></div>
-              <span>Active</span>
-            </div>
-            <div class="chat-controls">
-              <span>Help</span>
-              <span>Settings</span>
-            </div>
-          </div>
-          
-          <div class="chat-messages-area">
-            <div class="chat-row user-row">
-              <div class="chat-pill dark-pill">What is concierge81?</div>
-              <div class="timestamp">You • 9:12 PM</div>
-            </div>
-            
-            <div class="chat-row ai-row">
-              <div class="chat-pill cobalt-pill">
-                Hi! I'm concierge81.<br>How may I assist you today?
-              </div>
-              <div class="timestamp">concierge81</div>
-            </div>
-
-            <div class="suggested-prompts">
-              <span class="suggest-label">✨ Suggested next</span>
-              <div class="chip-row">
-                <div class="prompt-chip">Where is the café?</div>
-                <div class="prompt-chip">Any vegetarian options?</div>
-                <div class="prompt-chip">Room service hours</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="chat-input-area">
-            <div class="input-box">
-              <div class="category-btn"><span>🗂️ Categories</span></div>
-              <div class="mic-button small-mic">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Right: 2D Kiosk Frame -->
-        <div class="hero-kiosk-frame">
-          <div class="placeholder-box avatar-2d-portrait">
-            <span>[ 2D Avatar Graphic ]</span>
-          </div>
-          <div class="kiosk-intro">
-            <h1>I'm concierge81, your AI concierge.</h1>
-            <p>I help businesses give faster customer support, answering common questions, sharing accurate information, and assisting customers around the clock.</p>
-            <div class="kiosk-actions">
-              <a href="#contact" class="btn btn-primary">Request a demo</a>
-              <a href="#features-phone" class="link-btn">Know more about me ›</a>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- 2. Features Phone Grid -->
-  <section id="features-phone" class="section">
+  <!-- 1. Hero Card (2D Avatar + Live Chat) -->
+  <section id="hero" class="section theme-light chat-hero-section">
     <div class="container">
-      <div class="chat-section-header">
-        <div class="chat-header-row right">
-          <div class="header-pill header-pill-dark">Why would a business need this?</div>
-          <div class="timestamp">You • 9:12 PM</div>
-        </div>
-        <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Here's what I bring to your business.</div>
-        </div>
-      </div>
-
-      <div class="phone-feature-layout">
-        <!-- Left Features -->
-        <div class="feature-col left-col">
-          <div class="feature-item">
-            <div class="feature-text">
-              <h4>Lifelike avatar</h4>
-              <p>A friendly face for every guest.</p>
+      <div class="hero-card">
+        <div class="hero-card-top">
+          <span class="brand-logo">concierge<span>81</span></span>
+          <div class="hero-card-tools">
+            <div class="mode-toggle" role="group" aria-label="Display mode">
+              <button type="button" class="is-active">Avatar</button>
+              <button type="button">Chat</button>
             </div>
-            <div class="feature-icon">👤</div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-text">
-              <h4>Voice conversation</h4>
-              <p>Guests just talk and listen.</p>
-            </div>
-            <div class="feature-icon">🎙️</div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-text">
-              <h4>Speak translation</h4>
-              <p>Replies in the guest's language.</p>
-            </div>
-            <div class="feature-icon">A/文</div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-text">
-              <h4>Avatar or chat</h4>
-              <p>Talk to her, or type instead.</p>
-            </div>
-            <div class="feature-icon">💬</div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-text">
-              <h4>Categories</h4>
-              <p>Topics built for your business.</p>
-            </div>
-            <div class="feature-icon">🗂️</div>
+            <button class="lang-btn">🌐 EN</button>
           </div>
         </div>
 
-        <!-- Center Phone Mockup -->
-        <div class="center-phone-mockup">
-          <div class="phone-screen placeholder-box">
-            <span>[ Phone Avatar Graphic ]</span>
-          </div>
-        </div>
+        <div class="hero-split-area">
+          <!-- Left: 2D Avatar -->
+          <div class="hero-avatar"><img src="assets/images/Avatar.png" alt="Concierge81 avatar" width="1672" height="2495" fetchpriority="high"></div>
 
-        <!-- Right Features -->
-        <div class="feature-col right-col">
-          <div class="feature-item">
-            <div class="feature-icon">✨</div>
-            <div class="feature-text">
-              <h4>Smart suggestions</h4>
-              <p>Helpful next questions, instantly.</p>
+          <!-- Right: Live Chat Interface -->
+          <div class="hero-chat-interface">
+            <div class="chat-messages-area">
+              <div class="msg-row msg-row--ai">
+                <p class="bubble bubble--ai">Hi! I'm concierge81.<br>How may I assist you today?</p>
+              </div>
+              <div class="msg-row msg-row--user">
+                <p class="bubble bubble--user">What is concierge81?</p>
+                <span class="timestamp">You · 9:12 PM</span>
+              </div>
             </div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">📄</div>
-            <div class="feature-text">
-              <h4>Your own knowledge</h4>
-              <p>Answers from your information.</p>
-            </div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-text">
-              <h4>Always on</h4>
-              <p>Open 24/7, holidays included.</p>
-            </div>
-            <div class="feature-icon">🕒</div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">🤝</div>
-            <div class="feature-text">
-              <h4>Human handoff</h4>
-              <p>Hands complex requests to staff.</p>
-            </div>
-          </div>
-          <div class="feature-item">
-            <div class="feature-icon">🌐</div>
-            <div class="feature-text">
-              <h4>Everywhere</h4>
-              <p>Kiosk, web, tablet, and phone.</p>
+
+            <div class="chat-composer">
+              <div>
+                <span class="suggest-label">✦ Suggested next</span>
+                <div class="chip-row">
+                  <button type="button" class="chip chip--soft">Where is the café?</button>
+                  <button type="button" class="chip chip--soft">Any vegetarian options?</button>
+                  <button type="button" class="chip chip--soft">Room service hours</button>
+                </div>
+              </div>
+              <div class="composer-bar">
+                <button type="button" class="category-btn">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+                  Categories
+                </button>
+                <button type="button" class="mic-btn" aria-label="Speak">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -207,240 +92,522 @@
     </div>
   </section>
 
-  <!-- 3. Inbox Cloud & 3-Step Process -->
-  <section id="process" class="section light-bg">
-    <div class="container">
-      <div class="chat-section-header">
-        <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Are you still answering the same<br>questions every day?</div>
+  <!-- 2. Intro (Kiosk + Headline) -->
+  <section id="intro" class="section theme-light">
+    <div class="container intro-split">
+      <div class="kiosk-device">
+        <div class="kiosk-screen">
+          <span class="brand-logo kiosk-logo">concierge<span>81</span></span>
+          <img class="kiosk-avatar" src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy">
         </div>
-        <div class="sub-pill-text">This is what your team hears — over and over.</div>
-      </div>
-      
-      <div class="inbox-mockup dark-bg">
-        <div class="inbox-header">
-          <span>Team inbox</span>
-          <span class="badge-red">99+ new questions</span>
-        </div>
-        <div class="inbox-cloud placeholder-box" style="background: #111827; border: none;">
-          <span>[ Cloud of overlapping chat bubbles graphic ]</span>
-        </div>
+        <div class="kiosk-base"></div>
       </div>
 
-      <div class="chat-section-header" style="margin-top: 2rem;">
-        <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Let me handle the repeats.</div>
+      <div class="intro-thread">
+        <div class="msg-row msg-row--user">
+          <p class="bubble bubble--user">What is concierge81?</p>
+          <span class="timestamp">You · 9:12 PM</span>
         </div>
-        <div class="sub-pill-text">I answer everyday questions automatically — so your team can focus on what needs a human touch.</div>
-      </div>
-
-      <!-- 3 Steps -->
-      <div class="chat-section-header" style="margin-top: 8rem;">
-        <div class="chat-header-row right">
-          <div class="header-pill header-pill-dark">How does it work?</div>
-          <div class="timestamp">You • 9:12 PM</div>
-        </div>
-        <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Ask. Understand. Answer.</div>
-        </div>
-        <div class="sub-pill-text dark-sub-pill">It all happens in seconds — by chat or by voice.</div>
-      </div>
-
-      <div class="grid grid-3 process-grid">
-        <div class="card process-card dark-bg">
-          <div class="process-icon">💬</div>
-          <h5>STEP 01 - ASK</h5>
-          <h3>Your customer asks.</h3>
-          <p>By typing or speaking — at your kiosk, website, or app.</p>
-        </div>
-        <div class="card process-card dark-bg">
-          <div class="process-icon">✨</div>
-          <h5>STEP 02 - UNDERSTAND</h5>
-          <h3>Concierge81 understands.</h3>
-          <p>It finds the intent and the right answer in your business information.</p>
-        </div>
-        <div class="card process-card dark-bg">
-          <div class="process-icon">✓</div>
-          <h5>STEP 03 - ANSWER</h5>
-          <h3>They get a clear reply.</h3>
-          <p>Instantly. And if it needs a person, your team takes over with full context.</p>
+        <h1 class="header-pill header-pill--ai header-pill--xl">I'm concierge81, your AI concierge.</h1>
+        <p class="bubble bubble--sand bubble-lead">I help businesses give faster customer support, answering common questions, sharing accurate information, and assisting customers around the clock.</p>
+        <div class="intro-actions">
+          <a href="#contact" class="btn btn-primary">Request a demo</a>
+          <a href="#features" class="link-btn">Know more about me ›</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 4. Interaction Modes -->
-  <section id="interaction" class="section">
+  <!-- 3. Features (Kiosk flanked by features) -->
+  <section id="features" class="section theme-light">
+    <div class="container">
+      <div class="chat-section-header">
+        <div class="chat-header-row left">
+          <h2 class="header-pill header-pill--ai">Here's what I bring to your business.</h2>
+        </div>
+      </div>
+
+      <div class="feature-stage-wrap">
+        <div class="feature-stage">
+          <!-- Left Features: text then icon -->
+          <div class="feature-col left-col">
+            <div class="feature-item">
+              <div class="feature-text"><h4>Lifelike avatar</h4><p>A friendly face for every guest.</p></div>
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19a7 7 0 0 1 13 0"/><rect x="2.5" y="2.5" width="19" height="19" rx="5"/></svg></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-text"><h4>Voice conversation</h4><p>Guests just talk and listen.</p></div>
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-text"><h4>Speak translation</h4><p>Replies in the guest's language.</p></div>
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5.5 5c0 4 3 7 6.5 8M10.5 5c-.5 4-3 7-6.5 9"/><path d="M13 21l4-9 4 9M14.5 18h5"/></svg></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-text"><h4>Avatar or chat</h4><p>Talk to her, or type instead.</p></div>
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-text"><h4>Categories</h4><p>Topics built for your business.</p></div>
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></div>
+            </div>
+          </div>
+
+          <!-- Center Kiosk -->
+          <div class="kiosk-device">
+            <div class="kiosk-screen">
+              <span class="brand-logo kiosk-logo">concierge<span>81</span></span>
+              <img class="kiosk-avatar" src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy">
+            </div>
+            <div class="kiosk-base"></div>
+          </div>
+
+          <!-- Right Features: icon then text -->
+          <div class="feature-col right-col">
+            <div class="feature-item">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/></svg></div>
+              <div class="feature-text"><h4>Smart suggestions</h4><p>Helpful next questions, instantly.</p></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
+              <div class="feature-text"><h4>Your own knowledge</h4><p>Answers from your information.</p></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+              <div class="feature-text"><h4>Always on</h4><p>Open 24/7, holidays included.</p></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></div>
+              <div class="feature-text"><h4>Human handoff</h4><p>Hands complex requests to staff.</p></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="13" height="10" rx="1.5"/><path d="M7 18h5"/><rect x="17" y="9" width="4.5" height="11" rx="1"/></svg></div>
+              <div class="feature-text"><h4>Everywhere</h4><p>Kiosk, web, tablet, and phone.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Problem (Team Inbox) -->
+  <section id="problem" class="section theme-cream">
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row right">
-          <div class="header-pill header-pill-dark">Can my customers type or talk?</div>
-          <div class="timestamp">You • 9:12 PM</div>
+          <div class="header-pill header-pill--user">Why would a business need this?</div>
+          <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Both. However they prefer.</div>
+          <h2 class="header-pill header-pill--ai">Are you still answering the same questions every day?</h2>
         </div>
-        <div class="sub-pill-text">Customers can type a question or simply speak to your concierge. Either way, they get a clear answer right away.</div>
+        <p class="sub-pill-text">This is what your team hears — over and over.</p>
       </div>
 
-      <div class="grid grid-2 mode-grid">
-        <div class="mode-card light-mode-card">
+      <div class="inbox-card">
+        <div class="inbox-head">
+          <div class="inbox-title">
+            Team inbox <span class="inbox-meta">Today</span>
+            <span class="badge-red">99+ new questions</span>
+          </div>
+          <span class="drag-hint">✋ Drag the questions around</span>
+        </div>
+        <div class="q-pile" id="qPile">
+          <span class="q-tag">What time is checkout?</span>
+          <span class="q-tag q-tag--blue">How do I get to room 1204?</span>
+          <span class="q-tag">Do you have vegan options?</span>
+          <span class="q-tag">Is the pool open?</span>
+          <span class="q-tag">Where is the elevator?</span>
+          <span class="q-tag">Do you accept walk-ins?</span>
+          <span class="q-tag">Where is the restroom?</span>
+          <span class="q-tag q-tag--blue">Do you speak Japanese?</span>
+          <span class="q-tag">What's the Wi-Fi password?</span>
+          <span class="q-tag q-tag--white">Where is the meeting room?</span>
+          <span class="q-tag">Can I pay by card?</span>
+          <span class="q-tag">What's the check-in time?</span>
+          <span class="q-tag">Where is the elevator?</span>
+          <span class="q-tag q-tag--blue">Do you have parking?</span>
+          <span class="q-tag">Is there a pharmacy nearby?</span>
+          <span class="q-tag">Where can I pay?</span>
+          <span class="q-tag">Do you have vegetarian food?</span>
+          <span class="q-tag">What time do you open?</span>
+          <span class="q-tag q-tag--white">Is there a pharmacy nearby?</span>
+          <span class="q-tag">Can I leave my luggage?</span>
+          <span class="q-tag">What's the checkout time?</span>
+          <span class="q-tag">Do you have vegan options?</span>
+          <span class="q-tag">Is breakfast included?</span>
+          <span class="q-tag">Where is the restroom?</span>
+          <span class="q-tag q-tag--blue">How do I get to the lobby?</span>
+          <span class="q-tag">Do you accept walk-ins?</span>
+          <span class="q-tag">Where is the meeting room?</span>
+          <span class="q-tag">Can I book a taxi?</span>
+          <span class="q-tag">What's the Wi-Fi password?</span>
+          <span class="q-tag">Is the gym open late?</span>
+          <span class="q-tag q-tag--white q-tag--float">Where is the restroom?
+            <svg viewBox="0 0 24 24" fill="#FFFFFF" stroke="#0B0C0E" stroke-width="1.5" stroke-linejoin="round"><path d="M5 3l14 7-6 2-2 6Z"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="chat-section-header">
+        <div class="chat-header-row left">
+          <h2 class="header-pill header-pill--ai">Let me handle the repeats.</h2>
+        </div>
+        <p class="sub-pill-text">I answer everyday questions automatically — so your team can focus on what needs a human touch.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. How It Works (3 Steps) -->
+  <section id="how" class="section theme-dark">
+    <div class="container">
+      <div class="chat-section-header">
+        <div class="chat-header-row right">
+          <div class="header-pill header-pill--user">How does it work?</div>
+          <span class="timestamp">You · 9:12 PM</span>
+        </div>
+        <div class="chat-header-row left">
+          <h2 class="header-pill header-pill--ai">Ask. Understand. Answer.</h2>
+        </div>
+        <p class="sub-pill-text">It all happens in seconds.</p>
+      </div>
+
+      <div class="how-wrap">
+        <div class="stepper" aria-hidden="true">
+          <span class="step-dot is-active">1</span>
+          <span class="step-dot">2</span>
+          <span class="step-dot">3</span>
+        </div>
+        <div class="process-grid">
+          <div class="process-card">
+            <div class="process-icon">
+              <div class="process-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H9l-5 4Z"/><path d="M8 9h8M8 12h5"/></svg></div>
+            </div>
+            <span class="process-label">Step 01 · Ask</span>
+            <h3>Your customer asks.</h3>
+            <p>By typing or speaking — at your kiosk, website, or app.</p>
+          </div>
+          <div class="process-card">
+            <div class="process-icon">
+              <div class="process-glyph process-glyph--round"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/></svg></div>
+            </div>
+            <span class="process-label">Step 02 · Understand</span>
+            <h3>Concierge81 understands.</h3>
+            <p>It finds the intent and the right answer in your business information.</p>
+          </div>
+          <div class="process-card">
+            <div class="process-icon">
+              <div class="process-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+            </div>
+            <span class="process-label">Step 03 · Answer</span>
+            <h3>They get a clear reply.</h3>
+            <p>Instantly. And if it needs a person, your team takes over with full context.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Interaction Modes -->
+  <section id="interaction" class="section theme-light">
+    <div class="container">
+      <div class="chat-section-header">
+        <div class="chat-header-row right">
+          <div class="header-pill header-pill--user">Can my customers type or talk?</div>
+          <span class="timestamp">You · 9:12 PM</span>
+        </div>
+        <div class="chat-header-row left">
+          <h2 class="header-pill header-pill--ai">Both. However they prefer.</h2>
+        </div>
+        <p class="sub-pill-text">Customers can type a question or simply speak to your concierge. Either way, they get a clear answer right away.</p>
+      </div>
+
+      <div class="mode-grid">
+        <div class="mode-card mode-card--chat">
           <div class="mode-header">
-            <span>CHAT</span>
+            <span class="mode-tag">CHAT</span>
             <h3>Just type.</h3>
             <p>Ask about products, hours, facilities, and more — in plain words.</p>
           </div>
-          <div class="mode-ui-mockup placeholder-box"><span>[ Chat Interface Graphic ]</span></div>
+          <div class="mini-chat">
+            <div class="mini-chat-head">Concierge81<br><span class="online-dot">Online</span></div>
+            <span class="timestamp">Today 8:42 PM</span>
+            <div class="msg-row msg-row--user"><p class="bubble bubble--user bubble--sm">What time do you close?</p></div>
+            <div class="msg-row msg-row--ai"><p class="bubble bubble--ai bubble--sm">We're open until 9 PM today.</p></div>
+            <div class="msg-row msg-row--ai"><p class="bubble bubble--sand bubble--sm">Want directions or parking info?</p></div>
+            <div class="chip-row">
+              <span class="chip">Directions</span>
+              <span class="chip">Parking</span>
+              <span class="chip">Menu</span>
+            </div>
+          </div>
         </div>
-        <div class="mode-card dark-mode-card">
+        <div class="mode-card mode-card--voice">
           <div class="mode-header">
-            <span>VOICE</span>
+            <span class="mode-tag">VOICE</span>
             <h3>Just ask.</h3>
             <p>Speak naturally and hear the answer — no typing, no menus.</p>
           </div>
-          <div class="mode-ui-mockup voice-mockup">
-             <div class="large-mic-pulse">🎙️</div>
-             <span>Listening...</span>
+          <div class="voice-stage">
+            <span class="voice-ring"></span>
+            <span class="voice-ring"></span>
+            <span class="voice-ring"></span>
+            <div class="voice-orb">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+            </div>
+            <span class="listening">Listening…</span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 5. Industry Gallery -->
-  <section id="industries" class="section light-bg">
+  <!-- 7. Industry Gallery -->
+  <section id="industries" class="section theme-cream">
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row right">
-          <div class="header-pill header-pill-dark">Will it work for my industry?</div>
-          <div class="timestamp">You • 9:12 PM</div>
+          <div class="header-pill header-pill--user">Will it work for my industry?</div>
+          <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Built for places people visit.</div>
+          <h2 class="header-pill header-pill--ai">Built for places people visit.</h2>
         </div>
-        <div class="sub-pill-text">From hotel lobbies to clinic waiting rooms, I adapt to the way your customers ask. Swipe to explore.</div>
+        <p class="sub-pill-text">From hotel lobbies to clinic waiting rooms, I adapt to the way your customers ask. Swipe to explore.</p>
       </div>
 
-      <div class="industry-gallery">
-        <div class="gallery-card placeholder-box"><span>[ Hotels & Resorts Graphic ]</span></div>
-        <div class="gallery-card placeholder-box"><span>[ Corporate Offices Graphic ]</span></div>
-        <div class="gallery-card placeholder-box"><span>[ Airports & Transit Graphic ]</span></div>
-        <div class="gallery-card placeholder-box"><span>[ Healthcare Graphic ]</span></div>
-        <div class="gallery-card placeholder-box"><span>[ Retail Graphic ]</span></div>
-        <div class="gallery-card blue-gallery-card">
+      <div class="industry-gallery" id="industryGallery">
+        <article class="industry-card">
+          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-hotel.jpg ]</span></div>
+          <span class="industry-label">Hotels &amp; Resorts</span>
+          <h3>Check-in help, day or night.</h3>
+          <button class="industry-plus" aria-label="More about hotels">+</button>
+          <div class="industry-chat">
+            <p class="bubble bubble--glass">What time is checkout?</p>
+            <p class="bubble bubble--white">11 AM. Want me to arrange a late checkout?</p>
+          </div>
+        </article>
+        <article class="industry-card">
+          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-office.jpg ]</span></div>
+          <span class="industry-label">Corporate Offices</span>
+          <h3>Reception, without the wait.</h3>
+          <button class="industry-plus" aria-label="More about offices">+</button>
+          <div class="industry-chat">
+            <p class="bubble bubble--glass">Where is meeting room B?</p>
+            <p class="bubble bubble--white">Third floor — take the lift on your left.</p>
+          </div>
+        </article>
+        <article class="industry-card">
+          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-airport.jpg ]</span></div>
+          <span class="industry-label">Airports &amp; Transit</span>
+          <h3>Wayfinding in the moment.</h3>
+          <button class="industry-plus" aria-label="More about airports">+</button>
+          <div class="industry-chat">
+            <p class="bubble bubble--glass">Which way to Gate 12?</p>
+            <p class="bubble bubble--white">Straight ahead, about 4 minutes on foot.</p>
+          </div>
+        </article>
+        <article class="industry-card">
+          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-healthcare.jpg ]</span></div>
+          <span class="industry-label">Healthcare</span>
+          <h3>Calm guidance for every visitor.</h3>
+          <button class="industry-plus" aria-label="More about healthcare">+</button>
+          <div class="industry-chat">
+            <p class="bubble bubble--glass">Where is Pharmacy?</p>
+            <p class="bubble bubble--white">Level 2, east wing. I'll show you the way.</p>
+          </div>
+        </article>
+        <article class="industry-card">
+          <div class="placeholder-box industry-photo"><span>[ assets/images/industry-retail.jpg ]</span></div>
+          <span class="industry-label">Retail</span>
+          <h3>Answers right on the shop floor.</h3>
+          <button class="industry-plus" aria-label="More about retail">+</button>
+          <div class="industry-chat">
+            <p class="bubble bubble--glass">Do you have this in blue?</p>
+            <p class="bubble bubble--white">Yes — sizes M and L are in aisle 4.</p>
+          </div>
+        </article>
+        <article class="industry-card industry-card--cta">
           <span class="industry-label">Your industry</span>
           <h3>Built for yours, too.</h3>
           <p>Any business that serves customers can put me to work.</p>
-          <a href="#contact" class="btn btn-white">Tell us about yours</a>
+          <span class="avatar-circle"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+          <a href="#contact" class="btn btn-white btn-small">Tell us about yours</a>
+        </article>
+      </div>
+
+      <div class="gallery-controls">
+        <div class="gallery-dots" aria-hidden="true">
+          <span class="is-active"></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="gallery-arrows">
+          <button type="button" data-gallery="prev" aria-label="Previous industry">‹</button>
+          <button type="button" data-gallery="next" aria-label="Next industry">›</button>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 6. Bento Value Grid -->
-  <section id="values" class="section dark-bg">
+  <!-- 8. Bento Value Grid -->
+  <section id="values" class="section theme-dark">
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row right">
-          <div class="header-pill header-pill-white">Why concierge81?</div>
-          <div class="timestamp">You • 9:12 PM</div>
+          <div class="header-pill header-pill--user">Why concierge81?</div>
+          <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Less repetition. Better service.</div>
+          <h2 class="header-pill header-pill--ai">Less repetition. Better service.</h2>
         </div>
-        <div class="sub-pill-text dark-sub-pill">Everything you need to give customers fast, reliable answers — without adding to your team's workload.</div>
+        <p class="sub-pill-text">Everything you need to give customers fast, reliable answers — without adding to your team's workload.</p>
       </div>
 
-      <div class="value-bento-grid">
-        <div class="bento-card col-span-2">
-          <span class="bento-label">AVAILABILITY</span>
-          <h3>Open when you're closed.</h3>
-          <p>Nights, weekends, and holidays — every question gets an answer.</p>
-          <div class="bento-graphic placeholder-box" style="background: transparent; border: none;"><span>[ Timeline UI Graphic ]</span></div>
-        </div>
-        <div class="bento-card">
-          <span class="bento-label">HUMAN + AI</span>
-          <h3>Knows when to hand off.</h3>
-          <p>Complex requests reach your team with the full conversation.</p>
-          <div class="bento-graphic placeholder-box" style="background: transparent; border: none;"><span>[ Handoff Graphic ]</span></div>
+      <div class="bento">
+        <div class="bento-row">
+          <div class="bento-card bento-card--wide">
+            <span class="bento-label">Availability</span>
+            <h3>Open when you're closed.</h3>
+            <p>Nights, weekends, and holidays — every question gets an answer.</p>
+            <div class="bento-graphic availability">
+              <div class="big-247">24/7</div>
+              <div class="timeline">
+                <span class="timeline-tip">● Answered at 2:14 AM</span>
+                <div class="timeline-track"></div>
+                <div class="timeline-labels"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="bento-card">
+            <span class="bento-label">Human + AI</span>
+            <h3>Knows when to hand off.</h3>
+            <p>Complex requests reach your team with the full conversation.</p>
+            <div class="bento-graphic handoff">
+              <div class="handoff-node"><span class="handoff-avatar"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>Concierge81</div>
+              <div class="handoff-link"><span>Full context</span></div>
+              <div class="handoff-node">
+                <span class="handoff-team"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>
+                Your team
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="bento-card">
-          <span class="bento-label">ACCURACY</span>
-          <h3>Always on-brand.</h3>
-          <p>Every reply comes from your own, up-to-date information.</p>
-        </div>
-        <div class="bento-card">
-          <span class="bento-label">LANGUAGES</span>
-          <h3>Fluent in your guests' language.</h3>
-          <p>Serve every guest in the language they prefer.</p>
-        </div>
-        <div class="bento-card">
-          <span class="bento-label">SCALE</span>
-          <h3>Every location.</h3>
-          <p>One branch or many — all managed from one place.</p>
+        <div class="bento-row">
+          <div class="bento-card">
+            <span class="bento-label">Accuracy</span>
+            <h3>Always on-brand.</h3>
+            <p>Every reply comes from your own, up-to-date information.</p>
+            <div class="bento-graphic info-tree">
+              <div class="info-box">Business info<small>✓ Hours 9 AM – 9 PM · updated</small></div>
+              <div class="info-nodes">
+                <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></i>Kiosk</div>
+                <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></i>Web</div>
+                <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg></i>App</div>
+              </div>
+            </div>
+          </div>
+          <div class="bento-card">
+            <span class="bento-label">Languages</span>
+            <h3>Fluent in your guests' language.</h3>
+            <p>Serve every guest in the language they prefer.</p>
+            <div class="bento-graphic">
+              <div class="lang-tabs"><span class="is-active">EN</span><span>JP</span><span>ZH</span><span>KO</span><span>ES</span><span>+</span></div>
+              <div class="hello">Hello.<span>こんにちは。</span></div>
+              <div class="hello-alt">Hola · Bonjour · Xin chào · 안녕하세요</div>
+            </div>
+          </div>
+          <div class="bento-card">
+            <span class="bento-label">Scale</span>
+            <h3>Every location.</h3>
+            <p>One branch or many — all managed from one place.</p>
+            <div class="bento-graphic">
+              <svg class="network" viewBox="0 0 240 150" fill="none" aria-hidden="true">
+                <g stroke="#2A2B30"><line x1="120" y1="75" x2="45" y2="28"/><line x1="120" y1="75" x2="195" y2="35"/><line x1="120" y1="75" x2="55" y2="125"/><line x1="120" y1="75" x2="190" y2="120"/></g>
+                <circle cx="120" cy="75" r="16" fill="rgba(47,107,255,0.25)"/><circle cx="120" cy="75" r="6" fill="#2F6BFF"/>
+                <g fill="#5B8CFF"><circle cx="45" cy="28" r="3.5"/><circle cx="195" cy="35" r="3.5"/><circle cx="55" cy="125" r="3.5"/><circle cx="190" cy="120" r="3.5"/></g>
+                <g fill="#9CA3AF" font-size="8" font-family="inherit"><text x="30" y="17">Shinjuku</text><text x="182" y="24">Osaka</text><text x="40" y="142">Kyoto</text><text x="176" y="138">Nagoya</text></g>
+              </svg>
+            </div>
+          </div>
         </div>
 
-        <div class="bento-card col-span-2">
-          <span class="bento-label">INSIGHTS</span>
-          <h3>Know what customers need.</h3>
-          <p>See the questions asked most — and keep improving.</p>
-          <div class="bento-graphic placeholder-box" style="background: transparent; border: none;"><span>[ Bar Chart Graphic ]</span></div>
-        </div>
-        <div class="bento-card action-card">
-          <div class="avatar-circle placeholder-box"><span>[👤]</span></div>
-          <h3>See it in action.</h3>
-          <p>A live demo with your own questions.</p>
-          <a href="#contact" class="btn btn-white">Request a demo</a>
+        <div class="bento-row">
+          <div class="bento-card bento-card--wide">
+            <span class="bento-label">Insights</span>
+            <h3>Know what customers need.</h3>
+            <p>See the questions asked most — and keep improving.</p>
+            <div class="bento-graphic insights">
+              <div class="insight-copy">
+                <div class="insight-kicker">Most asked topic this week</div>
+                <div class="insight-word">Parking</div>
+                <div class="insight-quote">"Where can I park, and how much is it?"</div>
+                <span class="trend-chip">↗ Trending up</span>
+              </div>
+              <div class="bars-wrap">
+                <div class="bars-caption">Parking questions per day</div>
+                <div class="bars">
+                  <span class="bar">M</span><span class="bar">T</span><span class="bar">W</span><span class="bar">T</span><span class="bar">F</span><span class="bar">S</span><span class="bar">S</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bento-card bento-card--cta">
+            <span class="avatar-circle"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+            <h3>See it in action.</h3>
+            <p>A live demo with your own questions.</p>
+            <a href="#contact" class="btn btn-white btn-small">Request a demo</a>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 7. Deployment / Integrations -->
-  <section id="deployment" class="section light-bg">
+  <!-- 9. Deployment -->
+  <section id="deployment" class="section theme-light">
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row right">
-          <div class="header-pill header-pill-dark">Where would my concierge live?</div>
-          <div class="timestamp">You • 9:12 PM</div>
+          <div class="header-pill header-pill--user">Where would my concierge live?</div>
+          <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Wherever your customers already are.</div>
+          <h2 class="header-pill header-pill--ai">Wherever your customers already are.</h2>
         </div>
-        <div class="sub-pill-text">Scroll through our chat to see every place I can work.</div>
+        <p class="sub-pill-text">Scroll through our chat to see every place I can work.</p>
       </div>
 
-      <div class="deployment-split">
-        <div class="deployment-mockup placeholder-box">
-          <span>[ Tablet UI Graphic ]</span>
+      <div class="deploy-split">
+        <div class="deploy-stage">
+          <div class="tablet-frame">
+            <div class="placeholder-box tablet-screen"><span>[ assets/images/tablet-ui.png ]</span></div>
+          </div>
         </div>
-        
-        <div class="deployment-platforms">
+
+        <div class="platform-list">
           <div class="platform-card">
             <div class="platform-header">
-              <span class="platform-icon">🖥️</span>
+              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
               <h4>Kiosk</h4>
             </div>
             <p>A friendly face in your lobby, store, or reception — greeting every guest by voice or touch.</p>
           </div>
           <div class="platform-card">
             <div class="platform-header">
-              <span class="platform-icon">💻</span>
+              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></span>
               <h4>Website</h4>
             </div>
             <p>A chat window that answers visitors on any page, day or night.</p>
           </div>
           <div class="platform-card">
             <div class="platform-header">
-              <span class="platform-icon">📱</span>
+              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg></span>
               <h4>Mobile</h4>
             </div>
             <p>Help right inside your app — in your customers' pocket, wherever they are.</p>
           </div>
           <div class="platform-card">
             <div class="platform-header">
-              <span class="platform-icon">⚙️</span>
+              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
               <h4>Custom</h4>
             </div>
             <p>Built into your own displays, apps, or spaces — I'll fit right in.</p>
@@ -450,197 +617,225 @@
     </div>
   </section>
 
-  <!-- 8. Setup / Pricing -->
-  <section id="pricing" class="section dark-bg">
+  <!-- 10. Setup / Pricing -->
+  <section id="pricing" class="section theme-dark">
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row right">
-          <div class="header-pill header-pill-white">Which setup is right for me?</div>
-          <div class="timestamp">You • 9:12 PM</div>
+          <div class="header-pill header-pill--user">Which setup is right for me?</div>
+          <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Find the setup that fits your business.</div>
+          <h2 class="header-pill header-pill--ai">Find the setup that fits your business.</h2>
         </div>
       </div>
-      
+
       <div class="pricing-tier-grid">
         <div class="tier-card tier-1">
+          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><g stroke="#fff"><circle cx="110" cy="68" r="70" stroke-opacity=".22"/><circle cx="110" cy="68" r="50" stroke-opacity=".3"/></g><circle cx="110" cy="68" r="30" fill="#fff" fill-opacity=".22"/><circle cx="110" cy="68" r="9" fill="#fff" fill-opacity=".9"/></svg>
           <span class="tier-label">BASIC</span>
           <h3>Start simple.<br>Start with AI.</h3>
           <p>For businesses beginning their AI-powered customer assistance journey.</p>
-          <a href="#" class="btn btn-white btn-small">Learn More</a>
+          <a href="#contact" class="btn btn-white btn-small">Learn More</a>
         </div>
         <div class="tier-card tier-2">
+          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><circle cx="94" cy="70" r="44" fill="#fff" fill-opacity=".16" stroke="#fff" stroke-opacity=".4"/><circle cx="132" cy="70" r="44" stroke="#fff" stroke-opacity=".4"/><circle cx="113" cy="70" r="72" stroke="#fff" stroke-opacity=".12"/></svg>
           <span class="tier-label">BASIC</span>
           <h3>More capacity.<br>More ways to assist.</h3>
           <p>For businesses with higher customer interaction volumes and dedicated deployment needs.</p>
-          <a href="#" class="btn btn-white btn-small">Learn More</a>
+          <a href="#contact" class="btn btn-white btn-small">Learn More</a>
         </div>
         <div class="tier-card tier-3">
+          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><g stroke="#fff"><circle cx="102" cy="76" r="70" stroke-opacity=".18"/><circle cx="126" cy="54" r="26" stroke-opacity=".45"/><circle cx="132" cy="44" r="16" stroke-opacity=".35"/></g><circle cx="112" cy="74" r="22" fill="#fff" fill-opacity=".3"/><circle cx="142" cy="34" r="7" fill="#fff" fill-opacity=".95"/></svg>
           <span class="tier-label">BUSINESS</span>
-          <h3>Built for growing<br>operations.</h3>
+          <h3>Built for growing operations.</h3>
           <p>For organizations with higher customer traffic and broader operational requirements.</p>
-          <a href="#" class="btn btn-white btn-small">Learn More</a>
+          <a href="#contact" class="btn btn-white btn-small">Learn More</a>
         </div>
         <div class="tier-card tier-4">
+          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><circle cx="112" cy="68" r="72" stroke="#fff" stroke-opacity=".12"/><g stroke="#fff" stroke-opacity=".35"><path d="M112 68L112 23M112 68L151 45.5M112 68L151 90.5M112 68L112 113M112 68L73 90.5M112 68L73 45.5"/><path d="M112 23L151 45.5L151 90.5L112 113L73 90.5L73 45.5Z" stroke-opacity=".18"/></g><g stroke="#fff" stroke-opacity=".7"><circle cx="112" cy="23" r="5"/><circle cx="151" cy="45.5" r="5"/><circle cx="151" cy="90.5" r="5"/><circle cx="112" cy="113" r="5"/><circle cx="73" cy="90.5" r="5"/><circle cx="73" cy="45.5" r="5"/></g><circle cx="112" cy="68" r="18" fill="#fff" fill-opacity=".15"/><circle cx="112" cy="68" r="9" fill="#9DB8FF"/></svg>
           <span class="tier-label">ENTERPRISE</span>
-          <h3>Built around your<br>organization.</h3>
+          <h3>Built around your organization.</h3>
           <p>For multi-location businesses and customized implementations.</p>
-          <a href="#contact" class="btn btn-white btn-small outline-btn">Talk to Our Team</a>
+          <a href="#contact" class="btn btn-white btn-small">Talk to Our Team</a>
         </div>
       </div>
 
-      <div class="pricing-footer-prompt">
-        <span>Not sure which setup is right for you?</span>
-        <a href="#contact" class="btn btn-primary btn-small">Talk to Our Team</a>
+      <div class="cta-row">
+        <div class="cta-pill">
+          <span>Not sure which setup is right for you?</span>
+          <a href="#contact" class="btn btn-primary btn-small">Talk to Our Team</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- 9. FAQ Section -->
-  <section id="faq" class="section light-bg">
+  <!-- 11. FAQ -->
+  <section id="faq" class="section theme-cream">
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row right">
-          <div class="header-pill header-pill-dark">I still have a few questions.</div>
-          <div class="timestamp">You • 9:12 PM</div>
+          <div class="header-pill header-pill--user">I still have a few questions.</div>
+          <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Ask me anything.</div>
+          <h2 class="header-pill header-pill--ai">Ask me anything.</h2>
         </div>
-        <div class="sub-pill-text">Here are the questions I hear most.</div>
+        <p class="sub-pill-text">Here are the questions I hear most.</p>
       </div>
 
-      <div class="faq-filters">
-        <button class="filter-btn active">All</button>
-        <button class="filter-btn">General</button>
-        <button class="filter-btn">Chat & Voice</button>
-        <button class="filter-btn">Languages</button>
-        <button class="filter-btn">Setup & Plans</button>
-        <button class="filter-btn">Support</button>
+      <div class="faq-filters" id="faqFilters">
+        <button type="button" class="filter-btn is-active" data-filter="all">All</button>
+        <button type="button" class="filter-btn" data-filter="general">General</button>
+        <button type="button" class="filter-btn" data-filter="chat-voice">Chat &amp; Voice</button>
+        <button type="button" class="filter-btn" data-filter="languages">Languages</button>
+        <button type="button" class="filter-btn" data-filter="setup">Setup &amp; Plans</button>
+        <button type="button" class="filter-btn" data-filter="support">Support</button>
       </div>
 
       <div class="faq-chat-box">
-        <div class="timestamp text-center" style="margin-bottom: 2rem;">Today 9:12 AM</div>
-        
-        <div class="chat-row user-row">
-          <div class="chat-pill dark-pill">What is Concierge81?</div>
+        <span class="timestamp">Today 9:12 AM</span>
+
+        <div class="faq-pair" data-cat="general">
+          <div class="msg-row msg-row--user"><p class="bubble bubble--user">What is Concierge81?</p></div>
+          <div class="msg-ai">
+            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+            <p class="bubble bubble--sand">I'm an AI concierge for your business. I answer the questions your team hears every day — by chat or voice — so customers get help instantly.</p>
+          </div>
         </div>
-        <div class="chat-row ai-row">
-          <div class="chat-pill gray-pill">I'm an AI concierge for your business. I answer the questions your team hears every day — by chat or voice — so customers get help instantly.</div>
+
+        <div class="faq-pair" data-cat="general support">
+          <div class="msg-row msg-row--user"><p class="bubble bubble--user">Will it replace my staff?</p></div>
+          <div class="msg-ai">
+            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+            <p class="bubble bubble--sand">Not at all. I take care of routine questions so your team can focus on guests who need a personal touch. Anything complex goes straight to them, with the full conversation.</p>
+          </div>
+          <div class="helpful">Was this helpful? <button type="button">Yes</button><button type="button">No</button></div>
         </div>
-        
-        <div class="chat-row user-row">
-          <div class="chat-pill dark-pill">Will it replace my staff?</div>
+
+        <div class="msg-ai">
+          <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" loading="lazy"></span>
+          <p class="bubble bubble--sand">Anything else I can help you with?</p>
         </div>
-        <div class="chat-row ai-row">
-          <div class="chat-pill gray-pill">Not at all. I take care of routine questions so your team can focus on guests who need a personal touch. Anything complex goes straight to them, with the full conversation.</div>
-        </div>
-        
-        <div class="chat-row user-row">
-          <div class="chat-pill dark-pill">Anything else I can help you with?</div>
-        </div>
-        
-        <div class="suggested-prompts" style="margin-top: 1rem;">
-          <span class="suggest-label" style="display:block; width: 100%; margin-bottom: 0.5rem;">SUGGESTED</span>
+
+        <div class="faq-suggested">
+          <span class="suggest-label">SUGGESTED</span>
           <div class="chip-row">
-            <div class="prompt-chip">What kinds of questions can it answer?</div>
-            <div class="prompt-chip">Which languages does it support?</div>
-            <div class="prompt-chip">How long does setup take?</div>
-            <div class="prompt-chip">Can it hand a conversation to a person?</div>
-            <div class="prompt-chip">Does it work on our website?</div>
-            <div class="prompt-chip">How do I update its answers?</div>
+            <button type="button" class="chip chip--soft">What kinds of questions can it answer?</button>
+            <button type="button" class="chip">Which languages does it support?</button>
+            <button type="button" class="chip">How long does setup take?</button>
+            <button type="button" class="chip">Can it hand a conversation to a person?</button>
+            <button type="button" class="chip">Does it work on our website?</button>
+            <button type="button" class="chip">How do I update its answers?</button>
           </div>
         </div>
       </div>
-      
-      <div class="faq-footer-prompt" style="display: flex; justify-content: flex-end; margin-top: 2rem;">
-         <div class="pricing-footer-prompt dark-bg">
-           <span style="color: #fff;">Can't find your answer?</span>
-           <a href="#contact" class="btn btn-primary btn-small">Talk to Our Team</a>
-         </div>
+
+      <div class="cta-row">
+        <div class="cta-pill cta-pill--dark">
+          <span>Can't find your answer?</span>
+          <a href="#contact" class="btn btn-primary btn-small">Talk to Our Team</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- 10. Footer / Contact Form -->
-  <footer id="contact" class="site-footer dark-bg">
+  <!-- 12. Final CTA -->
+  <section id="cta" class="section theme-light cta-hero">
+    <div class="container">
+      <div class="status-line">Concierge81 <span class="online-dot">Online</span></div>
+      <h2 class="cta-title">Your AI assistant.<span>Now on every screen.</span></h2>
+      <p class="cta-sub">See Concierge81 answer your customers — live, with your own questions.</p>
+      <div class="cta-actions">
+        <a href="#contact" class="btn btn-primary">Request a demo</a>
+        <a href="#contact" class="link-btn">Talk to our Team ›</a>
+      </div>
+      <div class="kiosk-device">
+        <div class="kiosk-screen">
+          <span class="brand-logo kiosk-logo">concierge<span>81</span></span>
+          <img class="kiosk-avatar" src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy">
+        </div>
+        <div class="kiosk-base"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13. Contact -->
+  <section id="contact" class="section theme-dark">
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row right">
-          <div class="header-pill header-pill-white">How do I get started?</div>
-          <div class="timestamp">You • 9:12 PM</div>
+          <div class="header-pill header-pill--user">How do I get started?</div>
+          <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <div class="header-pill header-pill-blue">Leave your email.<br>We'll take it from here.</div>
+          <h2 class="header-pill header-pill--ai header-pill--xl">Leave your email.<br>We'll take it from here.</h2>
         </div>
       </div>
 
-      <div class="footer-split">
-        <!-- Left: Steps -->
-        <div class="footer-steps">
-          <span class="bento-label" style="color: #6B7280; display: block; margin-bottom: 2rem;">WHAT HAPPENS NEXT</span>
-          <div class="step-item">
-            <div class="step-number">1</div>
-            <p>We reply to schedule a short call.</p>
-          </div>
-          <div class="step-item">
-            <div class="step-number">2</div>
-            <p>We show concierge81 working with your business.</p>
-          </div>
-          <div class="step-item">
-            <div class="step-number">3</div>
-            <p>We recommend the setup that fits.</p>
-          </div>
+      <div class="contact-split">
+        <div class="next-steps">
+          <span class="eyebrow">What happens next</span>
+          <ol class="step-list">
+            <li class="step-item"><span class="step-number">1</span>We reply to schedule a short call.</li>
+            <li class="step-item"><span class="step-number">2</span>We show Concierge81 working with your business.</li>
+            <li class="step-item"><span class="step-number">3</span>We recommend the setup that fits.</li>
+          </ol>
         </div>
 
-        <!-- Right: Contact Form -->
         <div class="footer-form-card">
           <form id="leadForm">
             <div class="form-group">
-              <label>FULL NAME</label>
-              <input type="text" placeholder="Your name" required>
+              <label for="leadName">Full name</label>
+              <input id="leadName" type="text" placeholder="Your name" required>
             </div>
             <div class="form-group">
-              <label>WORK EMAIL</label>
-              <input type="email" placeholder="you@company.com" required>
+              <label for="leadEmail">Work email</label>
+              <input id="leadEmail" type="email" placeholder="you@company.com" required>
             </div>
             <div class="form-group">
-              <label>COMPANY</label>
-              <input type="text" placeholder="Company name">
+              <label for="leadCompany">Company</label>
+              <input id="leadCompany" type="text" placeholder="Company name">
             </div>
             <div class="form-group">
-              <label>I'M INTERESTED IN</label>
-              <div class="interest-pills">
+              <span class="form-label">I'm interested in</span>
+              <div class="interest-pills" id="interestPills">
                 <button type="button" class="interest-pill">Basic</button>
                 <button type="button" class="interest-pill">Professional</button>
                 <button type="button" class="interest-pill">Business</button>
                 <button type="button" class="interest-pill">Enterprise</button>
-                <button type="button" class="interest-pill active">Not sure yet</button>
+                <button type="button" class="interest-pill is-active">Not sure yet</button>
               </div>
             </div>
             <div class="form-group">
-              <label>ANYTHING ELSE?</label>
-              <input type="text" placeholder="Anything else we should know? (optional)">
+              <label for="leadNotes">Anything else?</label>
+              <input id="leadNotes" type="text" placeholder="Anything else we should know? (optional)">
             </div>
-            <button type="submit" class="btn btn-primary full-width">Send</button>
+            <button type="submit" class="btn btn-primary btn-block">Send</button>
             <p class="privacy-text">By submitting, you agree to our <a href="#">Privacy Policy</a>.</p>
           </form>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- Bottom Links -->
-      <div class="footer-bottom-links">
-        <div class="left-links">
-          <a href="mailto:info@mabuhaytech.com" class="btn btn-primary btn-small">Write us: info@mabuhaytech.com</a>
+  <!-- 14. Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="mail-pill">
+          <a href="mailto:info@mabuhaytech.com">Write us: info@mabuhaytech.com</a>
+          <button type="button" class="copy-btn" data-copy="info@mabuhaytech.com" aria-label="Copy email address">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+          </button>
         </div>
-        <div class="right-links">
-          <a href="#">How it works</a>
-          <a href="#">Industries</a>
-          <a href="#">Plans</a>
-          <a href="#">FAQ</a>
-          <a href="#">Contact</a>
-        </div>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="#how">How it works</a>
+          <a href="#industries">Industries</a>
+          <a href="#pricing">Plans</a>
+          <a href="#faq">FAQ</a>
+          <a href="#contact">Contact</a>
+        </nav>
       </div>
       <div class="footer-legal">
         <span class="legal-logo">concierge81 <small>© 2026</small></span>

@@ -894,12 +894,23 @@ code, kbd, samp, pre {
 
 .inbox-title {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem;
   font-weight: 600;
   font-size: 0.95rem;
 }
 
+.inbox-card {
+  container-type: inline-size;
+}
+
+@container (max-width: 37.5rem) {
+  .inbox-head, .inbox-title {
+    justify-content: center;
+    text-align: center;
+  }
+}
 .inbox-meta {
   color: #8A867B;
   font-size: 0.75rem;
@@ -933,7 +944,7 @@ code, kbd, samp, pre {
   position: absolute;
   left: var(--x);
   bottom: var(--y);
-  transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--r, 0deg));
+  transform: translate(calc(-50% + var(--dx, 0px)), var(--dy, 0px)) rotate(var(--r, 0deg));
   white-space: nowrap;
   padding: 0.5rem 1rem;
   border-radius: 999px;
@@ -975,187 +986,187 @@ code, kbd, samp, pre {
 }
 
 .q-pile .q-tag:nth-child(1) {
-  --x: 0%;
+  --x: 10%;
   --y: 1%;
   --r: -3deg;
 }
 
 .q-pile .q-tag:nth-child(2) {
-  --x: 15%;
+  --x: 25%;
   --y: 2%;
   --r: 2deg;
 }
 
 .q-pile .q-tag:nth-child(3) {
-  --x: 31%;
+  --x: 41%;
   --y: 0%;
   --r: -1deg;
 }
 
 .q-pile .q-tag:nth-child(4) {
-  --x: 47%;
+  --x: 57%;
   --y: 2%;
   --r: 3deg;
 }
 
 .q-pile .q-tag:nth-child(5) {
-  --x: 62%;
+  --x: 72%;
   --y: 1%;
   --r: -2deg;
 }
 
 .q-pile .q-tag:nth-child(6) {
-  --x: 79%;
+  --x: 89%;
   --y: 3%;
   --r: 1deg;
 }
 
 .q-pile .q-tag:nth-child(7) {
-  --x: 4%;
+  --x: 14%;
   --y: 11%;
   --r: 4deg;
 }
 
 .q-pile .q-tag:nth-child(8) {
-  --x: 21%;
+  --x: 31%;
   --y: 12%;
   --r: -5deg;
 }
 
 .q-pile .q-tag:nth-child(9) {
-  --x: 37%;
+  --x: 47%;
   --y: 10%;
   --r: 2deg;
 }
 
 .q-pile .q-tag:nth-child(10) {
-  --x: 53%;
+  --x: 63%;
   --y: 12%;
   --r: -3deg;
 }
 
 .q-pile .q-tag:nth-child(11) {
-  --x: 69%;
+  --x: 79%;
   --y: 11%;
   --r: 5deg;
 }
 
 .q-pile .q-tag:nth-child(12) {
-  --x: 7%;
+  --x: 17%;
   --y: 21%;
   --r: -6deg;
 }
 
 .q-pile .q-tag:nth-child(13) {
-  --x: 24%;
+  --x: 34%;
   --y: 22%;
   --r: 3deg;
 }
 
 .q-pile .q-tag:nth-child(14) {
-  --x: 40%;
+  --x: 50%;
   --y: 20%;
   --r: -2deg;
 }
 
 .q-pile .q-tag:nth-child(15) {
-  --x: 56%;
+  --x: 66%;
   --y: 22%;
   --r: 4deg;
 }
 
 .q-pile .q-tag:nth-child(16) {
-  --x: 73%;
+  --x: 83%;
   --y: 21%;
   --r: -4deg;
 }
 
 .q-pile .q-tag:nth-child(17) {
-  --x: 11%;
+  --x: 21%;
   --y: 31%;
   --r: 5deg;
 }
 
 .q-pile .q-tag:nth-child(18) {
-  --x: 28%;
+  --x: 38%;
   --y: 32%;
   --r: -3deg;
 }
 
 .q-pile .q-tag:nth-child(19) {
-  --x: 45%;
+  --x: 55%;
   --y: 30%;
   --r: 6deg;
 }
 
 .q-pile .q-tag:nth-child(20) {
-  --x: 61%;
+  --x: 71%;
   --y: 32%;
   --r: -5deg;
 }
 
 .q-pile .q-tag:nth-child(21) {
-  --x: 19%;
+  --x: 29%;
   --y: 41%;
   --r: -2deg;
 }
 
 .q-pile .q-tag:nth-child(22) {
-  --x: 37%;
+  --x: 47%;
   --y: 42%;
   --r: 4deg;
 }
 
 .q-pile .q-tag:nth-child(23) {
-  --x: 54%;
+  --x: 64%;
   --y: 40%;
   --r: -6deg;
 }
 
 .q-pile .q-tag:nth-child(24) {
-  --x: 9%;
+  --x: 19%;
   --y: 6%;
   --r: 6deg;
 }
 
 .q-pile .q-tag:nth-child(25) {
-  --x: 42%;
+  --x: 52%;
   --y: 6%;
   --r: -4deg;
 }
 
 .q-pile .q-tag:nth-child(26) {
-  --x: 71%;
+  --x: 81%;
   --y: 7%;
   --r: 3deg;
 }
 
 .q-pile .q-tag:nth-child(27) {
-  --x: 14%;
+  --x: 24%;
   --y: 17%;
   --r: -2deg;
 }
 
 .q-pile .q-tag:nth-child(28) {
-  --x: 48%;
+  --x: 58%;
   --y: 16%;
   --r: 5deg;
 }
 
 .q-pile .q-tag:nth-child(29) {
-  --x: 31%;
+  --x: 41%;
   --y: 27%;
   --r: 2deg;
 }
 
 .q-pile .q-tag:nth-child(30) {
-  --x: 66%;
+  --x: 76%;
   --y: 27%;
   --r: -3deg;
 }
 
 .q-pile .q-tag--float {
-  --x: 46%;
+  --x: 50%;
   --y: 74%;
   --r: 4deg;
   z-index: 5;
@@ -2904,7 +2915,7 @@ main > .blog-section:last-child {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 0;
+  object-position: 50% 40%;
 }
 
 .post-card-media--portrait {
@@ -3557,12 +3568,21 @@ main > .blog-section:last-child {
 .news-gallery figure {
   margin: 0;
 }
-.news-gallery .placeholder-box {
+
+.news-gallery-photo {
+  width: 100%;
+  height: auto;
   aspect-ratio: 4/3;
-  border: none;
+  object-fit: cover;
+  object-position: 42% 50%;
   border-radius: 14px;
   background: #E5E2D9;
 }
+
+.news-gallery-photo--office {
+  object-position: 45% 50%;
+}
+
 .news-gallery figcaption {
   font-size: 0.68rem;
   color: #8A867B;

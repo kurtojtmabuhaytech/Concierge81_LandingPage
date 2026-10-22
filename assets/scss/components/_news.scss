@@ -73,7 +73,10 @@
 
 .news-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 0.75rem; margin: 1.75rem 0;
   figure { margin: 0; }
-  .placeholder-box { aspect-ratio: 4 / 3; border: none; border-radius: 14px; background: $neutral-200; }
+}
+.news-gallery-photo { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; object-position: 42% 50%; border-radius: 14px; background: $neutral-200; }
+.news-gallery-photo--office { object-position: 45% 50%; }
+.news-gallery {
   figcaption { font-size: 0.68rem; color: $neutral-500; margin-top: 0.4rem; }
 }
 

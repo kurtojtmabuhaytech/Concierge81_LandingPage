@@ -376,7 +376,13 @@
   margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
 }
 .inbox-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; position: relative; z-index: 2; }
-.inbox-title { display: flex; align-items: center; gap: 0.6rem; font-weight: $font-weight-semibold; font-size: 0.95rem; }
+.inbox-title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; font-weight: $font-weight-semibold; font-size: 0.95rem; }
+
+// Narrow cards: the header wraps onto two lines, so centre both lines over the centred pile
+.inbox-card { container-type: inline-size; }
+@container (max-width: 37.5rem) {
+  .inbox-head, .inbox-title { justify-content: center; text-align: center; }
+}
 .inbox-meta { color: $neutral-500; font-size: 0.75rem; font-weight: $font-weight-normal; }
 .badge-red { background: $color-critical; padding: 3px 10px; border-radius: $radius-full; font-size: 0.65rem; font-weight: $font-weight-bold; }
 .drag-hint { border: 1px solid $color-night-line; background: $color-night-card; border-radius: $radius-full; padding: 5px 12px; font-size: 0.7rem; color: $neutral-300; }
@@ -387,7 +393,8 @@
   position: absolute;
   left: var(--x);
   bottom: var(--y);
-  transform: translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--r, 0deg));
+  // --x is the tag's centre (-50% shifts it back), so the pile stays centred at any card width
+  transform: translate(calc(-50% + var(--dx, 0px)), var(--dy, 0px)) rotate(var(--r, 0deg));
   white-space: nowrap;
   padding: 0.5rem 1rem;
   border-radius: $radius-full;
@@ -422,9 +429,10 @@ $q-pile: (
 );
 @each $pos in $q-pile {
   $i: index($q-pile, $pos);
-  .q-pile .q-tag:nth-child(#{$i}) { --x: #{nth($pos, 1)}; --y: #{nth($pos, 2)}; --r: #{nth($pos, 3)}; }
+  // List values are left edges from the desktop layout; +10% turns them into centres (10%–89%, symmetric around 50%)
+  .q-pile .q-tag:nth-child(#{$i}) { --x: #{nth($pos, 1) + 10%}; --y: #{nth($pos, 2)}; --r: #{nth($pos, 3)}; }
 }
-.q-pile .q-tag--float { --x: 46%; --y: 74%; --r: 4deg; z-index: 5; }
+.q-pile .q-tag--float { --x: 50%; --y: 74%; --r: 4deg; z-index: 5; }
 
 /* =========================================
    Section 5: How It Works (Dark 3-Step)
