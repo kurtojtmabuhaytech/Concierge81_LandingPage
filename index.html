@@ -9,7 +9,17 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="assets/css/landing.css">
+  <!-- Hides data-anim elements before first paint; dropped again if GSAP never loads -->
+  <script>
+    document.documentElement.classList.add('js-motion');
+    window.addEventListener('load', () => { if (!window.gsap) document.documentElement.classList.remove('js-motion'); });
+  </script>
+  <script src="assets/js/vendor/gsap/gsap.min.js" defer></script>
+  <script src="assets/js/vendor/gsap/ScrollTrigger.min.js" defer></script>
+  <script src="assets/js/vendor/gsap/Flip.min.js" defer></script>
+  <script src="assets/js/vendor/gsap/MorphSVGPlugin.min.js" defer></script>
   <script src="assets/js/main.js" defer></script>
+  <script src="assets/js/animations.js" defer></script>
 </head>
 <body class="reveal-page">
 

@@ -3690,3 +3690,19 @@ main > .blog-section:last-child {
     transition: none;
   }
 }
+/* =========================================
+   GSAP Motion (landing page)
+   index.html adds .js-motion to <html> before first paint; animations.js reveals data-anim
+   elements with autoAlpha. Without JS, without GSAP, or with reduced motion, they stay visible.
+   ========================================= */
+.js-motion [data-anim] {
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-motion [data-anim] {
+    visibility: visible;
+  }
+}
+
+/*# sourceMappingURL=landing.css.map */

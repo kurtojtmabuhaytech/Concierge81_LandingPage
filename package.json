@@ -1,0 +1,12 @@
+{
+  "name": "concierge81-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Concierge81 static landing page (prototype for the WordPress theme)",
+  "scripts": {
+    "vendor": "node scripts/copy-vendor.js"
+  },
+  "dependencies": {
+    "gsap": "3.15.0"
+  }
+}
