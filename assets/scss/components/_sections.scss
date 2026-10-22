@@ -292,6 +292,7 @@
     aspect-ratio: 1672 / 2180;
     object-fit: cover;
     object-position: 50% 0;
+    clip-path: inset(0 0 var(--avatar-clip-bottom, 0px) 0); // trimmed to the kiosk screen by the morph
   }
 }
 

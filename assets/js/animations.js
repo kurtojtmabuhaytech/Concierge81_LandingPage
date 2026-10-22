@@ -233,15 +233,28 @@
     );
     const cardBox = () => within(hero.surface);
     const screenBox = () => within($('.kiosk-screen', introKiosk));
-    // Hero avatar scaled into the kiosk screen: centred, standing on the screen's bottom edge
+    // Hero avatar scaled onto the exact pixels the kiosk shows, so the hand-over can't be seen.
+    // Frame 174.png (kiosk) is Avatar.png (hero) scaled by 0.2520 and offset (-6.5, 59.5) px,
+    // measured by matching the two files; re-measure if either artwork changes.
+    const HERO_ART = { width: 1672, height: 2495 };
+    const KIOSK_ART = { width: 414, height: 639, scale: 0.2520, x: -6.5, y: 59.5 };
     const avatarFit = () => {
       const img = within(heroImg);
-      const target = within($('.kiosk-avatar', introKiosk));
-      const scale = target.height / img.height;
+      const box = within(kioskBody.avatar); // the moving kiosk's own avatar, resting on the intro slot
+      // Both images use object-fit: cover with object-position: 50% 0
+      const heroScale = Math.max(img.width / HERO_ART.width, img.height / HERO_ART.height);
+      const heroLeft = img.x + (img.width - HERO_ART.width * heroScale) / 2;
+      const kioskScale = Math.max(box.width / KIOSK_ART.width, box.height / KIOSK_ART.height);
+      const artLeft = box.x + (box.width - KIOSK_ART.width * kioskScale) / 2 + KIOSK_ART.x * kioskScale;
+      const artTop = box.y + KIOSK_ART.y * kioskScale;
+      const scale = (KIOSK_ART.scale * kioskScale) / heroScale;
+      // The hero image runs further down than the kiosk shows: clip it at the screen's bottom edge
+      const shownRows = (box.height / kioskScale - KIOSK_ART.y) / KIOSK_ART.scale;
       return {
-        x: target.x + target.width / 2 - (img.width * scale) / 2 - img.x,
-        y: target.y + target.height - img.height * scale - img.y,
-        scale
+        x: artLeft - img.x - (heroLeft - img.x) * scale,
+        y: artTop - img.y,
+        scale,
+        clip: Math.max(0, img.height - shownRows * heroScale)
       };
     };
     // Distance that lines one element up with another (ignoring its current transform)
@@ -271,6 +284,7 @@
         backgroundSize: `${card.width}px ${card.height}px`, backgroundPosition: `${card.x}px ${card.y}px`
       });
       gsap.set(morphEdge, { autoAlpha: 0, ...clipTo(card, 28, 1) });
+      gsap.set(heroImg, { '--avatar-clip-bottom': '0px' });
       // The kiosk body forms around the morphed screen: frame, stand and logo fade in over it
       gsap.set(traveller, { backgroundColor: 'rgba(14, 16, 19, 0)', boxShadow: '0 30px 60px rgba(11, 12, 14, 0)' });
       gsap.set(kioskBody.screen, { backgroundImage: 'none' });
@@ -302,6 +316,7 @@
       .to(morphEdge, { ...clipToLater(screenBox, 18, 1), duration: MOTION.slow, ease: MOTION.easeInOut }, 0.15)
       .to(heroImg, {
         x: () => avatarFit().x, y: () => avatarFit().y, scale: () => avatarFit().scale,
+        '--avatar-clip-bottom': () => `${avatarFit().clip}px`,
         transformOrigin: '0 0', duration: MOTION.slow, ease: MOTION.easeInOut
       }, 0.15)
       .to(hero.avatar, { '--avatar-glow': 0, duration: 0.4, ease: 'none' }, 0.15)
