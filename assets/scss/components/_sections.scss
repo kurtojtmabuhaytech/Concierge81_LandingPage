@@ -452,8 +452,14 @@ $q-pile: (
 );
 @each $pos in $q-pile {
   $i: index($q-pile, $pos);
-  // List values are left edges from the desktop layout; +10% turns them into centres (10%–89%, symmetric around 50%)
-  .q-pile .q-tag:nth-child(#{$i}) { --x: #{nth($pos, 1) + 10%}; --y: #{nth($pos, 2)}; --r: #{nth($pos, 3)}; }
+  // List values are left edges from the desktop layout; +10% turns them into centres (10%–89%,
+  // symmetric around 50%). The pile is drawn in towards the middle and flattened, so the questions
+  // bunch up and overlap like a real heap (centres 22%–77%, up to 29% high).
+  .q-pile .q-tag:nth-child(#{$i}) {
+    --x: #{50% + (nth($pos, 1) + 10% - 50%) * 0.7};
+    --y: #{nth($pos, 2) * 0.7};
+    --r: #{nth($pos, 3)};
+  }
 }
 .q-pile .q-tag--float { --x: 50%; --y: 74%; --r: 4deg; z-index: 5; }
 
@@ -690,12 +696,25 @@ $q-pile: (
 .avatar-circle { width: 64px; height: 64px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.6); box-shadow: $shadow-glow; }
 
 .gallery-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
-.gallery-dots { display: flex; gap: 5px;
-  span { width: 6px; height: 6px; border-radius: $radius-full; background: $neutral-300; }
-  .is-active { width: 22px; background: $color-ink; }
+.gallery-dots { display: flex; align-items: center; gap: 4px;
+  // the dot is drawn inside a larger click area
+  span {
+    width: 18px; height: 18px; display: grid; place-items: center; cursor: pointer;
+    &::before { content: ''; width: 8px; height: 8px; border-radius: $radius-full; background: $neutral-300; transition: width 0.3s ease, background 0.3s ease; }
+    &:hover::before { background: $neutral-500; }
+  }
+  .is-active { width: 34px; &::before { width: 28px; background: $color-ink; } }
+  span[hidden] { display: none; } // positions the desktop carousel doesn't need
 }
-.gallery-arrows { display: flex; gap: 6px;
-  button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid $neutral-300; background: $color-white; cursor: pointer; font-size: 1rem; line-height: 1; color: $color-ink; }
+.gallery-arrows { display: flex; gap: 8px;
+  button {
+    width: 42px; height: 42px; border-radius: 50%; border: 1px solid $neutral-300; background: $color-white;
+    cursor: pointer; font-size: 1.25rem; line-height: 1; color: $color-ink;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+    &:hover:not(:disabled) { background: $color-ink; border-color: $color-ink; color: $color-white; }
+    &:disabled { opacity: 0.35; cursor: default; }
+  }
 }
 
 /* =========================================

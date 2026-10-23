@@ -1015,182 +1015,182 @@ code, kbd, samp, pre {
 }
 
 .q-pile .q-tag:nth-child(1) {
-  --x: 10%;
-  --y: 1%;
+  --x: 22%;
+  --y: 0.7%;
   --r: -3deg;
 }
 
 .q-pile .q-tag:nth-child(2) {
-  --x: 25%;
-  --y: 2%;
+  --x: 32.5%;
+  --y: 1.4%;
   --r: 2deg;
 }
 
 .q-pile .q-tag:nth-child(3) {
-  --x: 41%;
+  --x: 43.7%;
   --y: 0%;
   --r: -1deg;
 }
 
 .q-pile .q-tag:nth-child(4) {
-  --x: 57%;
-  --y: 2%;
+  --x: 54.9%;
+  --y: 1.4%;
   --r: 3deg;
 }
 
 .q-pile .q-tag:nth-child(5) {
-  --x: 72%;
-  --y: 1%;
+  --x: 65.4%;
+  --y: 0.7%;
   --r: -2deg;
 }
 
 .q-pile .q-tag:nth-child(6) {
-  --x: 89%;
-  --y: 3%;
+  --x: 77.3%;
+  --y: 2.1%;
   --r: 1deg;
 }
 
 .q-pile .q-tag:nth-child(7) {
-  --x: 14%;
-  --y: 11%;
+  --x: 24.8%;
+  --y: 7.7%;
   --r: 4deg;
 }
 
 .q-pile .q-tag:nth-child(8) {
-  --x: 31%;
-  --y: 12%;
+  --x: 36.7%;
+  --y: 8.4%;
   --r: -5deg;
 }
 
 .q-pile .q-tag:nth-child(9) {
-  --x: 47%;
-  --y: 10%;
+  --x: 47.9%;
+  --y: 7%;
   --r: 2deg;
 }
 
 .q-pile .q-tag:nth-child(10) {
-  --x: 63%;
-  --y: 12%;
+  --x: 59.1%;
+  --y: 8.4%;
   --r: -3deg;
 }
 
 .q-pile .q-tag:nth-child(11) {
-  --x: 79%;
-  --y: 11%;
+  --x: 70.3%;
+  --y: 7.7%;
   --r: 5deg;
 }
 
 .q-pile .q-tag:nth-child(12) {
-  --x: 17%;
-  --y: 21%;
+  --x: 26.9%;
+  --y: 14.7%;
   --r: -6deg;
 }
 
 .q-pile .q-tag:nth-child(13) {
-  --x: 34%;
-  --y: 22%;
+  --x: 38.8%;
+  --y: 15.4%;
   --r: 3deg;
 }
 
 .q-pile .q-tag:nth-child(14) {
   --x: 50%;
-  --y: 20%;
+  --y: 14%;
   --r: -2deg;
 }
 
 .q-pile .q-tag:nth-child(15) {
-  --x: 66%;
-  --y: 22%;
+  --x: 61.2%;
+  --y: 15.4%;
   --r: 4deg;
 }
 
 .q-pile .q-tag:nth-child(16) {
-  --x: 83%;
-  --y: 21%;
+  --x: 73.1%;
+  --y: 14.7%;
   --r: -4deg;
 }
 
 .q-pile .q-tag:nth-child(17) {
-  --x: 21%;
-  --y: 31%;
+  --x: 29.7%;
+  --y: 21.7%;
   --r: 5deg;
 }
 
 .q-pile .q-tag:nth-child(18) {
-  --x: 38%;
-  --y: 32%;
+  --x: 41.6%;
+  --y: 22.4%;
   --r: -3deg;
 }
 
 .q-pile .q-tag:nth-child(19) {
-  --x: 55%;
-  --y: 30%;
+  --x: 53.5%;
+  --y: 21%;
   --r: 6deg;
 }
 
 .q-pile .q-tag:nth-child(20) {
-  --x: 71%;
-  --y: 32%;
+  --x: 64.7%;
+  --y: 22.4%;
   --r: -5deg;
 }
 
 .q-pile .q-tag:nth-child(21) {
-  --x: 29%;
-  --y: 41%;
+  --x: 35.3%;
+  --y: 28.7%;
   --r: -2deg;
 }
 
 .q-pile .q-tag:nth-child(22) {
-  --x: 47%;
-  --y: 42%;
+  --x: 47.9%;
+  --y: 29.4%;
   --r: 4deg;
 }
 
 .q-pile .q-tag:nth-child(23) {
-  --x: 64%;
-  --y: 40%;
+  --x: 59.8%;
+  --y: 28%;
   --r: -6deg;
 }
 
 .q-pile .q-tag:nth-child(24) {
-  --x: 19%;
-  --y: 6%;
+  --x: 28.3%;
+  --y: 4.2%;
   --r: 6deg;
 }
 
 .q-pile .q-tag:nth-child(25) {
-  --x: 52%;
-  --y: 6%;
+  --x: 51.4%;
+  --y: 4.2%;
   --r: -4deg;
 }
 
 .q-pile .q-tag:nth-child(26) {
-  --x: 81%;
-  --y: 7%;
+  --x: 71.7%;
+  --y: 4.9%;
   --r: 3deg;
 }
 
 .q-pile .q-tag:nth-child(27) {
-  --x: 24%;
-  --y: 17%;
+  --x: 31.8%;
+  --y: 11.9%;
   --r: -2deg;
 }
 
 .q-pile .q-tag:nth-child(28) {
-  --x: 58%;
-  --y: 16%;
+  --x: 55.6%;
+  --y: 11.2%;
   --r: 5deg;
 }
 
 .q-pile .q-tag:nth-child(29) {
-  --x: 41%;
-  --y: 27%;
+  --x: 43.7%;
+  --y: 18.9%;
   --r: 2deg;
 }
 
 .q-pile .q-tag:nth-child(30) {
-  --x: 76%;
-  --y: 27%;
+  --x: 68.2%;
+  --y: 18.9%;
   --r: -3deg;
 }
 
@@ -1654,33 +1654,63 @@ code, kbd, samp, pre {
 
 .gallery-dots {
   display: flex;
-  gap: 5px;
+  align-items: center;
+  gap: 4px;
 }
 .gallery-dots span {
-  width: 6px;
-  height: 6px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.gallery-dots span::before {
+  content: "";
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
   background: #CFCBC0;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+.gallery-dots span:hover::before {
+  background: #8A867B;
 }
 .gallery-dots .is-active {
-  width: 22px;
+  width: 34px;
+}
+.gallery-dots .is-active::before {
+  width: 28px;
   background: #0E1013;
+}
+.gallery-dots span[hidden] {
+  display: none;
 }
 
 .gallery-arrows {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 .gallery-arrows button {
-  width: 30px;
-  height: 30px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   border: 1px solid #CFCBC0;
   background: #FFFFFF;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.25rem;
   line-height: 1;
   color: #0E1013;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+.gallery-arrows button:hover:not(:disabled) {
+  background: #0E1013;
+  border-color: #0E1013;
+  color: #FFFFFF;
+}
+.gallery-arrows button:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 /* =========================================
@@ -3814,8 +3844,15 @@ main > .blog-section:last-child {
 .story.is-staged .hero-card {
   overflow: visible;
 }
+.story.is-staged .kiosk-screen {
+  aspect-ratio: 1672/2180;
+}
+.story.is-staged .kiosk-avatar {
+  height: 100%;
+}
 .story.is-staged .intro-split .kiosk-device {
-  flex-basis: min(18.75rem, var(--stage-h) * 0.66 - 5rem);
+  flex: 0 0 auto;
+  width: calc(var(--hero-avatar-w, 22.5rem) + 20px);
 }
 .story.is-staged #features .chat-section-header {
   margin-bottom: 1.5rem;
@@ -3837,14 +3874,16 @@ main > .blog-section:last-child {
 }
 
 #how.is-staged,
-#interaction.is-staged {
+#interaction.is-staged,
+#industries.is-staged {
   --stage-h: calc(100svh - var(--header-h, 4rem));
   height: var(--stage-h);
   overflow: hidden;
   padding: 0;
 }
 #how.is-staged > .container,
-#interaction.is-staged > .container {
+#interaction.is-staged > .container,
+#industries.is-staged > .container {
   padding-block: 1.5rem;
   will-change: transform;
 }
@@ -3861,6 +3900,26 @@ main > .blog-section:last-child {
 }
 #problem.is-staged .inbox-card {
   margin-bottom: 2rem;
+}
+
+#industries.is-staged .industry-gallery {
+  overflow: hidden;
+  scroll-snap-type: none;
+  cursor: grab;
+  touch-action: pan-y;
+  margin-left: 0;
+  padding-left: 0;
+}
+#industries.is-staged .industry-gallery.is-dragging {
+  cursor: grabbing;
+}
+#industries.is-staged .industry-track {
+  display: flex;
+  gap: inherit;
+  will-change: transform;
+}
+#industries.is-staged .gallery-dots span {
+  cursor: pointer;
 }
 
 .slides-over {
