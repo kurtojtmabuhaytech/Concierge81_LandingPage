@@ -769,6 +769,132 @@
     });
   });
 
+  // Moving the content inside a pinned screen works like scrolling: the shift that brings an
+  // element fully into view (top first if it is taller than the screen)
+  const showInStage = (section, content, el) => () => {
+    const top = el.getBoundingClientRect().top - content.getBoundingClientRect().top;
+    return -gsap.utils.clamp(0, top - 16, top + el.offsetHeight + 24 - section.clientHeight);
+  };
+
+  /* 9. How it works (Figma recording 37–50s). Desktop: a scroll scene that slides up over the
+     inbox. The visitor asks, the concierge answers; then the steps build one by one: dot 1 lights
+     up and card 1 rises in, the line draws on to dot 2 (card 2's dial turns), then to dot 3 (card
+     3's chat bubble turns into a check); then every dot settles back to neutral. As the next
+     section slides up over it, the content fades out. */
+  const how = {
+    section: $('#how'),
+    content: $('#how > .container'),
+    header: $('#how .chat-section-header'),
+    wrap: $('#how .how-wrap'),
+    stepper: $('#how .stepper'),
+    dots: $$('#how .step-dot'),
+    cards: $$('#how .process-card')
+  };
+  how.answer = $('path', how.cards[2]);
+  how.check = how.answer.getAttribute('d');
+  how.bubble = 'M5 6h14v9h-8l-4.5 3.5V15H5Z'; // card 3's icon starts as a chat bubble
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop) return;
+    const { section, content, header, wrap, stepper, dots, cards, answer } = how;
+    const user = $('.chat-header-row.right', header);
+    const pill = $('.header-pill--user', user);
+    const reply = $('.header-pill--ai', header);
+    const sub = $('.sub-pill-text', header);
+    const icons = cards.map(card => $('.process-icon', card));
+    const texts = cards.map(card => $$('.process-label, h3, p', card));
+    const dial = $('.process-glyph--round', cards[1]);
+    const pillColor = getComputedStyle(pill).backgroundColor;
+    const pillText = getComputedStyle(pill).color;
+    const next = $('#interaction');
+    section.classList.add('is-staged');
+    next.classList.add('slides-over');
+
+    const applyStart = () => {
+      gsap.set(content, { y: 0, autoAlpha: 1 });
+      gsap.set(user, { autoAlpha: 0, y: 12 });
+      gsap.set(pill, { backgroundColor: '#5B5F66', color: 'rgba(255, 255, 255, 0.7)' });
+      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      gsap.set(stepper, { '--line': 0 });
+      gsap.set(dots, { autoAlpha: 0, scale: 0.6, '--on': 0 });
+      gsap.set(cards, { autoAlpha: 0, y: 24 });
+      gsap.set(icons, { scale: 0.85 });
+      gsap.set(texts.flat(), { opacity: 0.25 });
+      gsap.set(dial, { '--dial': '0deg' });
+      gsap.set(answer, { morphSVG: how.bubble });
+    };
+    applyStart();
+
+    // A card rises in with its icon, then its text turns from pale to solid
+    const cardIn = (i, at) => tl
+      .to(cards[i], { autoAlpha: 1, y: 0, duration: MOTION.base }, at)
+      .to(icons[i], { scale: 1, duration: MOTION.base, ease: 'back.out(1.7)' }, '<')
+      .to(texts[i], { opacity: 1, duration: 0.4, stagger: 0.1 }, '<0.25');
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
+    tl.addLabel('enter', 0)
+
+      // Step 1 (37–40s): the visitor asks, the concierge bubble grows, then the sub-bubble
+      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
+      .to(pill, { backgroundColor: pillColor, color: pillText, duration: 0.4, ease: 'none' }, 0.3);
+    bubbleIn(tl, reply, 0.6)
+      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+      .addLabel('ask')
+
+      // Step 2 (40–42s): the view moves to the steps; dot 1 lights up and card 1 rises in
+      .to(content, { y: showInStage(section, content, wrap), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
+      .to(dots[0], { autoAlpha: 1, scale: 1, '--on': 1, duration: 0.4 }, 'ask+=0.4');
+    cardIn(0, 'ask+=0.55')
+      .addLabel('step1')
+
+      // Step 3 (42–43.5s): the line draws on to dot 2, which takes the light; card 2's dial turns
+      .to(stepper, { '--line': 0.5, duration: 0.6, ease: 'power1.inOut' }, 'step1')
+      .to(dots[1], { autoAlpha: 1, scale: 1, duration: 0.3 }, 'step1+=0.4')
+      .to(dots[0], { '--on': 0, duration: 0.3 }, 'step1+=0.5')
+      .to(dots[1], { '--on': 1, duration: 0.3 }, 'step1+=0.5');
+    cardIn(1, 'step1+=0.6')
+      .to(dial, { '--dial': '180deg', duration: 1.2, ease: 'none' }, 'step1+=0.6')
+      .addLabel('step2')
+
+      // Step 4 (43.5–45s): on to dot 3; card 3 rises in and its chat bubble turns into a check
+      .to(stepper, { '--line': 1, duration: 0.6, ease: 'power1.inOut' }, 'step2')
+      .to(dots[2], { autoAlpha: 1, scale: 1, duration: 0.3 }, 'step2+=0.4')
+      .to(dots[1], { '--on': 0, duration: 0.3 }, 'step2+=0.5')
+      .to(dots[2], { '--on': 1, duration: 0.3 }, 'step2+=0.5');
+    cardIn(2, 'step2+=0.6')
+      .to(answer, { morphSVG: how.check, duration: 0.5, ease: MOTION.easeInOut }, 'step2+=1.1')
+      .addLabel('step3')
+
+      // Step 5 (45–46s): the steps settle, every dot back to neutral
+      .to(dots, { '--on': 0, duration: 0.4 }, 'step3+=0.2')
+      .addLabel('done');
+
+    // Leaving, as the next section slides up over it: the content fades out
+    const exit = gsap.timeline({ paused: true })
+      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .set({}, {}, 1);
+
+    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+
+    return () => {
+      next.classList.remove('slides-over');
+      section.classList.remove('is-staged');
+    };
+  });
+
+  // Phones: the chat plays, then the step cards rise in as they scroll into view
+  scenes.push(({ isMobile }) => {
+    if (!isMobile) return;
+    chatThread(how.header);
+    ScrollTrigger.batch('#how .process-card', {
+      start: 'top 85%',
+      once: true,
+      onEnter: batch => gsap.fromTo(batch, { autoAlpha: 0, y: 30 },
+        { autoAlpha: 1, y: 0, duration: MOTION.base, ease: MOTION.ease, stagger: 0.12 })
+    });
+  });
+
   setupPile();
 
   runOpening();
