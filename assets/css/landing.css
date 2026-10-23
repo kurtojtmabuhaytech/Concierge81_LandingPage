@@ -3836,13 +3836,15 @@ main > .blog-section:last-child {
   background: #D4E2FD;
 }
 
-#how.is-staged {
+#how.is-staged,
+#interaction.is-staged {
   --stage-h: calc(100svh - var(--header-h, 4rem));
   height: var(--stage-h);
   overflow: hidden;
   padding: 0;
 }
-#how.is-staged > .container {
+#how.is-staged > .container,
+#interaction.is-staged > .container {
   padding-block: 1.5rem;
   will-change: transform;
 }

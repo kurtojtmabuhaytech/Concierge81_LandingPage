@@ -883,11 +883,122 @@
     };
   });
 
-  // Phones: the chat plays, then the step cards rise in as they scroll into view
+  /* 10. Type or talk (Figma recording 50–63s). Desktop: a scroll scene that slides up over How it
+     works. The visitor asks, the concierge answers; the chat card fades in, its heading and then
+     its description word by word, and the mini chat window rises; the voice card shows as a pale
+     placeholder, turns dark, and the glow grows under the mic; then the mini chat plays message
+     by message, the chips appear and the voice card starts "Listening…". */
+  const modes = {
+    section: $('#interaction'),
+    content: $('#interaction > .container'),
+    header: $('#interaction .chat-section-header'),
+    grid: $('#interaction .mode-grid'),
+    chat: $('#interaction .mode-card--chat'),
+    voice: $('#interaction .mode-card--voice')
+  };
+  // Each card description, word by word (split once, so resizing never splits it again)
+  [modes.chat, modes.voice].forEach(card => {
+    const p = $('.mode-header p', card);
+    const words = p.textContent.trim().split(/\s+/);
+    p.textContent = '';
+    words.forEach((word, i) => {
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.textContent = word;
+      p.append(span, i < words.length - 1 ? ' ' : '');
+    });
+  });
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop) return;
+    const { section, content, header, grid, chat, voice } = modes;
+    const user = $('.chat-header-row.right', header);
+    const pill = $('.header-pill--user', user);
+    const reply = $('.header-pill--ai', header);
+    const sub = $('.sub-pill-text', header);
+    const titles = [chat, voice].map(card => $$('.mode-tag, h3', card));
+    const words = [chat, voice].map(card => $$('.word', card));
+    const mini = $('.mini-chat', chat);
+    const messages = $$('.msg-row', mini);
+    const question = $('.bubble', messages[0]);
+    const chips = $$('.chip', mini);
+    const stage = $('.voice-stage', voice);
+    const listening = $('.listening', voice);
+    const pillColor = getComputedStyle(pill).backgroundColor;
+    const questionColor = getComputedStyle(question).backgroundColor;
+    const voiceColor = getComputedStyle(voice).backgroundColor;
+    section.classList.add('is-staged');
+
+    const applyStart = () => {
+      gsap.set(content, { y: 0 });
+      gsap.set(user, { autoAlpha: 0, y: 12 });
+      gsap.set(pill, { backgroundColor: '#A8A49A' });
+      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      gsap.set([chat, voice], { autoAlpha: 0, y: 24 });
+      gsap.set(voice, { backgroundColor: '#5B5D61' });
+      gsap.set(titles.flat(), { opacity: 0 });
+      gsap.set(words.flat(), { opacity: 0 });
+      gsap.set(mini, { autoAlpha: 0, y: 40 });
+      gsap.set(messages, { autoAlpha: 0, y: 10 });
+      gsap.set(question, { backgroundColor: '#C9C6BE' });
+      gsap.set(chips, { autoAlpha: 0, y: 8 });
+      gsap.set(stage, { autoAlpha: 0, scale: 0.8 });
+      gsap.set(listening, { autoAlpha: 0 });
+    };
+    applyStart();
+
+    // A card's heading appears, then its description word by word
+    const headingIn = (i, at) => tl
+      .to(titles[i], { opacity: 1, duration: 0.4, stagger: 0.1 }, at)
+      .to(words[i], { opacity: 1, duration: 0.25, stagger: 0.05 }, '<0.3');
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
+    tl.addLabel('enter', 0)
+
+      // Step 1 (50–53s): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
+      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
+      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
+    bubbleIn(tl, reply, 0.6)
+      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+      .addLabel('ask')
+
+      // Step 2 (53–55s): the view moves to the cards; the chat card fades in, its heading and
+      // description, then the mini chat window rises
+      .to(content, { y: showInStage(section, content, grid), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
+      .to(chat, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'ask+=0.4');
+    headingIn(0, 'ask+=0.6')
+      .to(mini, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.2')
+      .addLabel('chat')
+
+      // Step 3 (55–57s): the voice card shows as a pale placeholder and turns dark; its heading
+      // and description; the glow grows under the mic
+      .to(voice, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'chat')
+      .to(voice, { backgroundColor: voiceColor, duration: 0.6, ease: 'none' }, 'chat+=0.3');
+    headingIn(1, 'chat+=0.6')
+      .to(stage, { autoAlpha: 1, scale: 1, duration: 0.9 }, 'chat+=0.7')
+      .addLabel('voice')
+
+      // Step 4 (57–60s): the mini chat plays: the question (grey → black), the answer, the
+      // follow-up, then the chips; the voice card starts listening
+      .to(messages[0], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice')
+      .to(question, { backgroundColor: questionColor, duration: 0.3, ease: 'none' }, 'voice+=0.25')
+      .to(listening, { autoAlpha: 1, duration: 0.4 }, 'voice+=0.3')
+      .to(messages[1], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice+=0.6')
+      .to(messages[2], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice+=1.0')
+      .to(chips, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.12 }, 'voice+=1.4')
+      .addLabel('talk');
+
+    scrollScene({ trigger: section, tl, tail: () => innerHeight * 0.25, onRefresh: applyStart });
+
+    return () => section.classList.remove('is-staged');
+  });
+
+  // Phones: the chats play, then the step and mode cards rise in as they scroll into view
   scenes.push(({ isMobile }) => {
     if (!isMobile) return;
-    chatThread(how.header);
-    ScrollTrigger.batch('#how .process-card', {
+    [how.header, modes.header].forEach(header => chatThread(header));
+    ScrollTrigger.batch('#how .process-card, #interaction .mode-card', {
       start: 'top 85%',
       once: true,
       onEnter: batch => gsap.fromTo(batch, { autoAlpha: 0, y: 30 },
