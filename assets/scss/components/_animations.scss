@@ -70,6 +70,7 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 .story.is-staged {
   --stage-h: calc(100svh - var(--header-h, 4rem)); // pinned right under the sticky header
   position: relative;
+  z-index: 0; // own stacking context: the kiosk stays under the section that slides over it
   height: var(--stage-h);
   overflow: hidden;
   background: $color-white;
@@ -107,6 +108,13 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   clip-path: inset(var(--clip-top, 0) var(--clip-right, 0) var(--clip-bottom, 0) var(--clip-left, 0) round var(--clip-radius, 0));
   will-change: clip-path;
   &--edge { background: $cobalt-100; }
+}
+
+// The section after a pinned scene slides up over it (the scene stays pinned for one more screen)
+.slides-over {
+  position: relative;
+  z-index: 1;
+  margin-top: calc(-1 * (100svh - var(--header-h, 4rem)));
 }
 
 .kiosk-traveller {

@@ -3764,6 +3764,7 @@ main > .blog-section:last-child {
 .story.is-staged {
   --stage-h: calc(100svh - var(--header-h, 4rem));
   position: relative;
+  z-index: 0;
   height: var(--stage-h);
   overflow: hidden;
   background: #FFFFFF;
@@ -3806,6 +3807,12 @@ main > .blog-section:last-child {
 }
 .story-morph--edge {
   background: #D4E2FD;
+}
+
+.slides-over {
+  position: relative;
+  z-index: 1;
+  margin-top: calc(-1 * (100svh - var(--header-h, 4rem)));
 }
 
 .kiosk-traveller {

@@ -52,6 +52,77 @@
     return tl;
   };
 
+  // Concierge bubble inside a stepped timeline: the blue shape grows, then its text fades in
+  // (starting state set by the scene: autoAlpha 0, scale 0.9, transparent text)
+  const bubbleIn = (tl, el, at) => tl
+    .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.base, ease: 'back.out(1.6)' }, at)
+    .to(el, { color: '#FFFFFF', duration: MOTION.bubbleText, ease: 'none' }, '-=0.2');
+
+  // Pinned scenes sit right under the sticky header (--header-h feeds --stage-h in the CSS)
+  const siteHeader = $('.site-header');
+  const setHeaderHeight = () => root.style.setProperty('--header-h', `${siteHeader.offsetHeight}px`);
+
+  /* Scroll scene: pins `trigger` under the header and ties `tl` to the scroll. The scene moves
+     only while the visitor scrolls (with a short, smooth catch-up), stops the moment they stop
+     and runs backwards when they scroll up; nothing plays on its own. Each second of the
+     timeline takes PACE of a screen to scroll through, so one wheel notch moves it a little.
+     The scene never unpins before its last moment has played; `tail` keeps it pinned after that
+     (the next section can slide up over it). `beforeMove` runs before the timeline first moves
+     (the story finishes the opening there, so the two never overlap); `onUpdate` gets the
+     timeline's time as it changes. An optional `exit` timeline plays over the tail, also with
+     the scroll, as the scene leaves. */
+  const PACE = 0.65; // screen heights of scrolling per second of animation
+  const scrollScene = ({ trigger, tl, exit, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {} }) => {
+    const span = () => tl.duration() * innerHeight * PACE;
+    let pin;
+    pin = ScrollTrigger.create({
+      trigger,
+      start: () => `top ${siteHeader.offsetHeight}px`,
+      end: () => `+=${span() + tail()}`,
+      pin: true,
+      anticipatePin: 1,
+      onRefresh: (self) => { pin = self; } // the first refresh runs before create() returns
+    });
+    // Measured from the pin (refreshed first): measuring the pinned element itself would count its pin spacing
+    const scrub = ScrollTrigger.create({
+      trigger,
+      start: () => pin.start,
+      end: () => pin.start + span(),
+      animation: tl,
+      scrub: 0.5,
+      onUpdate: (self) => {
+        if (self.progress > 0) beforeMove();
+      },
+      onRefresh: (self) => {
+        // Rewind with the old measurements (the exit first: it ran last), re-measure the starting
+        // state, then return to the scroll position
+        exit?.progress(0);
+        tl.progress(0);
+        setHeaderHeight();
+        onRefresh();
+        tl.invalidate();
+        if (self.progress > 0) beforeMove();
+        tl.progress(self.progress);
+        exit?.invalidate();
+      }
+    });
+    tl.eventCallback('onUpdate', () => onUpdate(tl.time()));
+    // The exit runs over the tail. It starts from wherever things are when the visitor gets there
+    // (questions may have been moved by hand), so it re-measures each time it is entered from above.
+    if (exit) {
+      ScrollTrigger.create({
+        trigger,
+        start: () => pin.start + span(),
+        end: () => pin.start + span() + tail(),
+        animation: exit,
+        scrub: 0.5,
+        onEnter: () => exit.invalidate(),
+        onRefresh: (self) => exit.progress(self.progress)
+      });
+    }
+    return { pin, scrub };
+  };
+
   const hero = {
     surface: $('.hero-card'),
     top: $('.hero-card-top'),
@@ -154,8 +225,8 @@
 
   /* 3–5. Desktop story (Figma recording 11–25s): hero, intro and features share one pinned screen.
      The kiosk stays still while the chat changes around it, and only moves at set steps.
-     Scrolling past a threshold plays the next step at its own speed (it never stops halfway);
-     scrolling back plays it in reverse. Only transforms and opacity animate. */
+     The timeline moves with the scroll (scrollScene) and stops when the scroll stops.
+     Only transforms and opacity animate. */
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const story = $('.story');
@@ -173,9 +244,10 @@
     const left = $$('#features .left-col .feature-item');
     const right = $$('#features .right-col .feature-item');
 
-    const header = $('.site-header');
-    const setHeaderHeight = () => story.style.setProperty('--header-h', `${header.offsetHeight}px`);
+    // The inbox section slides up over the pinned story once its last step has played
+    const next = $('#problem');
     story.classList.add('is-staged');
+    next.classList.add('slides-over');
     setHeaderHeight();
 
     const traveller = featuresKiosk.cloneNode(true);
@@ -298,10 +370,6 @@
     };
     applyStart();
 
-    const bubbleIn = (tl, el, at) => tl
-      .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.base, ease: 'back.out(1.6)' }, at)
-      .to(el, { color: '#FFFFFF', duration: MOTION.bubbleText, ease: 'none' }, '-=0.2');
-
     // Tweens start at 0.01 so resting on the first step never touches the hero the opening is building
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     tl.addLabel('hero', 0)
@@ -333,7 +401,8 @@
       .to(kioskBody.logo, { opacity: 1, duration: 0.3 }, 1.3)
       .addLabel('kiosk')
 
-      // Step 3: the greeting leaves, the question moves up to the intro, the intro answers
+      // Step 2 (recording 13.5–17s): the greeting leaves, the question moves up to the intro, then
+      // the answer grows, the sub-bubble and the buttons follow one at a time
       .to(hero.greeting, { autoAlpha: 0, y: -40, duration: 0.4 }, 'kiosk')
       .to(hero.question, {
         x: shift(hero.question, intro.question, 'x'), y: shift(hero.question, intro.question, 'y'),
@@ -341,78 +410,52 @@
       }, 'kiosk+=0.1')
       .set(intro.question, { autoAlpha: 1 }, 'kiosk+=0.7')
       .set(hero.question, { autoAlpha: 0 }, 'kiosk+=0.7');
-    bubbleIn(tl, intro.headline, 'kiosk+=0.8')
-      .to(intro.rest, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.25 }, '-=0.1')
+    bubbleIn(tl, intro.headline, 'kiosk+=0.75')
+      .to(intro.rest[0], { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+      .to(intro.rest[1], { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.25')
       .addLabel('intro')
 
-      // Step 4: the intro moves out, the kiosk glides to the centre, the features headline appears
+      // Step 3 (18–20s): the intro moves out before the kiosk glides to the centre (so scrolling
+      // back never slides the kiosk over the text), then the headline grows
       .to([intro.question, intro.headline, ...intro.rest], { autoAlpha: 0, y: -50, duration: 0.4, stagger: 0.05, ease: 'power2.in' }, 'intro')
-      .to(traveller, { ...onSlot(featuresKiosk), duration: MOTION.slow, ease: MOTION.easeInOut }, 'intro+=0.2');
-    bubbleIn(tl, featuresHeadline, 'intro+=0.8')
+      .to(traveller, { ...onSlot(featuresKiosk), duration: MOTION.slow, ease: MOTION.easeInOut }, 'intro+=0.5');
+    bubbleIn(tl, featuresHeadline, 'intro+=1.2')
       .addLabel('features')
 
-      // Step 5: the headline moves off, everything rises, the features slide out from behind the kiosk
+      // Step 4 (21–23.5s): the headline moves off, everything rises, the features slide out from
+      // behind the kiosk row by row
       .to(featuresHeadline, { y: -40, autoAlpha: 0, duration: 0.4, ease: 'power2.in' }, 'features')
       .to(featuresStage, { y: () => -rise(), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
       .to(traveller, { ...onSlot(featuresKiosk, rise), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1');
     left.forEach((el, i) => {
-      tl.to([el, right[i]].filter(Boolean), { autoAlpha: 1, x: 0, duration: 0.7 }, `features+=${0.5 + i * MOTION.stagger}`);
+      tl.to([el, right[i]].filter(Boolean), { autoAlpha: 1, x: 0, duration: 0.6 }, `features+=${0.5 + i * 0.25}`);
     });
     tl.addLabel('fan');
 
-    // Scroll thresholds (share of the pinned distance) at which each step starts playing
-    const steps = [['hero', 0], ['kiosk', 0.05], ['intro', 0.25], ['features', 0.5], ['fan', 0.72]];
-    const stepAt = (progress) => steps.reduce((found, [, at], i) => (progress >= at ? i : found), 0);
-    let current = 0;
-    let playhead;
-    const goTo = (index, instant) => {
-      if (index === current && !instant) return;
-      if (index > 0) finishOpening();
-      current = index;
-      const label = steps[index][0];
-      playhead?.kill();
-      if (instant) {
-        tl.seek(label);
-        return;
-      }
-      // Natural speed for one step; several steps at once (fast scrolling) are compressed
-      const distance = Math.abs(tl.labels[label] - tl.time());
-      playhead = tl.tweenTo(label, { duration: Math.min(distance, 1.8), ease: 'none' });
-    };
-
-    const pin = ScrollTrigger.create({
+    const scene = scrollScene({
       trigger: story,
-      start: () => `top ${header.offsetHeight}px`,
-      end: '+=300%',
-      pin: true,
-      anticipatePin: 1,
-      onUpdate: self => goTo(stepAt(self.progress)),
-      onRefresh: self => {
-        // Rewind with the old measurements, re-measure the starting state, then return to the step
-        playhead?.kill();
-        tl.seek(0);
-        setHeaderHeight();
+      tl,
+      tail: () => story.offsetHeight, // the inbox section slides up over the finished story
+      beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
+      onRefresh: () => {
         fitTraveller();
         applyStart();
-        tl.invalidate();
-        goTo(stepAt(self.progress), true);
       }
     });
 
     // In-page links to the intro and features land on their step inside the pinned story
-    const stepLinks = { '#intro': 2, '#features': 4 };
-    const stepScroll = (index) => pin.start + (pin.end - pin.start) * (steps[index][1] + 0.04);
+    const stepLinks = { '#intro': 'intro', '#features': 'fan' };
     const onStepLink = (e) => {
       const link = e.target.closest('a[href^="#"]');
-      const index = link && stepLinks[link.getAttribute('href')];
-      if (index === undefined) return;
+      const label = link ? stepLinks[link.getAttribute('href')] : undefined;
+      if (label === undefined) return; // not one of the story's links: leave the click alone
       e.preventDefault();
       e.stopPropagation(); // capture phase: main.js's smooth scroll would aim at the layer instead
-      scrollTo({ top: stepScroll(index), behavior: 'smooth' });
+      scrollTo({ top: scene.scrub.labelToScroll(label), behavior: 'smooth' });
       history.replaceState(null, '', link.getAttribute('href'));
     };
     document.addEventListener('click', onStepLink, true);
-    if (location.hash in stepLinks) requestAnimationFrame(() => scrollTo(0, stepScroll(stepLinks[location.hash])));
+    if (location.hash in stepLinks) requestAnimationFrame(() => scrollTo(0, scene.scrub.labelToScroll(stepLinks[location.hash])));
 
     return () => {
       document.removeEventListener('click', onStepLink, true);
@@ -420,6 +463,7 @@
       morph.remove();
       morphEdge.remove();
       story.classList.remove('is-staged');
+      next.classList.remove('slides-over');
     };
   });
 
