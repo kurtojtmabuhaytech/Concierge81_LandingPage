@@ -348,7 +348,9 @@
     // Starting state of everything the story reveals. Set up front and animated with to() tweens:
     // fromTo() tweens that start later in a paused timeline don't restore themselves when it rewinds.
     // Re-applied on refresh (sizes and positions change with the window).
+    let fan; // the features popping out (below); self-paced, so declared before applyStart uses it
     const applyStart = () => {
+      fan?.pause().progress(0);
       const card = cardBox();
       gsap.set(traveller, { autoAlpha: 0, x: onSlot(introKiosk).x(), y: onSlot(introKiosk).y(), scale: onSlot(introKiosk).scale() });
       gsap.set(morph, {
@@ -367,6 +369,7 @@
       gsap.set(featuresStage, { y: 0 });
       gsap.set(features, { autoAlpha: 0, x: 0 });
       gsap.set(features, { x: towardKiosk });
+      fan?.invalidate();
     };
     applyStart();
 
@@ -422,21 +425,29 @@
     bubbleIn(tl, featuresHeadline, 'intro+=1.2')
       .addLabel('features')
 
-      // Step 4 (21–23.5s): the headline moves off, everything rises, the features slide out from
-      // behind the kiosk row by row
+      // Step 4 (21–23.5s): the headline moves off and everything rises with the scroll; once the
+      // kiosk is in place the features slide out from behind it row by row on their own (below),
+      // while the pin holds
       .to(featuresHeadline, { y: -40, autoAlpha: 0, duration: 0.4, ease: 'power2.in' }, 'features')
       .to(featuresStage, { y: () => -rise(), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
-      .to(traveller, { ...onSlot(featuresKiosk, rise), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1');
+      .to(traveller, { ...onSlot(featuresKiosk, rise), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
+      .addLabel('popOut', 'features+=0.7')
+      .addLabel('fan', 'popOut+=1.6')
+      .set({}, {}, 'fan'); // holds the pin while the features pop out
+
+    // The features pop out at their own calm pace, not with the scroll
+    fan = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     left.forEach((el, i) => {
-      tl.to([el, right[i]].filter(Boolean), { autoAlpha: 1, x: 0, duration: 0.6 }, `features+=${0.5 + i * 0.25}`);
+      fan.to([el, right[i]].filter(Boolean), { autoAlpha: 1, x: 0, duration: 0.7 }, i * 0.3);
     });
-    tl.addLabel('fan');
+    const fanPaced = selfPaced(fan, () => tl.labels.popOut);
 
     const scene = scrollScene({
       trigger: story,
       tl,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
+      onUpdate: time => fanPaced.sync(time),
       onRefresh: () => {
         fitTraveller();
         applyStart();
@@ -637,7 +648,9 @@
     const showClosing = () => -Math.max(0, content.offsetHeight - section.clientHeight); // down to the section's end
 
     let rain; // the falling questions (below); time-based, so declared before applyStart uses it
+    let rise; // the questions rising back out as the scene leaves (below), also time-based
     const applyStart = () => {
+      rise?.pause().progress(0);
       rain?.pause().progress(0);
       gsap.set(content, { y: 0 });
       gsap.set(askUser, { autoAlpha: 0, y: 12 });
@@ -652,6 +665,7 @@
       tags.forEach((tag, i) => gsap.set(tag, { autoAlpha: 0, zIndex: '', x: 0, y: dropFrom(i), rotation: spinFrom(i), scale: 1 }));
       gsap.set(floatCursor, { opacity: 0 });
       rain?.invalidate();
+      rise?.invalidate();
     };
     applyStart();
 
@@ -707,16 +721,19 @@
       .to(closingSub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
       .addLabel('repeats');
 
-    // Leaving. First the questions drift calmly upwards while nothing else moves (the first
-    // DRIFT share of the tail); then, as the How section slides up over the inbox (the rest of
-    // the tail, one screen), they fade out together with the card and the messages.
-    const DRIFT = 0.35;
-    const exit = gsap.timeline({ paused: true })
+    // Leaving. Once the How section starts sliding up over the inbox (the tail), the questions rise
+    // back up out of the card at their own calm pace (the fall in reverse, not with the scroll)
+    // and fade away, the glow going with them, while the card and messages fade out with the scroll.
+    const riseDelay = i => (((i * 7) % tags.length) / tags.length) * 1.0;
+    rise = gsap.timeline({ paused: true })
       .to(tags, {
-        y: i => `-=${80 + (i % 5) * 18}`, rotation: i => `+=${(i % 2 ? 1 : -1) * (2 + (i % 3))}`,
-        duration: DRIFT * 0.7, ease: 'sine.inOut', stagger: { amount: DRIFT * 0.3, from: 'random' }
+        y: i => `-=${pile.offsetHeight + 160 + (i % 6) * 45}`, rotation: i => `+=${((i * 37) % 30) - 15}`,
+        duration: 2.0, ease: 'power2.in', stagger: riseDelay
       }, 0)
-      .to(content, { autoAlpha: 0, y: '-=40', duration: (1 - DRIFT) * 0.85, ease: 'power1.in' }, DRIFT)
+      .to(tags, { autoAlpha: 0, duration: 0.7, ease: 'none', stagger: riseDelay }, 1.3)
+      .to(pile, { '--pile-glow': 0, duration: 2.0, ease: 'none' }, 0.4);
+    const exit = gsap.timeline({ paused: true })
+      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.8, ease: 'power1.in' }, 0.15)
       .set({}, {}, 1); // the exit spans exactly 1, so its parts line up with the tail
     const next = $('#how');
     next.classList.add('slides-over');
@@ -733,6 +750,16 @@
       }
       // The demo needs the pile settled: if the scroll gets there first, the rain lands at once
       if (time >= tl.labels.inbox && rain.progress() < 1) rain.progress(1);
+      // The questions rise out once the exit starts, from wherever they rest (some may have been
+      // moved by hand), and come back down when the visitor scrolls back
+      if (exit.progress() > 0) {
+        if (rise.reversed() || (rise.progress() < 1 && !rise.isActive())) {
+          if (rise.progress() === 0) rise.invalidate();
+          rise.timeScale(1).play();
+        }
+      } else if (rise.progress() > 0 && !rise.reversed()) {
+        rise.timeScale(1.6).reverse();
+      }
       pile.classList.toggle('is-busy', time < tl.labels.demo || exit.progress() > 0);
       if (time < tl.labels.inbox) inbox.putBack();
       else if (time < tl.labels.demo) inbox.putBack([float, open]);
@@ -743,7 +770,7 @@
       trigger: section,
       tl,
       exit,
-      tail: () => section.offsetHeight / (1 - DRIFT), // the drift, then the How section slides up over the inbox
+      tail: () => section.offsetHeight, // the How section slides up over the inbox
       onUpdate: updatePile,
       onRefresh: applyStart
     });
@@ -769,6 +796,21 @@
     });
   });
 
+  /* Self-paced part of a scroll scene: `part` (a paused timeline) plays at its own calm pace once
+     the scene's scroll time passes `at()`, whatever the scroll speed, and runs back (a little
+     faster) when the visitor scrolls back above that point. `sync(time)` goes in the scene's
+     onUpdate. `onBack` runs before it runs back (e.g. to stop a loop the part started). */
+  const selfPaced = (part, at, { onBack = () => {} } = {}) => ({
+    sync: (time) => {
+      if (time >= at()) {
+        if (part.reversed() || (part.progress() < 1 && !part.isActive())) part.timeScale(1).play();
+      } else if (part.progress() > 0 && !part.reversed()) {
+        onBack();
+        part.timeScale(1.6).reverse();
+      }
+    }
+  });
+
   // Moving the content inside a pinned screen works like scrolling: the shift that brings an
   // element fully into view (top first if it is taller than the screen)
   const showInStage = (section, content, el) => () => {
@@ -777,10 +819,11 @@
   };
 
   /* 9. How it works (Figma recording 37–50s). Desktop: a scroll scene that slides up over the
-     inbox. The visitor asks, the concierge answers; then the steps build one by one: dot 1 lights
-     up and card 1 rises in, the line draws on to dot 2 (card 2's dial turns), then to dot 3 (card
-     3's chat bubble turns into a check); then every dot settles back to neutral. As the next
-     section slides up over it, the content fades out. */
+     inbox. The visitor asks and the concierge answers with the scroll; once the view reaches the
+     steps they build on their own, at the recording's pace: dot 1 lights up and card 1 rises in,
+     the line draws on to dot 2 (card 2's dial turns), then to dot 3 (card 3's chat bubble turns
+     into a check); every dot settles back to neutral, and card 3's icon keeps switching between
+     bubble and check, as in the preview. As the next section slides up over it, the content fades out. */
   const how = {
     section: $('#how'),
     content: $('#how > .container'),
@@ -810,7 +853,11 @@
     section.classList.add('is-staged');
     next.classList.add('slides-over');
 
+    let steps; // the self-paced steps (below)
+    let iconLoop;
     const applyStart = () => {
+      iconLoop?.kill();
+      steps?.pause().progress(0);
       gsap.set(content, { y: 0, autoAlpha: 1 });
       gsap.set(user, { autoAlpha: 0, y: 12 });
       gsap.set(pill, { backgroundColor: '#5B5F66', color: 'rgba(255, 255, 255, 0.7)' });
@@ -823,11 +870,12 @@
       gsap.set(texts.flat(), { opacity: 0.25 });
       gsap.set(dial, { '--dial': '0deg' });
       gsap.set(answer, { morphSVG: how.bubble });
+      steps?.invalidate();
     };
     applyStart();
 
     // A card rises in with its icon, then its text turns from pale to solid
-    const cardIn = (i, at) => tl
+    const cardIn = (i, at) => steps
       .to(cards[i], { autoAlpha: 1, y: 0, duration: MOTION.base }, at)
       .to(icons[i], { scale: 1, duration: MOTION.base, ease: 'back.out(1.7)' }, '<')
       .to(texts[i], { opacity: 1, duration: 0.4, stagger: 0.1 }, '<0.25');
@@ -842,10 +890,24 @@
       .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
       .addLabel('ask')
 
-      // Step 2 (40–42s): the view moves to the steps; dot 1 lights up and card 1 rises in
+      // The view moves to the steps; then the pin holds while they build on their own
       .to(content, { y: showInStage(section, content, wrap), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
-      .to(dots[0], { autoAlpha: 1, scale: 1, '--on': 1, duration: 0.4 }, 'ask+=0.4');
-    cardIn(0, 'ask+=0.55')
+      .addLabel('steps', 'ask+=0.4')
+      .addLabel('built', 'steps+=3.2')
+      .set({}, {}, 'built'); // holds the pin while the steps build
+
+    // Card 3's icon keeps switching between check and bubble once the steps are built
+    const loopIcon = () => {
+      iconLoop = gsap.timeline({ repeat: -1, repeatDelay: 1.6, delay: 1.6 })
+        .to(answer, { morphSVG: how.bubble, duration: 0.5, ease: MOTION.easeInOut })
+        .to(answer, { morphSVG: how.check, duration: 0.5, ease: MOTION.easeInOut }, '+=1.6');
+    };
+
+    steps = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease }, onComplete: loopIcon })
+      // Step 2 (40–42s): dot 1 lights up and card 1 rises in
+      .addLabel('start', 0)
+      .to(dots[0], { autoAlpha: 1, scale: 1, '--on': 1, duration: 0.4 }, 'start');
+    cardIn(0, 'start+=0.15')
       .addLabel('step1')
 
       // Step 3 (42–43.5s): the line draws on to dot 2, which takes the light; card 2's dial turns
@@ -867,27 +929,37 @@
       .addLabel('step3')
 
       // Step 5 (45–46s): the steps settle, every dot back to neutral
-      .to(dots, { '--on': 0, duration: 0.4 }, 'step3+=0.2')
-      .addLabel('done');
+      .to(dots, { '--on': 0, duration: 0.4 }, 'step3+=0.2');
+    const stepsPaced = selfPaced(steps, () => tl.labels.steps, {
+      onBack: () => {
+        iconLoop?.kill();
+        gsap.set(answer, { morphSVG: how.check }); // so running back turns the check into the bubble
+      }
+    });
 
     // Leaving, as the next section slides up over it: the content fades out
     const exit = gsap.timeline({ paused: true })
       .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
       .set({}, {}, 1);
 
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({
+      trigger: section, tl, exit, tail: () => section.offsetHeight,
+      onUpdate: time => stepsPaced.sync(time), onRefresh: applyStart
+    });
 
     return () => {
+      iconLoop?.kill();
       next.classList.remove('slides-over');
       section.classList.remove('is-staged');
     };
   });
 
   /* 10. Type or talk (Figma recording 50–63s). Desktop: a scroll scene that slides up over How it
-     works. The visitor asks, the concierge answers; the chat card fades in, its heading and then
-     its description word by word, and the mini chat window rises; the voice card shows as a pale
-     placeholder, turns dark, and the glow grows under the mic; then the mini chat plays message
-     by message, the chips appear and the voice card starts "Listening…". */
+     works. The visitor asks and the concierge answers with the scroll; once the view reaches the
+     cards they play on their own, at the recording's pace: the chat card fades in, its heading
+     and then its description word by word, and the mini chat window rises; the voice card shows
+     as a pale placeholder, turns dark, and the glow grows under the mic; then the mini chat plays
+     message by message, the chips appear and the voice card starts "Listening…". */
   const modes = {
     section: $('#interaction'),
     content: $('#interaction > .container'),
@@ -929,7 +1001,9 @@
     const voiceColor = getComputedStyle(voice).backgroundColor;
     section.classList.add('is-staged');
 
+    let cards; // the self-paced cards (below)
     const applyStart = () => {
+      cards?.pause().progress(0);
       gsap.set(content, { y: 0 });
       gsap.set(user, { autoAlpha: 0, y: 12 });
       gsap.set(pill, { backgroundColor: '#A8A49A' });
@@ -945,11 +1019,12 @@
       gsap.set(chips, { autoAlpha: 0, y: 8 });
       gsap.set(stage, { autoAlpha: 0, scale: 0.8 });
       gsap.set(listening, { autoAlpha: 0 });
+      cards?.invalidate();
     };
     applyStart();
 
     // A card's heading appears, then its description word by word
-    const headingIn = (i, at) => tl
+    const headingIn = (i, at) => cards
       .to(titles[i], { opacity: 1, duration: 0.4, stagger: 0.1 }, at)
       .to(words[i], { opacity: 1, duration: 0.25, stagger: 0.05 }, '<0.3');
 
@@ -963,11 +1038,17 @@
       .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
       .addLabel('ask')
 
-      // Step 2 (53–55s): the view moves to the cards; the chat card fades in, its heading and
-      // description, then the mini chat window rises
+      // The view moves to the cards; then the pin holds while they play on their own
       .to(content, { y: showInStage(section, content, grid), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
-      .to(chat, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'ask+=0.4');
-    headingIn(0, 'ask+=0.6')
+      .addLabel('cards', 'ask+=0.4')
+      .addLabel('played', 'cards+=3.2')
+      .set({}, {}, 'played'); // holds the pin while the cards play
+
+    cards = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } })
+      // Step 2 (53–55s): the chat card fades in, its heading and description, then the mini chat window rises
+      .addLabel('start', 0)
+      .to(chat, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'start');
+    headingIn(0, 'start+=0.2')
       .to(mini, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.2')
       .addLabel('chat')
 
@@ -986,10 +1067,13 @@
       .to(listening, { autoAlpha: 1, duration: 0.4 }, 'voice+=0.3')
       .to(messages[1], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice+=0.6')
       .to(messages[2], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice+=1.0')
-      .to(chips, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.12 }, 'voice+=1.4')
-      .addLabel('talk');
+      .to(chips, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.12 }, 'voice+=1.4');
+    const cardsPaced = selfPaced(cards, () => tl.labels.cards);
 
-    scrollScene({ trigger: section, tl, tail: () => innerHeight * 0.25, onRefresh: applyStart });
+    scrollScene({
+      trigger: section, tl, tail: () => innerHeight * 0.25,
+      onUpdate: time => cardsPaced.sync(time), onRefresh: applyStart
+    });
 
     return () => section.classList.remove('is-staged');
   });
