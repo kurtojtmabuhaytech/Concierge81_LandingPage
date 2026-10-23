@@ -486,6 +486,291 @@
     });
   });
 
+  /* 6–8. Team inbox (Figma recording 24–37s). Desktop: a scroll scene that slides up over the hero
+     story. The visitor asks, the concierge answers; the inbox card darkens in and the questions
+     rain into a pile; two are lifted out and dropped back (drag demo); then the view moves down
+     and "Let me handle the repeats." answers. The questions move by GSAP transforms (smoother
+     than CSS variables) and can be picked up and dropped (setupPile). */
+  const inbox = {
+    section: $('#problem'),
+    content: $('#problem > .container'),
+    headers: $$('#problem .chat-section-header'),
+    card: $('#problem .inbox-card'),
+    head: $('#problem .inbox-head'),
+    pile: $('#problem .q-pile'),
+    tags: $$('#problem .q-tag')
+  };
+  inbox.float = $('.q-tag--float', inbox.pile);
+  inbox.floatCursor = $('svg', inbox.float);
+  inbox.open = inbox.tags.find(tag => tag.textContent.trim() === 'What time do you open?');
+  // Each question's resting tilt in the pile (degrees, from the CSS)
+  inbox.tilt = inbox.tags.map(tag => parseFloat(getComputedStyle(tag).getPropertyValue('--r')) || 0);
+  // Where a question rests. The desktop scene drops the floating "Where is the restroom?" into the
+  // pile (the demo lifts it out); elsewhere it floats above the pile with its cursor, as designed.
+  inbox.floatRest = () => ({ y: 0, rotation: inbox.tilt[inbox.tags.indexOf(inbox.float)] });
+  inbox.rest = tag => (tag === inbox.float ? inbox.floatRest() : { y: 0, rotation: inbox.tilt[inbox.tags.indexOf(tag)] });
+
+  /* Inbox questions can be picked up and dropped: let go and a question falls straight down, as
+     with gravity, and lands on the question below it (or the bottom of the pile), drifting a
+     little in the direction it was thrown and settling with a small bounce. It stays where it
+     lands. With reduced motion it simply stays where it is dropped. Runs once, outside matchMedia. */
+  inbox.moved = new Set();   // questions resting somewhere other than their place in the pile
+  inbox.tosses = new Map();  // a question's running pick-up or fall
+  // Puts moved questions back in their places at once (before the scroll animates them again)
+  inbox.putBack = (which = inbox.tags) => which.forEach(tag => {
+    if (!inbox.moved.has(tag)) return;
+    inbox.tosses.get(tag)?.kill();
+    tag.classList.remove('is-dragging');
+    const rest = inbox.rest(tag);
+    gsap.set(tag, { x: 0, y: rest.y, rotation: rest.rotation, scale: 1 });
+    inbox.moved.delete(tag);
+  });
+
+  const setupPile = () => {
+    const { pile, tags } = inbox;
+    let topZ = 30;
+    gsap.set(tags, { xPercent: -50, x: 0, y: i => inbox.rest(tags[i]).y, rotation: i => inbox.rest(tags[i]).rotation });
+
+    // How far a question falls from where it is let go (shifted sideways by `drift`): onto the
+    // highest question underneath it, resting a little into it like the pile does, or onto the
+    // bottom of the pile when nothing is underneath
+    const fallDistance = (tag, drift) => {
+      const box = tag.getBoundingClientRect();
+      const left = box.left + drift;
+      const right = box.right + drift;
+      const tops = tags
+        .filter(other => other !== tag && getComputedStyle(other).visibility !== 'hidden')
+        .map(other => other.getBoundingClientRect())
+        .filter(r => r.right > left + 12 && r.left < right - 12 && r.top >= box.bottom - 8)
+        .map(r => r.top + r.height * 0.35);
+      const landing = Math.min(pile.getBoundingClientRect().bottom, ...tops);
+      return Math.max(0, landing - box.bottom);
+    };
+    // Sideways drift that keeps the question's centre over the pile
+    const driftWithin = (tag, wanted) => {
+      const box = tag.getBoundingClientRect();
+      const area = pile.getBoundingClientRect();
+      const centre = box.left + box.width / 2;
+      return gsap.utils.clamp(area.left + box.width * 0.3 - centre, area.right - box.width * 0.3 - centre, wanted);
+    };
+
+    tags.forEach(tag => {
+      let grab = null;
+      let trail = [];
+
+      tag.addEventListener('pointerdown', (e) => {
+        if (pile.classList.contains('is-busy')) return; // the scroll is still moving the questions
+        inbox.tosses.get(tag)?.kill();
+        tag.setPointerCapture(e.pointerId);
+        grab = { x: e.clientX, y: e.clientY, tx: gsap.getProperty(tag, 'x'), ty: gsap.getProperty(tag, 'y') };
+        trail = [{ x: e.clientX, y: e.clientY, t: performance.now() }];
+        tag.classList.add('is-dragging');
+        inbox.moved.add(tag);
+        gsap.set(tag, { zIndex: ++topZ });
+        inbox.tosses.set(tag, gsap.to(tag, { scale: 1.06, duration: 0.2, ease: 'power2.out' })); // picked up
+      });
+
+      tag.addEventListener('pointermove', (e) => {
+        if (!grab || !tag.hasPointerCapture(e.pointerId)) return;
+        gsap.set(tag, { x: grab.tx + e.clientX - grab.x, y: grab.ty + e.clientY - grab.y });
+        const now = performance.now();
+        trail.push({ x: e.clientX, y: e.clientY, t: now });
+        trail = trail.filter(p => now - p.t < 100); // the last 0.1s sets the throw
+      });
+
+      const letGo = (e) => {
+        if (!grab) return;
+        if (tag.hasPointerCapture(e.pointerId)) tag.releasePointerCapture(e.pointerId);
+        tag.classList.remove('is-dragging');
+        grab = null;
+        inbox.tosses.get(tag)?.kill();
+        if (prefersReducedMotion) {
+          gsap.set(tag, { scale: 1 });
+          return;
+        }
+        const first = trail[0];
+        const lastPoint = trail[trail.length - 1];
+        const seconds = Math.max(0.016, (lastPoint.t - first.t) / 1000);
+        const vx = (lastPoint.x - first.x) / seconds;
+        const drift = driftWithin(tag, gsap.utils.clamp(-160, 160, vx * 0.12));
+        const drop = fallDistance(tag, drift);
+        const fall = gsap.utils.clamp(0.25, 0.8, Math.sqrt(drop / 1600)); // gravity: longer drops take longer, accelerating
+        const tilt = gsap.utils.clamp(-8, 8, gsap.getProperty(tag, 'rotation') * 0.4 + vx * 0.004);
+        inbox.tosses.set(tag, gsap.timeline()
+          .to(tag, { x: `+=${drift}`, duration: fall + 0.2, ease: 'power1.out' }, 0)
+          .to(tag, { scale: 1, rotation: tilt, duration: fall + 0.2, ease: 'power2.out' }, 0)
+          .to(tag, { y: `+=${drop}`, duration: fall, ease: 'power2.in' }, 0)
+          // a small bounce as it lands
+          .to(tag, { y: `-=${Math.min(10, drop * 0.08)}`, duration: 0.12, ease: 'power2.out' })
+          .to(tag, { y: `+=${Math.min(10, drop * 0.08)}`, duration: 0.14, ease: 'power2.in' }));
+      };
+      tag.addEventListener('pointerup', letGo);
+      tag.addEventListener('pointercancel', letGo);
+    });
+  };
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop) return;
+    const { section, content, card, head, pile, tags, float, floatCursor, open } = inbox;
+    const [ask, closing] = inbox.headers;
+    const askUser = $('.chat-header-row.right', ask);
+    const askPill = $('.header-pill--user', askUser);
+    const askReply = $('.header-pill--ai', ask);
+    const askSub = $('.sub-pill-text', ask);
+    const closingReply = $('.header-pill--ai', closing);
+    const closingSub = $('.sub-pill-text', closing);
+    section.classList.add('is-staged');
+
+    // The floating "Where is the restroom?" rests down in the pile until the demo lifts it out
+    const floatInPile = () => pile.offsetHeight * 0.55;
+    inbox.floatRest = () => ({ y: floatInPile(), rotation: -6 });
+    const openRest = inbox.rest(open);
+    // Questions fall from above the card, each from its own height, with a slight spin, all within
+    // about 0.6s of each other (recording 28–29.5s)
+    const dropFrom = i => -(pile.offsetHeight + 80 + (i % 6) * 45);
+    const spinFrom = i => ((i * 37) % 30) - 15;
+    const fallDelay = i => (((i * 7) % tags.length) / tags.length) * 0.6;
+
+    // The pinned screen shows part of the content; moving it works like scrolling
+    const offsetIn = el => el.getBoundingClientRect().top - content.getBoundingClientRect().top;
+    const showCard = () => -gsap.utils.clamp(0, offsetIn(card) - 16, offsetIn(card) + card.offsetHeight + 24 - section.clientHeight);
+    const showClosing = () => -Math.max(0, content.offsetHeight - section.clientHeight); // down to the section's end
+
+    let rain; // the falling questions (below); time-based, so declared before applyStart uses it
+    const applyStart = () => {
+      rain?.pause().progress(0);
+      gsap.set(content, { y: 0 });
+      gsap.set(askUser, { autoAlpha: 0, y: 12 });
+      gsap.set(askPill, { backgroundColor: '#A8A49A' });
+      gsap.set([askReply, closingReply], { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      gsap.set([askSub, closingSub], { autoAlpha: 0, y: 16 });
+      gsap.set(card, { autoAlpha: 0, backgroundColor: '#CFCBC0' });
+      gsap.set(head, { autoAlpha: 0 });
+      gsap.set(pile, { '--pile-glow': 0 });
+      inbox.tosses.forEach(toss => toss.kill());
+      inbox.moved.clear();
+      tags.forEach((tag, i) => gsap.set(tag, { autoAlpha: 0, zIndex: '', x: 0, y: dropFrom(i), rotation: spinFrom(i), scale: 1 }));
+      gsap.set(floatCursor, { opacity: 0 });
+      rain?.invalidate();
+    };
+    applyStart();
+
+    // The rain plays at its own slow pace (not with the scroll), so the questions never fall in a
+    // rush: once the scroll reaches the full card it starts, and scrolling back above that point
+    // lifts them back out. The glow rises under the pile as they land.
+    rain = gsap.timeline({ paused: true })
+      .to(pile, { '--pile-glow': 1, duration: 1.8, ease: 'none' }, 0);
+    tags.forEach((tag, i) => {
+      const at = fallDelay(i) * 2;
+      const rest = inbox.rest(tag);
+      rain.to(tag, { autoAlpha: 1, duration: 0.2, ease: 'none' }, at)
+        .to(tag, { y: rest.y, duration: 1.4, ease: 'bounce.out' }, at)
+        .to(tag, { rotation: rest.rotation, duration: 1.4, ease: 'back.out(1.7)' }, at);
+    });
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
+    tl.addLabel('enter', 0)
+
+      // Step 1 (26–28s): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
+      .to(askUser, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
+      .to(askPill, { backgroundColor: '#0E1013', duration: 0.4, ease: 'none' }, 0.3);
+    bubbleIn(tl, askReply, 0.6)
+      .to(askSub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+      .addLabel('ask')
+
+      // Step 2 (28–30s): the view moves to the inbox and the card darkens in; once the whole card
+      // is in view (RAIN_AT) the rain starts, and this stretch of scrolling leaves it time to land
+      .to(content, { y: showCard, duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
+      .to(card, { autoAlpha: 1, duration: 0.3, ease: 'none' }, 'ask+=0.1')
+      .to(card, { backgroundColor: '#0E1013', duration: 0.6, ease: 'none' }, 'ask+=0.25')
+      .to(head, { autoAlpha: 1, duration: 0.4 }, 'ask+=0.55')
+      .addLabel('rain', 'ask+=0.95')
+      .addLabel('inbox', 'ask+=2.45')
+
+      // Step 3 (30.5–34s): drag demo. "Where is the restroom?" is lifted out with the cursor,
+      // hovers, and drops back; then "What time do you open?" does the same.
+      .set(float, { zIndex: 20 }, 'inbox')
+      .fromTo(float, { y: floatInPile, rotation: -6 }, { y: 0, rotation: 4, duration: 0.6, ease: MOTION.easeInOut, immediateRender: false }, 'inbox')
+      .to(floatCursor, { opacity: 1, duration: 0.2 }, 'inbox')
+      .to(float, { y: -10, rotation: 2, duration: 0.4, ease: 'sine.inOut' }, 'inbox+=0.6')
+      .to(float, { y: floatInPile, rotation: -6, duration: 0.9, ease: 'bounce.out' }, 'inbox+=1.0')
+      .to(floatCursor, { opacity: 0, duration: 0.2 }, 'inbox+=1.0')
+      .set(open, { zIndex: 20 }, 'inbox+=1.6')
+      .fromTo(open, { x: 0, y: openRest.y, rotation: openRest.rotation }, { x: 40, y: -120, rotation: -14, duration: 0.5, ease: MOTION.easeInOut, immediateRender: false }, 'inbox+=1.6')
+      .to(open, { y: -132, rotation: -11, duration: 0.4, ease: 'sine.inOut' }, 'inbox+=2.1')
+      .to(open, { x: 0, y: openRest.y, rotation: openRest.rotation, duration: 0.9, ease: 'bounce.out' }, 'inbox+=2.5')
+      .addLabel('demo')
+
+      // Step 4 (34.5–36s): the view moves down; "Let me handle the repeats." grows, then the sub-bubble
+      .to(content, { y: showClosing, duration: MOTION.slow, ease: MOTION.easeInOut }, 'demo');
+    bubbleIn(tl, closingReply, 'demo+=0.6')
+      .to(closingSub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+      .addLabel('repeats');
+
+    // Leaving. First the questions drift calmly upwards while nothing else moves (the first
+    // DRIFT share of the tail); then, as the How section slides up over the inbox (the rest of
+    // the tail, one screen), they fade out together with the card and the messages.
+    const DRIFT = 0.35;
+    const exit = gsap.timeline({ paused: true })
+      .to(tags, {
+        y: i => `-=${80 + (i % 5) * 18}`, rotation: i => `+=${(i % 2 ? 1 : -1) * (2 + (i % 3))}`,
+        duration: DRIFT * 0.7, ease: 'sine.inOut', stagger: { amount: DRIFT * 0.3, from: 'random' }
+      }, 0)
+      .to(content, { autoAlpha: 0, y: '-=40', duration: (1 - DRIFT) * 0.85, ease: 'power1.in' }, DRIFT)
+      .set({}, {}, 1); // the exit spans exactly 1, so its parts line up with the tail
+    const next = $('#how');
+    next.classList.add('slides-over');
+
+    // The questions can be picked up once the demo is over, until the exit starts. Scrolling back
+    // into the demo or the rain puts moved questions back in their places first (the demo
+    // animates its two, the rain all of them), so the scroll and a drop never fight over one.
+    const updatePile = () => {
+      const time = tl.time();
+      if (time < tl.labels.rain) {
+        if (rain.progress() > 0 && !rain.reversed()) rain.timeScale(1.6).reverse(); // lifted back out
+      } else if (rain.reversed() || (rain.progress() < 1 && !rain.isActive())) {
+        rain.timeScale(1).play();
+      }
+      // The demo needs the pile settled: if the scroll gets there first, the rain lands at once
+      if (time >= tl.labels.inbox && rain.progress() < 1) rain.progress(1);
+      pile.classList.toggle('is-busy', time < tl.labels.demo || exit.progress() > 0);
+      if (time < tl.labels.inbox) inbox.putBack();
+      else if (time < tl.labels.demo) inbox.putBack([float, open]);
+    };
+    exit.eventCallback('onUpdate', updatePile);
+
+    scrollScene({
+      trigger: section,
+      tl,
+      exit,
+      tail: () => section.offsetHeight / (1 - DRIFT), // the drift, then the How section slides up over the inbox
+      onUpdate: updatePile,
+      onRefresh: applyStart
+    });
+
+    return () => {
+      pile.classList.remove('is-busy');
+      inbox.putBack();
+      next.classList.remove('slides-over');
+      section.classList.remove('is-staged');
+      inbox.floatRest = () => ({ y: 0, rotation: inbox.tilt[tags.indexOf(float)] });
+    };
+  });
+
+  // Phones: the chats play, the card fades in and the questions fall into the pile as it scrolls in
+  scenes.push(({ isMobile }) => {
+    if (!isMobile) return;
+    inbox.headers.forEach(header => chatThread(header));
+    const trigger = { trigger: inbox.card, start: 'top 75%', once: true };
+    gsap.fromTo(inbox.card, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: MOTION.slow, ease: MOTION.ease, scrollTrigger: trigger });
+    gsap.fromTo(inbox.tags, { autoAlpha: 0, y: -240 }, {
+      autoAlpha: 1, y: i => inbox.rest(inbox.tags[i]).y, duration: 0.9, ease: 'bounce.out',
+      stagger: { each: 0.04, from: 'random' }, delay: 0.3, scrollTrigger: { ...trigger }
+    });
+  });
+
+  setupPile();
+
   runOpening();
 
   const mm = gsap.matchMedia();

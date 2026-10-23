@@ -175,9 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
   }
 
-  // Draggable inbox questions
+  // Draggable inbox questions. With GSAP, animations.js runs the pile instead (drag and throw).
   const pile = document.getElementById('qPile');
-  if (pile) {
+  if (pile && !window.gsap) {
     let topZ = 10;
     pile.querySelectorAll('.q-tag').forEach(tag => {
       let startX = 0, startY = 0, baseX = 0, baseY = 0;

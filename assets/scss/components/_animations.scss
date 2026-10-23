@@ -110,6 +110,16 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   &--edge { background: $cobalt-100; }
 }
 
+// Desktop inbox (animations.js adds .is-staged): one pinned screen; the content moves inside it
+#problem.is-staged {
+  --stage-h: calc(100svh - var(--header-h, 4rem));
+  height: var(--stage-h);
+  overflow: hidden;
+  padding: 0;
+  > .container { padding-block: 1.5rem; will-change: transform; }
+  .inbox-card { margin-bottom: 2rem; }
+}
+
 // The section after a pinned scene slides up over it (the scene stays pinned for one more screen)
 .slides-over {
   position: relative;

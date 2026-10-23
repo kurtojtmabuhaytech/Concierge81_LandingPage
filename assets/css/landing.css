@@ -952,6 +952,19 @@ code, kbd, samp, pre {
   margin-top: 1rem;
 }
 
+.q-pile::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -10%;
+  width: 80%;
+  height: 70%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(39, 111, 248, 0.35) 0%, rgba(39, 111, 248, 0.12) 45%, transparent 70%);
+  pointer-events: none;
+  opacity: var(--pile-glow, 1);
+}
+
 .q-tag {
   position: absolute;
   left: var(--x);
@@ -972,6 +985,10 @@ code, kbd, samp, pre {
 .q-tag.is-dragging {
   cursor: grabbing;
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+}
+
+.q-pile.is-busy .q-tag {
+  pointer-events: none;
 }
 
 .q-tag--blue {
@@ -3807,6 +3824,20 @@ main > .blog-section:last-child {
 }
 .story-morph--edge {
   background: #D4E2FD;
+}
+
+#problem.is-staged {
+  --stage-h: calc(100svh - var(--header-h, 4rem));
+  height: var(--stage-h);
+  overflow: hidden;
+  padding: 0;
+}
+#problem.is-staged > .container {
+  padding-block: 1.5rem;
+  will-change: transform;
+}
+#problem.is-staged .inbox-card {
+  margin-bottom: 2rem;
 }
 
 .slides-over {

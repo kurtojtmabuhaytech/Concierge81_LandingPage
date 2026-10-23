@@ -401,6 +401,16 @@
 
 .q-pile { position: relative; height: clamp(16.25rem, 36vw, 22.5rem); margin-top: 1rem; }
 
+// Soft cobalt glow under the pile (Figma recording ~29s); the tags paint over it
+.q-pile::before {
+  content: '';
+  position: absolute; left: 50%; bottom: -10%;
+  width: 80%; height: 70%; transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba($cobalt-500, 0.35) 0%, rgba($cobalt-500, 0.12) 45%, transparent 70%);
+  pointer-events: none;
+  opacity: var(--pile-glow, 1); // raised by the inbox rain on desktop
+}
+
 .q-tag {
   position: absolute;
   left: var(--x);
@@ -419,6 +429,7 @@
   touch-action: none;
   &.is-dragging { cursor: grabbing; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6); }
 }
+.q-pile.is-busy .q-tag { pointer-events: none; } // the scroll is still moving the questions
 .q-tag--blue { background: $color-cobalt-bright; color: $color-white; }
 .q-tag--white { background: $color-white; color: $color-ink; }
 .q-tag--float {
