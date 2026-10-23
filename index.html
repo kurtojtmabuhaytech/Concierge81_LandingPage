@@ -9,9 +9,30 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="assets/css/landing.css">
+  <!-- Hides data-anim elements before first paint; dropped again if GSAP never loads -->
+  <script>
+    document.documentElement.classList.add('js-motion');
+    window.addEventListener('load', () => { if (!window.gsap) document.documentElement.classList.remove('js-motion'); });
+  </script>
+  <script src="assets/js/vendor/gsap/gsap.min.js" defer></script>
+  <script src="assets/js/vendor/gsap/ScrollTrigger.min.js" defer></script>
+  <script src="assets/js/vendor/gsap/Flip.min.js" defer></script>
+  <script src="assets/js/vendor/gsap/MorphSVGPlugin.min.js" defer></script>
   <script src="assets/js/main.js" defer></script>
+  <script src="assets/js/animations.js" defer></script>
 </head>
 <body class="reveal-page">
+
+  <!-- Opening screen (animations.js): "concierge is typing…" becomes the hero greeting. Shown only with GSAP motion. -->
+  <div class="splash" aria-hidden="true">
+    <div class="splash-msg">
+      <p class="bubble bubble--ai splash-bubble">
+        <span class="splash-dots"><i></i><i></i><i></i></span>
+        <span class="splash-text">Hi! I'm concierge81.<br>How may I assist you today?</span>
+      </p>
+      <span class="timestamp splash-caption">concierge is typing…</span>
+    </div>
+  </div>
 
   <!-- Navigation / Header -->
   <header class="site-header">
@@ -40,11 +61,13 @@
   <div class="nav-backdrop" aria-hidden="true"></div>
 
   <main>
+  <!-- Sections 1–3 form one pinned story on desktop (animations.js); a normal stack everywhere else -->
+  <div class="story">
   <!-- 1. Hero Card (2D Avatar + Live Chat) -->
-  <section id="hero" class="section theme-light chat-hero-section">
+  <section id="hero" class="section theme-light chat-hero-section" data-motion>
     <div class="container">
       <div class="hero-card">
-        <div class="hero-card-top">
+        <div class="hero-card-top" data-anim>
           <span class="brand-logo">concierge<span>81</span></span>
           <div class="hero-card-tools">
             <div class="mode-toggle" role="group" aria-label="Display mode">
@@ -57,35 +80,34 @@
 
         <div class="hero-split-area">
           <!-- Left: 2D Avatar -->
-          <div class="hero-avatar"><img src="assets/images/Avatar.png" alt="Concierge81 avatar" width="1672" height="2495" fetchpriority="high"></div>
+          <div class="hero-avatar" data-anim><img src="assets/images/Avatar.png" alt="Concierge81 avatar" width="1672" height="2495" fetchpriority="high"></div>
 
           <!-- Right: Live Chat Interface -->
           <div class="hero-chat-interface">
             <div class="chat-messages-area">
-              <div class="msg-row msg-row--ai">
+              <div class="msg-row msg-row--ai" data-anim>
                 <p class="bubble bubble--ai">Hi! I'm concierge81.<br>How may I assist you today?</p>
+                <span class="timestamp">concierge · 9:12 AM</span>
               </div>
-              <div class="msg-row msg-row--user">
+              <div class="msg-row msg-row--user" data-anim>
                 <p class="bubble bubble--user">What is concierge81?</p>
                 <span class="timestamp">You · 9:12 PM</span>
               </div>
             </div>
 
-            <div class="chat-composer">
+            <div class="chat-composer" data-anim>
               <div>
                 <span class="suggest-label">✦ Suggested next</span>
                 <div class="chip-row">
-                  <button type="button" class="chip chip--soft">Where is the café?</button>
-                  <button type="button" class="chip chip--soft">Any vegetarian options?</button>
-                  <button type="button" class="chip chip--soft">Room service hours</button>
+                  <button type="button" class="chip chip--soft" data-anim>What is concierge81?</button>
                 </div>
               </div>
               <div class="composer-bar">
-                <button type="button" class="category-btn">
+                <button type="button" class="category-btn" data-anim>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
                   Categories
                 </button>
-                <button type="button" class="mic-btn" aria-label="Speak">
+                <button type="button" class="mic-btn" aria-label="Speak" data-anim>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
                 </button>
               </div>
@@ -97,9 +119,9 @@
   </section>
 
   <!-- 2. Intro (Kiosk + Headline) -->
-  <section id="intro" class="section theme-light">
+  <section id="intro" class="section theme-light" data-motion>
     <div class="container intro-split">
-      <div class="kiosk-device">
+      <div class="kiosk-device" data-anim>
         <div class="kiosk-screen">
           <span class="brand-logo kiosk-logo">concierge<span>81</span></span>
           <img class="kiosk-avatar" src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy">
@@ -108,13 +130,13 @@
       </div>
 
       <div class="intro-thread">
-        <div class="msg-row msg-row--user">
+        <div class="msg-row msg-row--user" data-anim>
           <p class="bubble bubble--user">What is concierge81?</p>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
-        <h1 class="header-pill header-pill--ai header-pill--xl">I'm concierge81, your AI concierge.</h1>
-        <p class="bubble bubble--sand bubble-lead">I help businesses give faster customer support, answering common questions, sharing accurate information, and assisting customers around the clock.</p>
-        <div class="intro-actions">
+        <h1 class="header-pill header-pill--ai header-pill--xl" data-anim>I'm concierge81, your AI concierge.</h1>
+        <p class="bubble bubble--sand bubble-lead" data-anim>I help businesses give faster customer support, answering common questions, sharing accurate information, and assisting customers around the clock.</p>
+        <div class="intro-actions" data-anim>
           <a href="#contact" class="btn btn-primary">Request a demo</a>
           <a href="#features" class="link-btn">Know more about me ›</a>
         </div>
@@ -123,11 +145,11 @@
   </section>
 
   <!-- 3. Features (Kiosk flanked by features) -->
-  <section id="features" class="section theme-light">
+  <section id="features" class="section theme-light" data-motion>
     <div class="container">
       <div class="chat-section-header">
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Here's what I bring to your business.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Here's what I bring to your business.</h2>
         </div>
       </div>
 
@@ -135,30 +157,30 @@
         <div class="feature-stage">
           <!-- Left Features: text then icon -->
           <div class="feature-col left-col">
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Lifelike avatar</h3><p>A friendly face for every guest.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="3.5"/><path d="M5.5 19a7 7 0 0 1 13 0"/><rect x="2.5" y="2.5" width="19" height="19" rx="5"/></svg></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Voice conversation</h3><p>Guests just talk and listen.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Speak translation</h3><p>Replies in the guest's language.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5.5 5c0 4 3 7 6.5 8M10.5 5c-.5 4-3 7-6.5 9"/><path d="M13 21l4-9 4 9M14.5 18h5"/></svg></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Avatar or chat</h3><p>Talk to her, or type instead.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-text"><h3>Categories</h3><p>Topics built for your business.</p></div>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></div>
             </div>
           </div>
 
           <!-- Center Kiosk -->
-          <div class="kiosk-device">
+          <div class="kiosk-device" data-anim>
             <div class="kiosk-screen">
               <span class="brand-logo kiosk-logo">concierge<span>81</span></span>
               <img class="kiosk-avatar" src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy">
@@ -168,23 +190,23 @@
 
           <!-- Right Features: icon then text -->
           <div class="feature-col right-col">
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/></svg></div>
               <div class="feature-text"><h3>Smart suggestions</h3><p>Helpful next questions, instantly.</p></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></div>
               <div class="feature-text"><h3>Your own knowledge</h3><p>Answers from your information.</p></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
               <div class="feature-text"><h3>Always on</h3><p>Open 24/7, holidays included.</p></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></div>
               <div class="feature-text"><h3>Human handoff</h3><p>Hands complex requests to staff.</p></div>
             </div>
-            <div class="feature-item">
+            <div class="feature-item" data-anim>
               <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="13" height="10" rx="1.5"/><path d="M7 18h5"/><rect x="17" y="9" width="4.5" height="11" rx="1"/></svg></div>
               <div class="feature-text"><h3>Everywhere</h3><p>Kiosk, web, tablet, and phone.</p></div>
             </div>
@@ -194,21 +216,23 @@
     </div>
   </section>
 
+  </div>
+
   <!-- 4. Problem (Team Inbox) -->
-  <section id="problem" class="section theme-cream">
+  <section id="problem" class="section theme-cream" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">Why would a business need this?</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Are you still answering the same questions every day?</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Are you still answering the same questions every day?</h2>
         </div>
-        <p class="sub-pill-text">This is what your team hears — over and over.</p>
+        <p class="sub-pill-text" data-anim>This is what your team hears — over and over.</p>
       </div>
 
-      <div class="inbox-card">
+      <div class="inbox-card" data-anim>
         <div class="inbox-head">
           <div class="inbox-title">
             Team inbox <span class="inbox-meta">Today</span>
@@ -255,25 +279,25 @@
 
       <div class="chat-section-header">
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Let me handle the repeats.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Let me handle the repeats.</h2>
         </div>
-        <p class="sub-pill-text">I answer everyday questions automatically — so your team can focus on what needs a human touch.</p>
+        <p class="sub-pill-text" data-anim>I answer everyday questions automatically — so your team can focus on what needs a human touch.</p>
       </div>
     </div>
   </section>
 
   <!-- 5. How It Works (3 Steps) -->
-  <section id="how" class="section theme-dark">
+  <section id="how" class="section theme-dark" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">How does it work?</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Ask. Understand. Answer.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Ask. Understand. Answer.</h2>
         </div>
-        <p class="sub-pill-text">It all happens in seconds.</p>
+        <p class="sub-pill-text" data-anim>It all happens in seconds.</p>
       </div>
 
       <div class="how-wrap">
@@ -283,7 +307,7 @@
           <span class="step-dot">3</span>
         </div>
         <div class="process-grid">
-          <div class="process-card">
+          <div class="process-card" data-anim>
             <div class="process-icon">
               <div class="process-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H9l-5 4Z"/><path d="M8 9h8M8 12h5"/></svg></div>
             </div>
@@ -291,7 +315,7 @@
             <h3>Your customer asks.</h3>
             <p>By typing or speaking — at your kiosk, website, or app.</p>
           </div>
-          <div class="process-card">
+          <div class="process-card" data-anim>
             <div class="process-icon">
               <div class="process-glyph process-glyph--round"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/></svg></div>
             </div>
@@ -299,7 +323,7 @@
             <h3>Concierge81 understands.</h3>
             <p>It finds the intent and the right answer in your business information.</p>
           </div>
-          <div class="process-card">
+          <div class="process-card" data-anim>
             <div class="process-icon">
               <div class="process-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
             </div>
@@ -313,21 +337,21 @@
   </section>
 
   <!-- 6. Interaction Modes -->
-  <section id="interaction" class="section theme-light">
+  <section id="interaction" class="section theme-light" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">Can my customers type or talk?</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Both. However they prefer.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Both. However they prefer.</h2>
         </div>
-        <p class="sub-pill-text">Customers can type a question or simply speak to your concierge. Either way, they get a clear answer right away.</p>
+        <p class="sub-pill-text" data-anim>Customers can type a question or simply speak to your concierge. Either way, they get a clear answer right away.</p>
       </div>
 
       <div class="mode-grid">
-        <div class="mode-card mode-card--chat">
+        <div class="mode-card mode-card--chat" data-anim>
           <div class="mode-header">
             <span class="mode-tag">CHAT</span>
             <h3>Just type.</h3>
@@ -346,7 +370,7 @@
             </div>
           </div>
         </div>
-        <div class="mode-card mode-card--voice">
+        <div class="mode-card mode-card--voice" data-anim>
           <div class="mode-header">
             <span class="mode-tag">VOICE</span>
             <h3>Just ask.</h3>

@@ -109,7 +109,7 @@ main > .blog-section:last-child { padding-bottom: $space-section; }
 }
 .post-card-media { aspect-ratio: 16 / 10; overflow: hidden; background: $neutral-200;
   &.placeholder-box { border: none; border-radius: 0; }
-  img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
+  img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; } // landscape kiosk photos: keep avatar + visitors centred
 }
 // Portrait avatar in a wide card: head + shoulders down to the chest, centred (Figma)
 .post-card-media--portrait {

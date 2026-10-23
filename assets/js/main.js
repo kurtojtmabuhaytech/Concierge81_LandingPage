@@ -175,9 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
   }
 
-  // Draggable inbox questions
+  // Draggable inbox questions. With GSAP, animations.js runs the pile instead (drag and throw).
   const pile = document.getElementById('qPile');
-  if (pile) {
+  if (pile && !window.gsap) {
     let topZ = 10;
     pile.querySelectorAll('.q-tag').forEach(tag => {
       let startX = 0, startY = 0, baseX = 0, baseY = 0;
@@ -228,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Scroll reveal (pages with <body class="reveal-page">): text fades in as it enters the
   // viewport and out as it leaves. Chat headers / highlighted text get the stronger "emphasis" variant.
+  // Sections marked data-motion are animated by animations.js (GSAP) instead.
   const revealGroups = [
     {
       variant: 'reveal--emphasis',
@@ -259,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     revealGroups.forEach(({ variant, selector, stagger }) => {
       document.querySelectorAll(selector).forEach(el => {
-        if (el.classList.contains('reveal')) return;
+        if (el.classList.contains('reveal') || el.closest('[data-motion]')) return;
         // Stagger siblings that share this group (e.g. bubbles in one header, cards in one row)
         const siblings = [...el.parentElement.children].filter(child => child.matches(selector));
         el.style.setProperty('--reveal-delay', `${(siblings.indexOf(el) % 5) * stagger}s`);

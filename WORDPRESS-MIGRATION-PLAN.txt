@@ -1,0 +1,490 @@
+================================================================================
+ CONCIERGE81 — WORDPRESS CUSTOM THEME MIGRATION PLAN
+================================================================================
+
+ Goal       Turn the static prototype into a custom WordPress theme ("concierge81")
+            running on the Local site concierge81.local. The marketing pages
+            stay static (fast, pixel-matched to Figma). Blog and News become
+            dynamic, so the team publishes and updates them inside Local WP /
+            wp-admin.
+ Status     PLAN, not started. Nothing below has been built yet.
+ Site       Local site "concierge81"  ->  http://concierge81.local
+            WordPress 7.1.3 · PHP 8.2.29 · MySQL 8.4.0
+            Folder: C:\Users\mabuh\Local Sites\concierge81\app\public
+            Themes folder is currently empty.
+            Plugins present: Code Snippets, Duplicate Page, TinyMCE Advanced,
+            UpdraftPlus
+ Branch     feature/wordpress-theme (new, from feature/blog-news-static)
+
+--------------------------------------------------------------------------------
+ CONTENTS
+--------------------------------------------------------------------------------
+  1. Static vs dynamic: what changes and what doesn't
+  2. Architecture overview
+  3. Theme file structure (full tree)
+  4. Template map: static page -> WordPress template
+  5. Data schema: post types, taxonomies, fields, menus, options
+  6. How each dynamic feature works (load more, filters, featured, TOC, ...)
+  7. Article components in the editor (blocks, styles, patterns)
+  8. Build and sync workflow (repo -> Local)
+  9. WP-CLI setup and content import
+ 10. Phases, deliverables and acceptance criteria
+ 11. Quality assurance plan
+ 12. Risks and how they're handled
+ 13. Decisions needed before / during the build
+
+
+================================================================================
+ 1. STATIC VS DYNAMIC
+================================================================================
+
+  Part                                Mode     Edited where
+  ----------------------------------  -------  ----------------------------------
+  Landing page (14 sections)          STATIC   Theme code (front-page.php +
+                                               template-parts/landing/*)
+  Header (logo, nav, CTA)             STATIC*  header.php (*nav links can come
+                                               from Appearance > Menus)
+  Contact section + lead form         STATIC   template-parts/contact.php
+  Footer                              STATIC*  footer.php (*links via a menu)
+  Blog listing                        DYNAMIC  Posts in wp-admin
+  Blog article                        DYNAMIC  Posts in wp-admin (block editor)
+  Newsroom listing                    DYNAMIC  "News" post type in wp-admin
+  News announcement                   DYNAMIC  "News" post type in wp-admin
+  Featured story (blog / news)        DYNAMIC  "Featured" checkbox on a post
+  Categories / filters                DYNAMIC  Posts > Categories, News > Categories
+  "Keep reading" / "More from news"   DYNAMIC  Automatic (latest / same category)
+  Contact email, press email          OPTION   Settings > Concierge81 (one place)
+
+  Unchanged: the design, SCSS architecture, Design System V2 tokens,
+  main.js behaviour, scroll-reveal animation, images and responsive rules.
+
+
+================================================================================
+ 2. ARCHITECTURE OVERVIEW
+================================================================================
+
+   ┌──────────── this repo (git) ────────────┐        ┌──── Local WP ────┐
+   │ index.html … news-article.html (design  │        │ concierge81.local │
+   │   reference; kept)                      │        │                   │
+   │ assets/scss  (single source of styles)  │──sass──┐│                   │
+   │ assets/js/main.js                       │        ││                   │
+   │ wordpress-theme/concierge81/  (THEME)   │◄───────┘│                   │
+   │   PHP templates, inc/, template-parts/  │ sync ──►│ wp-content/themes/│
+   │ scripts/ (build, sync, import, qa)      │         │   concierge81/    │
+   └─────────────────────────────────────────┘         └───────────────────┘
+
+  - A classic PHP theme. No page builder; no plugin is required to render.
+  - Styles: the same SCSS compiles to wordpress-theme/concierge81/assets/css/
+    theme.css, so the static prototype and the theme never drift apart.
+  - Content for dynamic parts comes from WP_Query; markup comes from the same
+    template parts, so the server render and "Load more" render are identical.
+  - Custom code lives in the theme (inc/*.php). Data definitions (post type,
+    meta) are in a small "functionality" section of the theme for now, and can
+    move to a must-use plugin later so content survives a theme switch
+    (see decision D5).
+
+
+================================================================================
+ 3. THEME FILE STRUCTURE (FULL TREE)
+================================================================================
+
+  wordpress-theme/concierge81/
+  ├── style.css                    Theme header (name, version, text domain)
+  ├── screenshot.png               Theme thumbnail for Appearance > Themes
+  ├── functions.php                Loads inc/* only (no logic inline)
+  ├── theme.json                   Editor palette, font sizes and spacing from
+  │                                Design System V2, so the editor matches the site
+  │
+  ├── header.php                   <head>, fonts, header, nav, .nav-backdrop,
+  │                                opens <main>; body_class() adds .reveal-page /
+  │                                .page-cream per template
+  ├── footer.php                   closes <main>, contact part, footer, wp_footer()
+  │
+  ├── front-page.php               STATIC landing page: calls 14 landing parts
+  ├── home.php                     Blog listing (Settings > Reading "Posts page")
+  ├── single.php                   Blog article
+  ├── archive-news.php             Newsroom listing (/news/)
+  ├── single-news.php              News announcement (/news/<slug>/)
+  ├── category.php                 Blog category archive (reuses home layout)
+  ├── taxonomy-news_category.php   News category archive (reuses newsroom layout)
+  ├── page.php                     Generic pages (Privacy, Terms, ...)
+  ├── search.php                   Search results (card grid)
+  ├── 404.php                      Not-found page in the chat style
+  ├── index.php                    Required fallback
+  │
+  ├── template-parts/
+  │   ├── chat-header.php          The "You · 9:12 PM" / blue bubble / sub-bubble
+  │   │                            thread, with args (question, answer, sub, size)
+  │   ├── kiosk.php                Kiosk device mockup
+  │   ├── story-media.php          Photo + chat overlay (featured + hero)
+  │   ├── contact.php              Contact section + lead form
+  │   ├── landing/                 hero.php, intro.php, features.php, problem.php,
+  │   │                            how.php, interaction.php, industries.php,
+  │   │                            values.php, deployment.php, pricing.php,
+  │   │                            faq.php, cta.php
+  │   ├── blog/                    card.php, featured.php, filters.php,
+  │   │                            byline.php, toc.php, keep-reading.php
+  │   └── news/                    row.php, featured.php, filters.php,
+  │                                more-from-newsroom.php, press-card.php
+  │
+  ├── inc/
+  │   ├── setup.php                theme supports, menus, image sizes, editor styles
+  │   ├── enqueue.php              CSS/JS/fonts with version = file modified time
+  │   ├── post-types.php           "news" post type + "news_category" taxonomy
+  │   ├── meta.php                 register_post_meta + meta boxes (featured,
+  │   │                            eyebrow suffix, story overlay, job title)
+  │   ├── options.php              Settings > Concierge81 (emails, socials)
+  │   ├── template-tags.php        c81_reading_time(), c81_eyebrow(),
+  │   │                            c81_post_meta_line(), c81_author_row(), ...
+  │   ├── toc.php                  adds ids to <h2> + builds "On this page"
+  │   ├── rest.php                 /wp-json/c81/v1/cards (load more + filters)
+  │   ├── blocks.php               block styles + block patterns (section 7)
+  │   ├── lead-form.php            admin-post handler for the contact form
+  │   └── cleanup.php              remove emoji script, oEmbed, etc. (speed)
+  │
+  ├── patterns/                    PHP block patterns (stat row, tip, Q&A, ...)
+  ├── assets/
+  │   ├── css/theme.css            compiled from repo assets/scss (do not edit)
+  │   ├── css/editor.css           editor-only styles so posts look like the site
+  │   ├── js/main.js               same file as the prototype + load-more fetch
+  │   └── images/                  Avatar, Frame 174, cards/*
+  └── languages/                   .pot for translation (EN now; JP later)
+
+
+================================================================================
+ 4. TEMPLATE MAP: STATIC PAGE -> WORDPRESS TEMPLATE
+================================================================================
+
+  Static file           WP template            URL (pretty permalinks)
+  --------------------  ---------------------  --------------------------------
+  index.html            front-page.php         /
+  blog.html             home.php               /blog/
+  blog-post.html        single.php             /blog/<post-slug>/
+  (blog category)       category.php           /blog/category/<slug>/
+  news.html             archive-news.php       /news/
+  news-article.html     single-news.php        /news/<slug>/
+  (news category)       taxonomy-news_category /news/category/<slug>/
+  (legal pages)         page.php               /privacy/, /terms/, ...
+
+  Settings > Reading:   "Homepage" = static page "Home", "Posts page" = "Blog"
+  Settings > Permalinks: /blog/%postname%/
+
+
+================================================================================
+ 5. DATA SCHEMA
+================================================================================
+
+5.1 Post type: post (Blog). Built into WordPress.
+  Field                       Source                          Shown as
+  --------------------------  ------------------------------  -------------------
+  Title                       post_title                      card + article h1
+  Lead / excerpt              post_excerpt                    card text, article lead
+  Body                        post_content (block editor)     article body
+  Featured image              _thumbnail_id                   card photo, hero photo
+  Image caption               attachment caption              hero <figcaption>
+  Category (primary)          category taxonomy               eyebrow ("CASE STUDY"),
+                                                              filter pills
+  Eyebrow suffix              meta c81_eyebrow_suffix         "· HOSPITALITY"
+  Author                      post_author (WP user)           byline name + avatar
+  Author job title            user meta c81_job_title         "Customer Success Lead"
+  Date                        post_date                       "Sep 22, 2026"
+  Reading time                computed (words / 220)          "8 min read"
+  Featured flag               meta c81_featured (bool)        Featured card on /blog/
+  Story overlay (optional)    meta c81_story_greeting,        chat bubbles on the
+                              c81_story_question,             featured/hero photo
+                              c81_story_suggestions (3 lines)
+  Helpful votes (later)       meta c81_helpful_yes/no         "Was this helpful?"
+
+  Categories (seeded): Guides, Tutorials, Case studies, Industry, Product,
+  Tips, Trends. Filter pills show the categories that have posts.
+
+5.2 Post type: news (custom)
+  register_post_type('news')
+    labels: News / News item · menu icon: dashicons-megaphone
+    public, has_archive 'news', rewrite slug 'news', show_in_rest (block editor)
+    supports: title, editor, excerpt, thumbnail, revisions, author
+  Field                       Source                          Shown as
+  --------------------------  ------------------------------  -------------------
+  Title / excerpt / body      core fields                     row title, lead, body
+  Featured image + caption    core                            featured photo, hero
+  News category               taxonomy news_category          blue badge + filters
+  Badge label                 term meta c81_badge_label       "Partnership" (singular)
+                              (falls back to term name)       vs filter "Partnerships"
+  Eyebrow                     "<Category> · <long date>"      "PRODUCT RELEASE ·
+                              + meta c81_eyebrow_override     SEPTEMBER 22, 2026"
+  Featured flag               meta c81_featured               Featured story on /news/
+  Quote (optional)            block pattern "News quote"      blue quote bubble
+  Press contact               Settings > Concierge81          press card
+
+  Taxonomy news_category (hierarchical, show_in_rest), seeded:
+  Product, Partnerships (badge "Partnership"), Customers, Company.
+
+5.3 Menus (Appearance > Menus)
+  primary   header links: news, blog, contact
+  footer    How it works, Industries, Plans, FAQ, Contact
+  legal     Privacy, Terms, Disclaimer, Commercial Transactions Act
+  The current item gets .is-current + aria-current via a nav_menu_css_class filter.
+
+5.4 Theme options (Settings > Concierge81, one small screen)
+  c81_contact_email   info@mabuhaytech.com   footer pill, mailto links
+  c81_press_email     info@mabuhaytech.com   news press card
+  c81_demo_url        #contact               every "Request a demo" button
+  c81_lead_recipient  where form leads are emailed
+
+5.5 Image sizes (add_image_size)
+  c81-card      720 × 450  crop   blog cards
+  c81-hero      1600 × 700 crop   featured / hero story media
+  c81-gallery   720 × 540  crop   news gallery
+  c81-portrait  540 × 800  crop   industry-style portrait cards (if needed)
+  Uploads get these automatically; srcset/sizes come from WordPress.
+
+5.6 Lead form data (decision D3)
+  Option A (default): a "lead" post type (private) + email via wp_mail.
+  Option B: a form plugin (WPForms / Contact Form 7) styled to match.
+
+
+================================================================================
+ 6. HOW EACH DYNAMIC FEATURE WORKS
+================================================================================
+
+  Featured story     WP_Query: newest post with c81_featured = 1 (blog / news).
+                     If none, the newest post. It's excluded from the list below.
+  Card list          First page from WP_Query (6 blog / 8 news), rendered by
+                     template-parts/blog/card.php or news/row.php.
+  Load more          main.js calls GET /wp-json/c81/v1/cards?type=post|news
+                     &cat=<slug>&page=N. The endpoint runs WP_Query and returns
+                     { html, hasMore, total } built with the SAME template part,
+                     so new cards look identical. The button hides when
+                     hasMore is false.
+  Filters            Pills are category links (/blog/category/guides/), so they
+                     work without JS and are SEO-friendly. With JS they fetch
+                     page 1 for that category through the same endpoint without
+                     a reload, and update the URL with history.pushState.
+  Empty state        Shown when a category returns 0 items.
+  Reading time       c81_reading_time(): word count of post_content / 220,
+                     rounded up, min 1.
+  On this page       toc.php filters the_content: gives every <h2> an id (slug
+                     of its text) and returns a list for template-parts/blog/
+                     toc.php. The JS highlight already exists in main.js.
+  Keep reading       3 latest posts in the same category (fallback: latest),
+                     excluding the current post.
+  More from news     3 latest news items excluding the current one.
+  Share / Copy link  Unchanged JS; URL comes from the permalink.
+  SEO basics         Title tag via add_theme_support('title-tag'); the excerpt
+                     becomes the meta description; Open Graph image = featured
+                     image (or an SEO plugin later, decision D4).
+
+
+================================================================================
+ 7. ARTICLE COMPONENTS IN THE EDITOR
+================================================================================
+
+  The Figma article (blog-post.html) has special blocks. Authors insert them from
+  the editor: Patterns tab -> "Concierge81", or a style on a core block. No
+  custom JS blocks are needed for phase 1.
+
+  Figma component         Editor tool                     Built from
+  ----------------------  ------------------------------  ------------------------
+  Stat cards (80% ...)    Pattern "Stat row"              Columns + Group style
+  Data table + badges     Block style "Concierge table"   core/table + .badge class
+  Tip callout             Block style "Tip"               core/group
+  Numbered steps          Block style "Topic steps"       core/list (ordered)
+  Chat vs voice cards     Pattern "Chat or voice"         Columns + Groups
+  Q&A chat bubbles        Pattern "Q&A chat"              Group + Paragraph styles
+                                                          "Visitor" / "Concierge"
+  Key takeaways (dark)    Pattern "Key takeaways"         Group (dark) + check list
+  Check list              Block style "Check list"        core/list
+  Photo pair + captions   Pattern "Photo pair"            Gallery / Columns + Image
+  Quote bubble (news)     Block style "Quote bubble"      core/quote
+  Press contact (news)    Automatic from settings         template part
+
+  theme.json supplies the cobalt/neutral palette, V2 font sizes, spacing and
+  Inter, so whatever authors pick stays on-brand. editor.css makes the editor
+  look like the front end.
+
+
+================================================================================
+ 8. BUILD AND SYNC WORKFLOW
+================================================================================
+
+  scripts/build.ps1
+    1. sass assets/scss/theme.scss -> wordpress-theme/concierge81/assets/css/theme.css
+       (theme.scss = landing.scss + WP-only partials such as alignments and
+        editor helpers)
+    2. sass assets/scss/editor.scss -> .../assets/css/editor.css
+    3. copy assets/js/main.js and assets/images -> theme assets
+
+  scripts/sync-theme.ps1
+    robocopy wordpress-theme\concierge81 -> Local Sites\concierge81\app\public\
+    wp-content\themes\concierge81  (/MIR, excludes .git and node_modules)
+
+  Day-to-day: edit in the repo -> run build + sync (one command:
+  scripts/dev.ps1) -> refresh concierge81.local. Optionally a file watcher
+  re-syncs on save.
+  Enqueued file versions use filemtime(), so the browser never shows stale CSS.
+
+
+================================================================================
+ 9. WP-CLI SETUP AND CONTENT IMPORT
+================================================================================
+
+  WP-CLI ships with Local:
+    ...\Local\resources\extraResources\bin\wp-cli\wp-cli.phar
+  and runs with Local's PHP 8.2 against the running site database. If Local's
+  MySQL socket/port needs it, commands run from Local's "Open site shell"
+  environment (script: scripts/wp.ps1 wraps this).
+
+  Setup commands (scripts/setup-site.ps1):
+    wp theme activate concierge81
+    wp rewrite structure '/blog/%postname%/' --hard
+    wp post create --post_type=page --post_title=Home    --post_status=publish
+    wp post create --post_type=page --post_title=Blog    --post_status=publish
+    wp option update show_on_front page
+    wp option update page_on_front <Home id>
+    wp option update page_for_posts <Blog id>
+    wp term create category "Guides" ... (all blog categories)
+    wp term create news_category "Product" ... (+ badge term meta)
+    wp menu create primary / footer / legal; wp menu item add-custom ...
+    wp menu location assign primary primary  (etc.)
+    wp option update c81_contact_email info@mabuhaytech.com
+
+  Content import (scripts/import-content.php, run with wp eval-file):
+    - 12 blog posts and 12 news items from the static pages (title, excerpt,
+      category, date, eyebrow suffix, featured flag on the featured ones)
+    - The full Figma article body for "How AI concierges cut front-desk wait
+      times by half." and "Concierge81 launches Voice Mode for lobby kiosks."
+      built from the editor patterns
+    - Images imported to the Media Library with wp media import and set as
+      featured images (header photos stay placeholders until supplied)
+    - Author "Carlo Mendoza" (user) with c81_job_title
+
+  Safety: before any import, take an UpdraftPlus / wp db export backup.
+  The import script is idempotent: it skips items that already exist by slug.
+
+
+================================================================================
+ 10. PHASES, DELIVERABLES, ACCEPTANCE CRITERIA
+================================================================================
+
+ Phase 0 — Groundwork
+   - Branch feature/wordpress-theme; build + sync + wp scripts; DB backup
+   - Accept: the empty theme activates on concierge81.local with no PHP notices
+
+ Phase 1 — Theme skeleton + static landing page
+   - style.css, functions.php, inc/setup, inc/enqueue, header.php, footer.php,
+     contact part, front-page.php + 12 landing parts, theme.json
+   - Accept: concierge81.local looks the same as index.html at 390 / 768 /
+     1440 / 1920 (visual diff), all JS works, no console errors
+
+ Phase 2 — Blog (dynamic)
+   - inc/meta, template-tags, toc, rest; home.php, single.php, category.php;
+     blog template parts; load more + filters via REST; patterns/styles;
+     import 12 posts + the full sample article
+   - Accept: /blog/ and a post match blog.html / blog-post.html; publishing
+     a new post in wp-admin shows up on /blog/ with no code change
+
+ Phase 3 — News (dynamic)
+   - inc/post-types; archive-news.php, single-news.php, taxonomy template;
+     news parts; badge term meta; import 12 items + the sample announcement
+   - Accept: /news/ and an item match news.html / news-article.html; a new
+     News item appears in the list and in "More from the newsroom"
+
+ Phase 4 — Editor experience
+   - Settings > Concierge81, editor.css, pattern polish, menus, legal pages
+   - Accept: a non-developer can write a full Figma-style article from the
+     patterns without touching code
+
+ Phase 5 — QA, performance, docs
+   - Full QA run (section 11) on concierge81.local; fixes; DOCUMENTATION.txt
+     extended with a "WordPress" chapter; a short editor guide for the team
+   - Accept: QA report green (or listed exceptions you approve)
+
+  Every phase: build -> sync -> check on concierge81.local -> QA subset ->
+  commit -> you review before the next phase.
+
+
+================================================================================
+ 11. QUALITY ASSURANCE PLAN
+================================================================================
+
+  Tool: Playwright (Microsoft's browser-automation test runner), driving
+  the Microsoft Edge already installed. Added to the repo as a dev
+  dependency (package.json + tests/), so the same tests run against the
+  static files now and against concierge81.local later.
+
+  Test suites
+  -----------
+  1. Smoke         Every page loads: HTTP 200, no console errors, no failed
+                   requests (missing CSS/JS/images/fonts).
+  2. Links/assets  Every internal link and image resolves (no 404s); anchors
+                   (#contact, #faq ...) exist on the page.
+  3. Responsive    Widths 320, 390, 768, 1024, 1440, 1920: no horizontal
+                   scroll (except the industry gallery); header and hamburger
+                   swap correctly; full-page screenshot per width.
+  4. Interaction   Hamburger opens and closes (outside tap, Escape, link) and
+                   scroll stays locked; FAQ filters; blog/news filters + Load
+                   more counts; gallery arrows and dots; inbox drag; copy
+                   buttons; Share fallback; "On this page" highlight; contact
+                   form validation.
+  5. Animation     Reveal elements become visible when scrolled into view and
+                   fade out when they leave; reduced-motion shows everything
+                   immediately.
+  6. Accessibility axe-core scan on every page (WCAG 2.1 AA): contrast, labels,
+                   heading order, landmarks, alt text, button names.
+  7. Visual        Screenshot baselines; later the WordPress pages are compared
+     regression    pixel-by-pixel with the static ones (phase 1-3 acceptance).
+  8. Performance   Lighthouse (Edge) on each page: performance, accessibility,
+                   best practices, SEO scores + largest files.
+
+  Output
+  ------
+  - An HTML report (npx playwright show-report): pass/fail per test, with
+    screenshots, video and a step-by-step trace for every failure.
+  - A summary in chat with each finding and the proposed fix.
+
+  Watching it run live (see the chat reply for the steps)
+  ------------------------
+  - Headed mode: a real Edge window opens on your screen and you watch the
+    pages scroll, menus open and filters click in real time (slowed down).
+  - UI mode: Playwright's own window with a live list of tests, a timeline,
+    and a DOM snapshot for every step. You can re-run any test yourself.
+
+
+================================================================================
+ 12. RISKS AND HANDLING
+================================================================================
+
+  Risk                                         Handling
+  -------------------------------------------  ---------------------------------
+  Static and WP styles drift apart             One SCSS source builds both
+  Editor content breaks the article layout     Patterns + block styles + theme.json
+                                               palette; editor.css preview
+  Load-more cards differ from server cards     Same template part renders both
+  Theme switch loses News content              Post type can move to a mu-plugin (D5)
+  Local DB connection for WP-CLI               Run through Local's site shell
+                                               environment (scripts/wp.ps1)
+  Large images slow the site                   WP image sizes + srcset; compress
+                                               Avatar.png
+  Import duplicates                            Idempotent import keyed by slug;
+                                               backup first
+  Writing outside the repo (Local Sites)       Only via sync script; you approve
+                                               the permission prompts
+
+
+================================================================================
+ 13. DECISIONS NEEDED
+================================================================================
+
+  D1  Theme source location     Repo (wordpress-theme/) + sync to Local  [rec.]
+                                or edit directly inside Local Sites
+  D2  Header/footer links       From WP menus [rec.] or hard-coded
+  D3  Contact form              Lead post type + email [rec.] or a form plugin
+  D4  SEO                       Theme basics now [rec.], SEO plugin later
+  D5  News post type location   In theme for now [rec.], mu-plugin before launch
+  D6  Language                  English only now; JP/translation plugin later?
+  D7  Extra plugins             None required. Optional: ACF (only if the
+                                landing page must become editable later)
+
+================================================================================
+ END OF PLAN
+================================================================================
