@@ -5513,5 +5513,19 @@ main > .blog-section:last-child {
     border-bottom-color: transparent;
   }
 }
+html.is-opening {
+  overflow: hidden;
+}
+
+.is-smooth .site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.is-smooth #smooth-content {
+  padding-top: var(--header-h, 4rem);
+}
 
 /*# sourceMappingURL=landing.css.map */

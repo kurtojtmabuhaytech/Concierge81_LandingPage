@@ -190,3 +190,11 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
     border-bottom-color: transparent;
   }
 }
+
+// The opening (first open in a session): no scrolling until it has played
+html.is-opening { overflow: hidden; }
+
+// Smooth scrolling (ScrollSmoother, desktop): the content moves inside a fixed wrapper, so the
+// site header is fixed to the screen instead of sticky, and the content starts below it
+.is-smooth .site-header { position: fixed; top: 0; left: 0; right: 0; }
+.is-smooth #smooth-content { padding-top: var(--header-h, 4rem); }

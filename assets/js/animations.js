@@ -12,17 +12,33 @@
     return;
   }
 
-  gsap.registerPlugin(ScrollTrigger, Flip, MorphSVGPlugin);
+  gsap.registerPlugin(ScrollTrigger, Flip, MorphSVGPlugin, ...(window.ScrollSmoother ? [ScrollSmoother] : []));
 
-  // A refresh always starts over: back to the top with the opening. The browser (and
-  // ScrollTrigger) would otherwise restore the old scroll position, and an in-page link may have
-  // left a #section in the address bar. Arriving from another page with a #section link (e.g.
-  // the blog's "Contact") still goes straight to that section.
+  /* Once per browser session (sessionStorage):
+     - the opening plays on the first open, and not again on a refresh;
+     - a refresh comes back to where the visitor was (restored by us, after the scenes have
+       measured the page);
+     - once they have reached "Why would a business need this?" the intro story counts as done:
+       on later loads in the session it is shown finished, as a plain stack, and never replays. */
+  const session = {
+    get: key => { try { return sessionStorage.getItem(`c81:${key}`); } catch (e) { return null; } },
+    set: (key, value) => { try { sessionStorage.setItem(`c81:${key}`, value); } catch (e) { /* storage blocked */ } }
+  };
+  const introSeen = session.get('introSeen') === '1';
+  const introDone = session.get('introDone') === '1';
   const reloaded = performance.getEntriesByType?.('navigation')[0]?.type === 'reload';
   if (reloaded && location.hash) history.replaceState(null, '', location.pathname + location.search);
+  const savedPlace = (() => {
+    if (!introSeen || location.hash) return null;
+    try { return JSON.parse(session.get('place')); } catch (e) { return null; }
+  })();
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   ScrollTrigger.clearScrollMemory('manual');
   if (!location.hash) scrollTo(0, 0);
+
+  // Smooth scrolling (desktop, created in the matchMedia below); a scroll helper for both cases
+  let smoother = null;
+  const scrollToY = (y, smooth = true) => (smoother ? smoother.scrollTo(y, smooth) : scrollTo({ top: y, behavior: smooth ? 'smooth' : 'auto' }));
 
   // Shared timing, read from the Figma motion recording (±0.25s)
   const MOTION = {
@@ -32,30 +48,33 @@
     base: 0.5,           // bubbles, cards fading in
     slow: 0.8,           // kiosk moves, section morphs
     stagger: 0.18,       // features, list items
-    typing: 1.2,         // "concierge is typing…" before a reply
-    bubbleText: 0.4      // text fading in after a bubble shape has grown
+    typing: 0.7,         // "concierge is typing…" before a reply
+    bubbleText: 0.4,     // text fading in after a bubble shape has grown
+    pop: 0.32            // a message popping in whole
   };
 
   const $ = (selector, scope = document) => scope.querySelector(selector);
   const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
   const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Chat thread (phones): visitor bubble → concierge bubble (shape grows first, then its text) →
-  // everything else, moving with the scroll as the thread passes from `start` to `end`
-  const chatThread = (scope, { trigger = scope, start = 'top 80%', end = 'top 40%' } = {}) => {
+  // Played once the scroll reaches them, at their own pace; reversed when the visitor scrolls back above
+  const PLAY = 'play none none reverse';
+
+  // Chat thread (phones): visitor bubble → concierge bubble (pops in whole) → everything else,
+  // played when the thread scrolls into view
+  const chatThread = (scope, { trigger = scope, start = 'top 80%' } = {}) => {
     const items = $$('[data-anim]', scope);
     const user = items.filter(el => el.matches('.msg-row--user, .chat-header-row.right'));
     const reply = items.find(el => el.matches('.header-pill--ai'));
     const rest = items.filter(el => !user.includes(el) && el !== reply);
-    const tl = gsap.timeline({ scrollTrigger: { trigger, start, end, scrub: 0.5 } });
+    const tl = gsap.timeline({ scrollTrigger: { trigger, start, toggleActions: PLAY } });
 
     if (user.length) {
       tl.fromTo(user, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: MOTION.base, ease: MOTION.ease });
     }
     if (reply) {
-      tl.fromTo(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom' },
-        { autoAlpha: 1, scale: 1, duration: MOTION.base, ease: 'back.out(1.6)' }, user.length ? '+=0.15' : 0)
-        .fromTo(reply, { color: 'rgba(255, 255, 255, 0)' }, { color: '#FFFFFF', duration: MOTION.bubbleText, ease: 'none' }, '-=0.2');
+      tl.fromTo(reply, { autoAlpha: 0, scale: 0.85, transformOrigin: 'left bottom' },
+        { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, user.length ? '+=0.15' : 0);
     }
     if (rest.length) {
       tl.fromTo(rest, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: MOTION.base, ease: MOTION.ease, stagger: 0.15 }, '-=0.1');
@@ -63,38 +82,55 @@
     return tl;
   };
 
-  // Phones: `targets` move from `from` to their resting state with the scroll as `trigger` passes
-  // through the lower part of the screen (one after another when there are several)
-  const scrollReveal = (targets, trigger, from, { start = 'top 90%', end = 'top 55%', stagger = 0.15 } = {}) =>
+  // Phones: `targets` move from `from` to their resting state once `trigger` scrolls into the lower
+  // part of the screen (one after another when there are several)
+  const scrollReveal = (targets, trigger, from, { start = 'top 88%', stagger = 0.12 } = {}) =>
     gsap.fromTo(targets, from, {
-      autoAlpha: 1, x: 0, y: 0, ease: 'power2.out', stagger,
-      scrollTrigger: { trigger, start, end, scrub: 0.5 }
+      autoAlpha: 1, x: 0, y: 0, duration: MOTION.base, ease: 'power2.out', stagger,
+      scrollTrigger: { trigger, start, toggleActions: PLAY }
     });
 
-  // Concierge bubble inside a stepped timeline: the blue shape grows, then its text fades in
+  // Concierge bubble inside a stepped timeline: it pops in whole, its text already there
   // (starting state set by the scene: autoAlpha 0, scale 0.9, transparent text)
   const bubbleIn = (tl, el, at) => tl
-    .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.base, ease: 'back.out(1.6)' }, at)
-    .to(el, { color: '#FFFFFF', duration: MOTION.bubbleText, ease: 'none' }, '-=0.2');
+    .set(el, { color: '#FFFFFF' }, at)
+    .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, at);
 
   // Pinned scenes sit right under the sticky header (--header-h feeds --stage-h in the CSS)
   const siteHeader = $('.site-header');
   const setHeaderHeight = () => root.style.setProperty('--header-h', `${siteHeader.offsetHeight}px`);
 
-  /* Scroll scene: pins `trigger` under the header and ties `tl` to the scroll. The scene moves
-     only while the visitor scrolls (with a short, smooth catch-up), stops the moment they stop
-     and runs backwards when they scroll up; nothing plays on its own. Each second of the
-     timeline takes PACE of a screen to scroll through, so one wheel notch moves it a little.
-     The scene never unpins before its last moment has played; `tail` keeps it pinned after that
-     (the next section can slide up over it). `beforeMove` runs before the timeline first moves
-     (the story finishes the opening there, so the two never overlap); `top` is where it pins
-     (the story under the site header; the later scenes, after the header has slid away, at the
-     very top of the screen); `onUpdate` gets the
-     timeline's time as it changes. An optional `exit` timeline plays over the tail, also with
-     the scroll, as the scene leaves. */
+  /* Scroll scene: pins `trigger` and plays `tl` step by step as the visitor scrolls through it.
+     The steps are the timeline's labels. Scrolling into a step plays it to its end at its own,
+     natural speed; scrolling back plays it in reverse to the step's start. Wherever the visitor
+     stops, the step under way finishes, so the page never rests on a half-played moment, and a fast
+     flick plays the steps it passes in order, a little quicker, instead of skipping them. Each
+     second of the timeline gets PACE of a screen of scrolling; `tail` keeps the scene pinned after
+     its last step (the next section can slide up over it). `beforeMove` runs before the timeline
+     first moves (the story finishes the opening there); `top` is where it pins (the story under
+     the site header, later scenes at the top of the screen); `onUpdate` gets the timeline's time
+     as it changes. An optional `exit` timeline follows the scroll over the tail as the scene leaves. */
   const PACE = 0.65; // screen heights of scrolling per second of animation
+  const CATCH_UP = 1.4; // seconds: further behind than this, the playhead speeds up to keep up
   const scrollScene = ({ trigger, tl, exit, top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {} }) => {
     const span = () => tl.duration() * innerHeight * PACE;
+    tl.pause();
+    const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
+    // The step boundary at or after `time` (forwards), at or before it (backwards)
+    const stepAfter = time => stops().find(t => t >= time - 0.001) ?? tl.duration();
+    const stepBefore = time => [...stops()].reverse().find(t => t <= time + 0.001) ?? 0;
+    let chase;
+    let target = 0;
+    const playTo = (time) => {
+      if (Math.abs(time - target) < 0.001 && chase?.isActive()) return;
+      target = time;
+      chase?.kill();
+      const distance = Math.abs(time - tl.time());
+      if (distance < 0.001) return;
+      // Natural speed for a step or so; longer stretches are compressed so it keeps up with the visitor
+      const duration = distance <= CATCH_UP ? distance : CATCH_UP + (distance - CATCH_UP) * 0.35;
+      chase = tl.tweenTo(time, { duration: time < tl.time() ? duration * 0.7 : duration, ease: 'none' });
+    };
     let pin;
     pin = ScrollTrigger.create({
       trigger,
@@ -105,25 +141,27 @@
       onRefresh: (self) => { pin = self; } // the first refresh runs before create() returns
     });
     // Measured from the pin (refreshed first): measuring the pinned element itself would count its pin spacing
-    const scrub = ScrollTrigger.create({
+    const steps = ScrollTrigger.create({
       trigger,
       start: () => pin.start,
       end: () => pin.start + span(),
-      animation: tl,
-      scrub: 0.5,
       onUpdate: (self) => {
         if (self.progress > 0) beforeMove();
+        const at = self.progress * tl.duration();
+        playTo(self.direction < 0 ? stepBefore(at) : stepAfter(at));
       },
       onRefresh: (self) => {
         // Rewind with the old measurements (the exit first: it ran last), re-measure the starting
-        // state, then return to the scroll position
+        // state, then jump (no replay) to the end of the step at the scroll position
+        chase?.kill();
         exit?.progress(0);
         tl.progress(0);
         setHeaderHeight();
         onRefresh();
         tl.invalidate();
         if (self.progress > 0) beforeMove();
-        tl.progress(self.progress);
+        target = self.progress > 0 ? stepAfter(self.progress * tl.duration()) : 0;
+        tl.time(target);
         exit?.invalidate();
       }
     });
@@ -136,12 +174,14 @@
         start: () => pin.start + span(),
         end: () => pin.start + span() + tail(),
         animation: exit,
-        scrub: 0.5,
+        scrub: 0.6,
         onEnter: () => exit.invalidate(),
         onRefresh: (self) => exit.progress(self.progress)
       });
     }
-    return { pin, scrub };
+    // Scroll position of a step (in-page links to a step)
+    const labelToScroll = label => pin.start + (tl.labels[label] / tl.duration()) * span();
+    return { pin, scrub: { labelToScroll }, steps };
   };
 
   const hero = {
@@ -157,11 +197,12 @@
   let finishOpening = () => {};
 
   /* ---- 0–2. Opening screen → hero ---------------------------------------------------------
-     Plays on every visit. Runs once, outside matchMedia, so resizing never replays it.
-     Scroll, tap or a key skips to the end; a #section link skips it entirely. */
+     Plays once per browser session, on the first open: it waits until the page (avatar, photos)
+     has loaded, then the greeting pops in whole and flies into the hero. The page can't be
+     scrolled while it plays, so every first visitor sees it. A refresh in the same session, a
+     #section link or reduced motion skip it. Runs once, outside matchMedia. */
   const runOpening = () => {
     const splash = $('.splash');
-    const skipEvents = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
     let done = false;
     let tl;
     let dotsLoop;
@@ -169,7 +210,8 @@
     const finish = () => {
       if (done) return;
       done = true;
-      skipEvents.forEach(type => removeEventListener(type, finish));
+      session.set('introSeen', '1');
+      root.classList.remove('is-opening');
       finishOpening = () => {};
       tl?.kill();
       dotsLoop?.kill();
@@ -178,16 +220,13 @@
       gsap.set(hero.surface, { '--hero-surface': 1 });
     };
 
-    if (!splash || prefersReducedMotion || location.hash) {
+    if (!splash || prefersReducedMotion || location.hash || introSeen) {
       finish();
       return;
     }
     finishOpening = finish;
-
-    // Every visit starts at the top with the opening
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    root.classList.add('is-opening'); // no scrolling until the opening has played
     scrollTo(0, 0);
-    skipEvents.forEach(type => addEventListener(type, finish, { once: true, passive: true }));
 
     const msg = $('.splash-msg', splash);
     const bubble = $('.splash-bubble', splash);
@@ -196,32 +235,32 @@
     const caption = $('.splash-caption', splash);
     const heroBubble = $('.bubble', hero.greeting);
 
-    // Bubble sizes: the full greeting, and the small one-line "•••" bubble it grows from
+    // Bubble sizes: the full greeting, and the small one-line "•••" bubble shown while typing
     const style = getComputedStyle(bubble);
     const full = { width: bubble.offsetWidth, height: bubble.offsetHeight };
     const typing = {
       width: dots.offsetWidth + 2 * parseFloat(style.paddingLeft),
       height: parseFloat(style.lineHeight) + 2 * parseFloat(style.paddingTop)
     };
-    gsap.set(bubble, typing);
-    gsap.set(text, { autoAlpha: 0 });
+    gsap.set(bubble, { ...typing, autoAlpha: 0 });
+    gsap.set([text, caption], { autoAlpha: 0 });
     dotsLoop = gsap.to($$('i', dots), {
       y: -3, opacity: 0.4, duration: 0.35, ease: 'sine.inOut',
       stagger: { each: 0.12, repeat: -1, yoyo: true }
     });
 
-    tl = gsap.timeline({ onComplete: finish })
-      .from(bubble, { autoAlpha: 0, scale: 0.6, transformOrigin: 'left bottom', duration: MOTION.fast, ease: 'back.out(2)' })
-      .from(caption, { autoAlpha: 0, duration: MOTION.fast }, '<0.1')
-      // typing… then the bubble grows into the greeting
-      .to(dots, { autoAlpha: 0, duration: 0.15 }, `+=${MOTION.typing}`)
-      .to(bubble, { ...full, duration: MOTION.base, ease: MOTION.easeInOut }, '<')
-      .to(caption, { autoAlpha: 0, duration: 0.15 }, '<')
-      .call(() => { caption.textContent = 'concierge · 9:12 AM'; })
-      .to(caption, { autoAlpha: 1, duration: 0.2 })
-      .to(text, { autoAlpha: 1, duration: MOTION.bubbleText }, '<-0.1')
+    tl = gsap.timeline({ paused: true, onComplete: finish })
+      .fromTo(bubble, { scale: 0.6, transformOrigin: 'left bottom' }, { autoAlpha: 1, scale: 1, duration: MOTION.fast, ease: 'back.out(2)' })
+      .to(caption, { autoAlpha: 1, duration: MOTION.fast }, '<0.1')
+      // a short "typing…", then the whole greeting pops in at once
+      .addLabel('greet', `+=${MOTION.typing}`)
+      .set(dots, { autoAlpha: 0 }, 'greet')
+      .set(bubble, full, 'greet')
+      .set(text, { autoAlpha: 1 }, 'greet')
+      .call(() => { caption.textContent = 'concierge · 9:12 AM'; }, null, 'greet')
+      .fromTo(bubble, { scale: 0.86 }, { scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', immediateRender: false }, 'greet')
       // hold, then hand the greeting to the hero while the card builds around it
-      .addLabel('handoff', '+=0.8')
+      .addLabel('handoff', 'greet+=1.0')
       .to(splash, { backgroundColor: 'rgba(255, 255, 255, 0)', duration: MOTION.slow, ease: 'none' }, 'handoff')
       .to(msg, {
         x: () => heroBubble.getBoundingClientRect().left - bubble.getBoundingClientRect().left,
@@ -236,9 +275,20 @@
       .set(hero.greeting, { autoAlpha: 1 }, `handoff+=${MOTION.slow}`)
       .set(msg, { autoAlpha: 0 }, `handoff+=${MOTION.slow}`)
       .fromTo(hero.composer, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: MOTION.base, ease: MOTION.ease })
-      .fromTo(hero.controls, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: MOTION.fast, ease: MOTION.ease, stagger: 0.12 })
-      // the visitor "sends" the suggested question
-      .fromTo(hero.question, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: MOTION.base, ease: MOTION.ease }, '+=0.3');
+      .fromTo(hero.controls, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: MOTION.fast, ease: MOTION.ease, stagger: 0.1 })
+      // the visitor "sends" the suggested question: it pops in whole
+      .fromTo(hero.question, { autoAlpha: 0, scale: 0.86, transformOrigin: 'right bottom' },
+        { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, '+=0.3');
+
+    // Start once everything has loaded, so nothing pops in half-drawn (a slow network still
+    // starts it after a few seconds)
+    let started = false;
+    const start = () => { if (!started) { started = true; tl.play(); } };
+    if (document.readyState === 'complete') start();
+    else {
+      addEventListener('load', start, { once: true });
+      setTimeout(start, 4000);
+    }
   };
 
   /* ---- Scenes: each is ({ isDesktop, isMobile }) => cleanup?, rebuilt when the breakpoint changes ---- */
@@ -249,7 +299,7 @@
      The timeline moves with the scroll (scrollScene) and stops when the scroll stops.
      Only transforms and opacity animate. */
   scenes.push(({ isDesktop }) => {
-    if (!isDesktop) return;
+    if (!isDesktop || introDone) return;
     const story = $('.story');
     const introKiosk = $('#intro .kiosk-device');
     const featuresKiosk = $('#features .kiosk-device');
@@ -492,11 +542,11 @@
       if (label === undefined) return; // not one of the story's links: leave the click alone
       e.preventDefault();
       e.stopPropagation(); // capture phase: main.js's smooth scroll would aim at the layer instead
-      scrollTo({ top: scene.scrub.labelToScroll(label), behavior: 'smooth' });
+      scrollToY(scene.scrub.labelToScroll(label));
       history.replaceState(null, '', link.getAttribute('href'));
     };
     document.addEventListener('click', onStepLink, true);
-    if (location.hash in stepLinks) requestAnimationFrame(() => scrollTo(0, scene.scrub.labelToScroll(stepLinks[location.hash])));
+    if (location.hash in stepLinks) requestAnimationFrame(() => scrollToY(scene.scrub.labelToScroll(stepLinks[location.hash]), false));
 
     return () => {
       document.removeEventListener('click', onStepLink, true);
@@ -506,6 +556,23 @@
       morphEdge.remove();
       story.classList.remove('is-staged');
       next.classList.remove('slides-over');
+    };
+  });
+
+  // Desktop, intro already done this session: the hero, intro and features are a plain, finished
+  // stack; the site header slides away as the inbox comes in, as it does after the story
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop || !introDone) return;
+    gsap.set('.story [data-anim]', { autoAlpha: 1 });
+    const header = ScrollTrigger.create({
+      trigger: '#problem',
+      start: 'top 60%',
+      onEnter: () => gsap.to(siteHeader, { yPercent: -100, duration: 0.4, ease: MOTION.easeInOut }),
+      onLeaveBack: () => gsap.to(siteHeader, { yPercent: 0, duration: 0.4, ease: MOTION.easeInOut })
+    });
+    return () => {
+      header.kill();
+      gsap.set(siteHeader, { clearProps: 'transform' });
     };
   });
 
@@ -791,9 +858,9 @@
     inbox.headers.forEach(header => chatThread(header));
     scrollReveal(inbox.card, inbox.card, { autoAlpha: 0, y: 30 }, { start: 'top 90%', end: 'top 65%' });
     gsap.fromTo(inbox.tags, { autoAlpha: 0, y: -240 }, {
-      autoAlpha: 1, y: i => inbox.rest(inbox.tags[i]).y, ease: 'bounce.out',
+      autoAlpha: 1, y: i => inbox.rest(inbox.tags[i]).y, duration: 0.9, ease: 'bounce.out',
       stagger: { each: 0.04, from: 'random' },
-      scrollTrigger: { trigger: inbox.card, start: 'top 65%', end: 'top 15%', scrub: 0.5 }
+      scrollTrigger: { trigger: inbox.card, start: 'top 65%', toggleActions: PLAY }
     });
   });
 
@@ -1886,11 +1953,61 @@
         gsap.set('[data-anim]', { autoAlpha: 1 });
         return;
       }
+      // Desktop: the page glides with a little momentum, so a quick flick or a slow wheel never
+      // feels rough (phones keep their native touch scrolling)
+      if (context.conditions.isDesktop && window.ScrollSmoother) {
+        setHeaderHeight();
+        root.classList.add('is-smooth');
+        smoother = ScrollSmoother.create({ wrapper: '#smooth-wrapper', content: '#smooth-content', smooth: 1.1, smoothTouch: false });
+      }
       const cleanups = scenes.map(scene => scene(context.conditions)).filter(Boolean);
-      return () => cleanups.forEach(cleanup => cleanup());
+      return () => {
+        cleanups.forEach(cleanup => cleanup());
+        smoother?.kill();
+        smoother = null;
+        root.classList.remove('is-smooth');
+      };
     }
   );
 
-  // Recalculate trigger positions once images (avatar, photos) have their real size
-  addEventListener('load', () => ScrollTrigger.refresh());
+  // In-page links glide there with the smooth scrolling (the story's step links are handled first)
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a[href^="#"]');
+    const href = link?.getAttribute('href');
+    const target = href && href.length > 1 && document.querySelector(href);
+    if (!smoother || !target || e.defaultPrevented) return;
+    e.preventDefault();
+    e.stopPropagation(); // main.js would scroll natively instead
+    smoother.scrollTo(target, true, 'top top');
+    history.replaceState(null, '', href);
+  }, true);
+
+  // Where the visitor is, as a section and a distance into it (positions shift when the intro
+  // story is shown finished instead of pinned), saved as they scroll
+  const places = ['.story', '#problem', '#how', '#interaction', '#industries', '#values', '#deployment', '#pricing', '#faq', '#cta', '#contact'];
+  const topOf = (selector) => {
+    const el = $(selector);
+    const box = el.parentElement.classList.contains('pin-spacer') ? el.parentElement : el;
+    // (with smooth scrolling the content trails the scrollbar, so ask the smoother)
+    return smoother ? smoother.offset(box, 'top top') : box.getBoundingClientRect().top + scrollY;
+  };
+  const savePlace = () => {
+    if (root.classList.contains('is-opening')) return;
+    const y = scrollY;
+    const id = [...places].reverse().find(sel => topOf(sel) <= y + 1) || places[0];
+    session.set('place', JSON.stringify({ id, offset: y - topOf(id) }));
+    if (y >= topOf('#problem') - 1) session.set('introDone', '1');
+  };
+  ScrollTrigger.addEventListener('scrollEnd', savePlace);
+  addEventListener('pagehide', savePlace);
+
+  // Recalculate trigger positions once images (avatar, photos) have their real size, then come
+  // back to where the visitor was before the refresh (straight there, its steps shown finished)
+  addEventListener('load', () => {
+    ScrollTrigger.refresh();
+    if (savedPlace && $(savedPlace.id)) {
+      scrollToY(topOf(savedPlace.id) + savedPlace.offset, false);
+      ScrollTrigger.refresh(); // the scenes jump to their finished step there, instead of playing up to it
+    }
+  });
 })();
