@@ -1388,10 +1388,124 @@
     };
   });
 
+  /* 13. Where would my concierge live? (Figma recording 1:38–2:01). Desktop: a scroll scene that
+     slides up over Why concierge81?. The visitor asks and the concierge answers; then the device
+     appears as a website screen, and each place joins the list in turn while the device turns into
+     it: kiosk, website, tablet, then phone, each with its own screen. All with the scroll. */
+  const deployment = {
+    section: $('#deployment'),
+    content: $('#deployment > .container'),
+    header: $('#deployment .chat-section-header'),
+    split: $('#deployment .deploy-split'),
+    stage: $('#deployment .deploy-stage'),
+    device: $('#deployment .device'),
+    cards: $$('#deployment .platform-card')
+  };
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop) return;
+    const { section, content, header, split, stage, device, cards } = deployment;
+    const user = $('.chat-header-row.right', header);
+    const pill = $('.header-pill--user', user);
+    const reply = $('.header-pill--ai', header);
+    const sub = $('.sub-pill-text', header);
+    const pillColor = getComputedStyle(pill).backgroundColor;
+    const screens = Object.fromEntries($$('.device-ui', device).map(img => [img.dataset.device, img]));
+    screens.website.removeAttribute('loading'); // the default screen: shown before the scene starts
+    section.classList.add('is-staged');
+    stage.classList.add('is-shaping');
+
+    // Each place's device, sized to the stage: the screen's own proportions inside the bezel
+    const frame = 3; // the device's border
+    const shapes = {
+      website: { ratio: 1440 / 900, bezel: 4, radius: 15, wide: true },
+      kiosk: { ratio: 720 / 1280, bezel: 10, radius: 22 },
+      tablet: { ratio: 834 / 1194, bezel: 12, radius: 26 },
+      mobile: { ratio: 393 / 852, bezel: 9, radius: 36 }
+    };
+    const shape = (name) => {
+      const { ratio, bezel, radius, wide } = shapes[name];
+      const edge = 2 * (bezel + frame);
+      const width = wide ? stage.clientWidth * 0.89 : null;
+      const height = wide ? (width - edge) / ratio + edge : stage.clientHeight * 0.86;
+      return {
+        width: wide ? width : (height - edge) * ratio + edge,
+        height,
+        padding: bezel,
+        borderRadius: radius
+      };
+    };
+    const shapeTo = name => Object.fromEntries(
+      ['width', 'height', 'padding', 'borderRadius'].map(key => [key, () => shape(name)[key]])
+    );
+    const showScreen = (name, at) => Object.entries(screens).forEach(([key, img]) =>
+      tl.to(img, { opacity: key === name ? 1 : 0, duration: 0.35, ease: 'none' }, at));
+
+    const applyStart = () => {
+      gsap.set(content, { y: 0 });
+      gsap.set(user, { autoAlpha: 0, y: 12 });
+      gsap.set(pill, { backgroundColor: '#A8A49A' });
+      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      gsap.set(stage, { autoAlpha: 0, y: 30 });
+      gsap.set(device, { ...shape('website'), scale: 0.92 });
+      Object.entries(screens).forEach(([key, img]) => gsap.set(img, { opacity: key === 'website' ? 1 : 0 }));
+      gsap.set(cards, { autoAlpha: 0, x: 24 });
+    };
+    applyStart();
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
+    tl.addLabel('enter', 0)
+
+      // Step 1 (1:38–1:41): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
+      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
+      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
+    bubbleIn(tl, reply, 0.6)
+      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+      .addLabel('ask')
+
+      // Step 2 (1:41–1:43): the view moves to the stage; the device rises in as a website screen
+      .to(content, { y: showInStage(section, content, split), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
+      .to(stage, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'ask+=0.3')
+      .to(device, { scale: 1, duration: MOTION.base }, 'ask+=0.4')
+      .addLabel('places', 'ask+=1.1');
+
+    // Steps 3–6 (1:43–2:00): each place joins the list and the device turns into it (on short
+    // screens the view moves down just enough to keep the new card in sight)
+    cards.forEach((card, i) => {
+      const at = `places+=${i * 1.4}`;
+      const name = card.dataset.device;
+      const keepInView = () => Math.min(showInStage(section, content, split)(), showInStage(section, content, card)());
+      tl.to(content, { y: keepInView, duration: 0.5, ease: MOTION.easeInOut }, at)
+        .to(card, { autoAlpha: 1, x: 0, duration: MOTION.base }, at)
+        .to(device, { ...shapeTo(name), duration: 0.8, ease: MOTION.easeInOut }, `${at}+=0.2`);
+      showScreen(name, `${at}+=0.4`);
+    });
+    tl.addLabel('built', `places+=${cards.length * 1.4}`);
+
+    // Leaving, as the pricing section slides up over it: the content fades out
+    const next = $('#pricing');
+    next.classList.add('slides-over');
+    const exit = gsap.timeline({ paused: true })
+      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .set({}, {}, 1);
+
+    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+
+    return () => {
+      next.classList.remove('slides-over');
+      section.classList.remove('is-staged');
+      stage.classList.remove('is-shaping');
+      gsap.set(device, { clearProps: 'width,height,padding,borderRadius,transform' });
+    };
+  });
+
   // Phones: the chats, then the step, mode and industry cards come in with the scroll
   scenes.push(({ isMobile }) => {
     if (!isMobile) return;
-    [how.header, modes.header, industries.header, values.header].forEach(header => chatThread(header));
+    [how.header, modes.header, industries.header, values.header, deployment.header].forEach(header => chatThread(header));
+    scrollReveal(deployment.stage, deployment.stage, { autoAlpha: 0, y: 30 });
+    deployment.cards.forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
     values.cards.forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
     scrollReveal([...industries.cards, industries.controls], industries.gallery, { autoAlpha: 0, x: 40 }, { stagger: 0.1 });
     $$('#how .process-card, #interaction .mode-card').forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));

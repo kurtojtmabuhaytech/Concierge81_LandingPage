@@ -2997,84 +2997,116 @@ code, kbd, samp, pre {
 
 /* =========================================
    Section 9: Deployment
+   Figma: a canvas with the device (left) and the four places as answer cards (467 wide, right)
    ========================================= */
 .deploy-split {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.25rem;
+  gap: 3rem;
   align-items: stretch;
 }
 
 .deploy-stage {
-  flex: 1.6 1 0;
+  flex: 1 1 0;
   min-width: min(100%, 26.25rem);
+  min-height: clamp(20rem, 42vw, 39.75rem);
+  position: relative;
   background: #F3F1EB;
-  border-radius: 20px;
-  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border-radius: 28px;
   display: grid;
   place-items: center;
+  overflow: hidden;
 }
 
-.tablet-frame {
-  width: 100%;
-  background: #0E1013;
-  padding: 10px;
-  border-radius: 18px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+.device {
+  width: 89%;
+  padding: 4px;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #1E2024, #1C1E22);
+  border: 3px solid #050415;
+  box-shadow: 0 30px 60px rgba(14, 16, 19, 0.16);
 }
 
-.tablet-screen {
-  aspect-ratio: 16/10.5;
-  width: 100%;
-  border: none;
+.device-screen {
+  position: relative;
+  height: 100%;
+  aspect-ratio: 1440/900;
+  overflow: hidden;
   border-radius: 10px;
-  background: #FFFFFF;
+  background: #F5F7FF;
+}
+
+.device-ui {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+  opacity: 0;
+}
+
+.device-ui[data-device=website] {
+  position: relative;
+  display: block;
+  opacity: 1;
+}
+
+.deploy-stage.is-shaping .device-screen {
+  aspect-ratio: auto;
+}
+.deploy-stage.is-shaping .device-ui[data-device=website] {
+  position: absolute;
 }
 
 .platform-list {
-  flex: 1 1 0;
+  flex: 0 1 29.1875rem;
   min-width: min(100%, 16.25rem);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.25rem;
 }
 
 .platform-card {
   background: #FFFFFF;
   border: 1px solid #E5E2D9;
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
+  border-radius: 22px 22px 22px 6px;
+  padding: 1.25rem 1.375rem;
+  box-shadow: 0 10px 28px rgba(13, 15, 20, 0.08);
 }
 .platform-card h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  line-height: 1.25;
+  letter-spacing: -0.017em;
   font-weight: 600;
 }
 .platform-card p {
-  margin: 0.4rem 0 0;
+  margin: 0.75rem 0 0;
   color: #5C5A4D;
-  font-size: 0.82rem;
-  line-height: 1.5;
+  font-size: 1rem;
+  line-height: 1.56;
 }
 
 .platform-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .platform-icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
   background: #EDF3FE;
   color: #276FF8;
   display: grid;
   place-items: center;
 }
 .platform-icon svg {
-  width: 15px;
-  height: 15px;
+  width: 20px;
+  height: 20px;
 }
 
 /* =========================================
@@ -4748,6 +4780,7 @@ main > .blog-section:last-child {
 #how.is-staged,
 #interaction.is-staged,
 #industries.is-staged,
+#deployment.is-staged,
 #values.is-staged {
   --stage-h: 100svh;
   height: var(--stage-h);
@@ -4757,6 +4790,7 @@ main > .blog-section:last-child {
 #how.is-staged > .container,
 #interaction.is-staged > .container,
 #industries.is-staged > .container,
+#deployment.is-staged > .container,
 #values.is-staged > .container {
   padding-block: 1.5rem;
   will-change: transform;
