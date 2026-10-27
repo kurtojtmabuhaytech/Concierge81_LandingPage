@@ -267,7 +267,10 @@ document.addEventListener('DOMContentLoaded', () => {
         '.feature-item', '.inbox-card', '.stepper', '.process-card',
         '.mode-card', '.gallery-controls', '.bento-card', '.deploy-stage', '.platform-card',
         '.tier-card', '.cta-row', '.faq-filters', '.faq-chat-box',
-        '.cta-sub', '.cta-actions', '.next-steps', '.footer-form-card'
+        '.cta-sub', '.cta-actions', '.next-steps', '.footer-form-card',
+        // blog pages
+        '.blog-section-title', '.featured-card', '.post-filters', '.post-card', '.load-more',
+        '.post-header > *', '.post-hero', '.post-toc', '.post-body > *', '.keep-reading-head'
       ].join(', '),
       stagger: 0.08
     }
