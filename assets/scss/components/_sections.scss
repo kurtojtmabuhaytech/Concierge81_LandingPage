@@ -1291,7 +1291,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   .btn { padding: 0.875rem 1.625rem; font-size: 1.0625rem; font-weight: $font-weight-medium; }
   .link-btn { font-size: 1.0625rem; color: $cobalt-600; }
 }
-.cta-hero .kiosk-device { width: min(100%, 31.25rem); margin: 0 auto -6rem; border-radius: 36px 36px 14px 14px; padding: 14px 14px 0; border: 3px solid $neutral-700;
+.cta-hero .kiosk-device { width: min(100%, 26.25rem, calc((100svh - 7rem) * 0.62)); margin: 0 auto -6rem; // 420 at 1512 (Figma); the whole screen fits the screen's height border-radius: 36px 36px 14px 14px; padding: 14px 14px 0; border: 3px solid $neutral-700;
   .kiosk-screen { border-radius: 22px; }
 }
 

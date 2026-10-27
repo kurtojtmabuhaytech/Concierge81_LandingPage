@@ -1808,7 +1808,7 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, parts, kiosk } = cta;
-    const actions = $('.cta-actions', section);
+    const screen = $('.kiosk-screen', kiosk);
     const next = $('#contact');
     section.classList.add('is-staged');
     next.classList.add('slides-over');
@@ -1824,10 +1824,10 @@
       .addLabel('enter', 0)
       // Step 1: the status, the title, the sub-line and the buttons, one after another
       .to(parts, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.3 }, 0.01)
-      // Step 2: the kiosk rises in below them, then the view moves down onto it (the buttons stay
-      // at the top, as in the recording)
+      // Step 2: the kiosk rises in below them, then the view moves down until its whole screen
+      // (down to her hands and the top of the base) is in view, as in the Figma
       .to(kiosk, { autoAlpha: 1, y: 0, duration: 0.8 }, 'enter+=1.0')
-      .to(content, { y: showInStage(section, content, actions, kiosk), duration: MOTION.slow, ease: MOTION.easeInOut }, 'enter+=1.6')
+      .to(content, { y: showInStage(section, content, screen), duration: MOTION.slow, ease: MOTION.easeInOut }, 'enter+=1.6')
       .addLabel('built', 'enter+=2.4');
 
     scrollScene({ trigger: section, tl, tail: () => section.offsetHeight, onRefresh: applyStart });
