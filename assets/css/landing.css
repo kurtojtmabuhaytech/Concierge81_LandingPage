@@ -5513,12 +5513,6 @@ main > .blog-section:last-child {
     backdrop-filter: none;
     border-bottom-color: transparent;
   }
-  .js-motion.story-plain .site-header {
-    background: rgba(255, 255, 255, 0.96);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    border-bottom-color: #E5E2D9;
-  }
 }
 html.is-opening {
   overflow: hidden;

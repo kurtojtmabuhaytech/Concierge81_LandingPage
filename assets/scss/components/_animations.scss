@@ -189,13 +189,6 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
     -webkit-backdrop-filter: none; backdrop-filter: none;
     border-bottom-color: transparent;
   }
-  // Once the intro story is a plain page (scrolled back up, or done earlier in the session) the
-  // content scrolls under the header, so it gets its frosted bar back
-  .js-motion.story-plain .site-header {
-    background: rgba(255, 255, 255, 0.96);
-    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    border-bottom-color: $color-border;
-  }
 }
 
 // The opening (first open in a session): no scrolling until it has played
