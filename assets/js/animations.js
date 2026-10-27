@@ -141,6 +141,7 @@
     let playing = null; // new steps under way
     let playingTo = 0;
     let follow = null;  // the scene easing after the scroll over what was seen
+    let followTo = -1;
     let viewMove = null; // the view easing after the scroll (other scenes, over what was seen)
     let pin;
 
@@ -187,13 +188,18 @@
       builtAt = built;
     };
     // Over what was seen: follow the scroll
-    const followSeen = (time) => {
+    const followSeen = (time, direction = 1) => {
       playing?.kill();
       playing = null;
       if (followBack) {
-        if (Math.abs(time - tl.time()) < 0.001 && !follow?.isActive()) return;
+        // Only ever rests on a finished step: moves to the step at this scroll position with a
+        // short, smooth transition (never stops on a half-faded frame in between)
+        const step = stops().filter(t => t <= time + 0.001).at(-1) ?? 0;
+        const goal = direction < 0 ? step : stepAfter(time);
+        if (Math.abs(goal - followTo) < 0.001 && (follow?.isActive() || Math.abs(tl.time() - goal) < 0.001)) return;
         follow?.kill();
-        follow = tl.tweenTo(time, { duration: 0.35, ease: 'power2.out' });
+        followTo = goal;
+        follow = tl.tweenTo(goal, { duration: Math.min(0.9, 0.25 + Math.abs(goal - tl.time()) * 0.35), ease: 'power2.inOut' });
         return;
       }
       build();
@@ -270,7 +276,7 @@
           return;
         }
         if (playing && self.direction > 0) return; // still catching up on the way down
-        followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, watched)));
+        followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, watched)), self.direction);
       },
       onRefresh: (self) => {
         // Rewind with the old measurements (the exit first: it ran last), re-measure the starting
@@ -928,19 +934,10 @@
       .to(closingSub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
       .addLabel('repeats');
 
-    // Leaving, as the How section slides up over the inbox (the tail): the questions rise back up
-    // out of the card (the fall in reverse) from wherever they rest and fade away with the glow,
-    // then the card and messages fade out. All with the scroll; the exit re-measures where the
-    // questions rest each time it is entered from above (some may have been moved by hand).
-    const riseDelay = i => (((i * 7) % tags.length) / tags.length) * 1.0;
+    // Leaving, as the next section slides up over it: everything stays as the visitor left it
+    // (the questions stay in the pile); the content only drifts up a little as it is covered
     const exit = gsap.timeline({ paused: true })
-      .to(tags, {
-        y: i => `-=${pile.offsetHeight + 160 + (i % 6) * 45}`, rotation: i => `+=${((i * 37) % 30) - 15}`,
-        duration: 2.0, ease: 'power2.in', stagger: riseDelay
-      }, 0)
-      .to(tags, { autoAlpha: 0, duration: 0.7, ease: 'none', stagger: riseDelay }, 1.3)
-      .to(pile, { '--pile-glow': 0, duration: 2.0, ease: 'none' }, 0.4)
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 1.2, ease: 'power1.in' }, 1.6);
+      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0);
     const next = $('#how');
     next.classList.add('slides-over');
 
@@ -949,7 +946,7 @@
     // animates its two, the rain all of them), so the scroll and a drop never fight over one.
     const updatePile = () => {
       const time = tl.time();
-      pile.classList.toggle('is-busy', time < tl.labels.demo || exit.progress() > 0);
+      pile.classList.toggle('is-busy', time < tl.labels.demo); // draggable once they have landed, also while the next section covers them
       if (time < tl.labels.inbox) inbox.putBack();
       else if (time < tl.labels.demo) inbox.putBack([float, open]);
     };
@@ -1100,7 +1097,7 @@
 
     // Leaving, as the next section slides up over it: the content fades out
     const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
       .set({}, {}, 1);
 
     scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
@@ -1227,7 +1224,7 @@
 
     // Leaving, as the industries section slides up over it: the content fades out
     const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.8, ease: 'power1.in' }, 0.15)
+      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
       .set({}, {}, 1);
 
     scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
@@ -1407,7 +1404,7 @@
 
     // Leaving: the content fades out
     const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.8, ease: 'power1.in' }, 0.15)
+      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
       .set({}, {}, 1);
 
     scrollScene({ trigger: section, tl, exit, tail: () => innerHeight * 0.5, onRefresh: applyStart });
@@ -1532,7 +1529,7 @@
       // the answer label appears as it passes 2:14 AM; the hand-off line draws to the team
       .to(content, { y: showInStage(section, content, rows[0]), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
       .to(rows[0].children, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.2 }, 'ask+=0.4')
-      .addLabel('row1', 'ask+=0.9')
+      .addLabel('row1', 'ask+=1.15') // after both cards have risen in (a step never ends mid-fade)
       .to(timeline, { '--at': '9.3%', duration: 0.5, ease: 'power1.inOut' }, 'row1')
       .to(fill, { scaleX: 0.093, duration: 0.5, ease: 'power1.inOut' }, 'row1')
       .to(tip, { autoAlpha: 1, y: 0, duration: 0.3 }, 'row1+=0.4')
@@ -1550,7 +1547,7 @@
       // spread out from the hub along their lines and get their names
       .to(content, { y: showInStage(section, content, rows[1]), duration: MOTION.slow, ease: MOTION.easeInOut }, 'row1Done')
       .to(rows[1].children, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.2 }, 'row1Done+=0.3')
-      .addLabel('row2', 'row1Done+=0.9')
+      .addLabel('row2', 'row1Done+=1.25')
       .to(infoBox, { autoAlpha: 1, y: 0, duration: 0.4 }, 'row2')
       .to(branches, { strokeDashoffset: 0, duration: 0.6, ease: 'power1.inOut', stagger: 0.1 }, 'row2+=0.4')
       .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, 'row2+=0.8')
@@ -1570,13 +1567,13 @@
       .to(network, { opacity: 1, duration: 0.4, stagger: 0.1 }, 'row2+=0.8')
       .to(places, { autoAlpha: 1, x: 0, y: 0, duration: 0.6, ease: MOTION.easeInOut, stagger: 0.12 }, 'row2+=0.8')
       .to(tags, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.12 }, 'row2+=1.3')
-      .addLabel('row2Done', 'row2+=2.4')
+      .addLabel('row2Done', 'row2+=2.55')
 
       // Step 4 (1:32–1:37): on to row 3. Parking and its quote appear, the week's bars grow (the
       // last, today, lit), then the demo card rises in
       .to(content, { y: showInStage(section, content, rows[2]), duration: MOTION.slow, ease: MOTION.easeInOut }, 'row2Done')
       .to(rows[2].children[0], { autoAlpha: 1, y: 0, duration: MOTION.base }, 'row2Done+=0.3')
-      .addLabel('row3', 'row2Done+=0.7')
+      .addLabel('row3', 'row2Done+=0.85')
       .to(word, { autoAlpha: 1, y: 0, duration: 0.35, stagger: 0.12 }, 'row3')
       .to(bars, { '--grow': 1, duration: 0.5, ease: 'power2.out', stagger: 0.1 }, 'row3+=0.3')
       .to(demo, { autoAlpha: 1, y: 0, duration: 0.6 }, 'row3+=0.6')
@@ -1584,7 +1581,7 @@
 
     // Leaving, as the deployment section slides up over it: the content fades out
     const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
       .set({}, {}, 1);
 
     scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
@@ -1743,7 +1740,7 @@
     const next = $('#pricing');
     next.classList.add('slides-over');
     const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
       .set({}, {}, 1);
 
     scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
@@ -1853,7 +1850,7 @@
 
     // Leaving, as the FAQ section slides up over it: the content fades out
     const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
       .set({}, {}, 1);
 
     scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
@@ -1971,7 +1968,7 @@
 
     // Leaving, as the final call to action slides up over it: the content fades out
     const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
       .set({}, {}, 1);
 
     scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
@@ -2088,7 +2085,7 @@
       if (context.conditions.isDesktop && window.ScrollSmoother) {
         setHeaderHeight();
         root.classList.add('is-smooth');
-        smoother = ScrollSmoother.create({ wrapper: '#smooth-wrapper', content: '#smooth-content', smooth: 1.1, smoothTouch: false });
+        smoother = ScrollSmoother.create({ wrapper: '#smooth-wrapper', content: '#smooth-content', smooth: 0.6, smoothTouch: false });
       }
       const cleanups = scenes.map(scene => scene(context.conditions)).filter(Boolean);
       return () => {
