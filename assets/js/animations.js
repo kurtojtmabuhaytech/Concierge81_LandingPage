@@ -113,9 +113,11 @@
      The steps are the timeline's labels.
      - Down, into a new step: the step plays at its own speed, and the scroll holds at that step
        until it has finished, so a hard flick can't skip anything; then the next step can start.
-     - Up: the scene shows each step as it was when the visitor saw it (its finished frame), held
-       still; nothing plays backwards.
-     - Down again through steps already seen: shown straight away, finished; only new steps play.
+     - Back over what the visitor has seen (up, or down again), the scene follows the scroll
+       smoothly and nothing they have seen disappears: the story (`followBack`, every frame of it a
+       full page) moves back and forth with the scroll, e.g. the kiosk turning back into the hero
+       card; the other scenes stay built (questions, cards, answers remain and can be used) and only
+       their view scrolls back up through them. Only new steps play, and only on the way down.
      Each second of the timeline gets PACE of a screen of scrolling; `tail` keeps the scene pinned
      after its last step (the next section can slide up over it). `seen` starts the scene as
      already watched (the intro, after a refresh past it); `startShown` says its first frame is
@@ -125,7 +127,7 @@
   const PACE = 0.65; // screen heights of scrolling per second of animation
   const STEP_SPEED = 0.9; // steps play a touch slower than the timeline, so they read calmly
   let jumping = false; // an in-page link is gliding past scenes: show them finished, don't hold
-  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {} }) => {
+  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {} }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
@@ -140,12 +142,48 @@
     let pin;
     const toScroll = time => pin.start + (time / tl.duration()) * span();
 
+    let follow = null; // the story easing after the scroll over what was seen
     // Show a step's finished frame straight away (no animation)
     const show = (time) => {
+      follow?.kill();
       playing?.kill();
       playing = null;
       hold = null;
       tl.time(time);
+    };
+    // Over the part already seen, the scene follows the scroll (see above)
+    let builtY = 0; // the view's position inside the pinned screen once everything seen is built
+    let builtAt = -1; // the time builtY was measured at
+    const followSeen = (time, progress) => {
+      if (followBack) {
+        if (Math.abs(time - tl.time()) < 0.001) return;
+        follow?.kill();
+        follow = tl.tweenTo(time, { duration: 0.45, ease: 'power2.out' });
+        return;
+      }
+      const built = Math.min(seen, tl.duration());
+      if (Math.abs(builtAt - built) > 0.001) {
+        if (content) gsap.killTweensOf(content, 'y');
+        tl.time(Math.max(0, built - 0.0001), true);
+        tl.time(built);
+        builtY = content ? gsap.getProperty(content, 'y') : 0;
+        builtAt = built;
+      } else if (Math.abs(tl.time() - built) > 0.001) {
+        tl.time(built);
+      }
+      if (!content) return;
+      const builtProgress = built / tl.duration();
+      const share = builtProgress > 0 ? gsap.utils.clamp(0, 1, progress / builtProgress) : 1;
+      gsap.to(content, { y: builtY * share, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
+    };
+    // Before a new step plays: back to exactly where the seen part ended (the view included)
+    const resume = () => {
+      follow?.kill();
+      follow = null;
+      const built = Math.min(seen, tl.duration());
+      if (content) gsap.killTweensOf(content, 'y');
+      tl.time(Math.max(0, built - 0.0001), true);
+      tl.time(built);
     };
     // Play the next unseen step, holding the scroll at it until it has finished
     const playNext = () => {
@@ -161,6 +199,8 @@
           playing = null;
           hold = null;
           seen = Math.max(seen, to);
+          builtY = content ? gsap.getProperty(content, 'y') : 0;
+          builtAt = Math.min(seen, tl.duration());
           steps.update(); // the visitor may have scrolled on: carry on from where they are
         }
       });
@@ -193,11 +233,11 @@
           if (self.direction > 0 && hold !== null && self.scroll() > hold + 2) scrollToY(hold, false);
           return;
         }
-        if (want <= seen) {
-          if (Math.abs(tl.time() - want) > 0.001) show(want); // seen before: its finished frame
+        if (at <= Math.min(seen, tl.duration()) + 0.001 || self.direction < 0) {
+          followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, seen)), self.progress);
           return;
         }
-        if (self.direction < 0) return;
+        resume();
         playNext();
         if (self.scroll() > hold + 2) scrollToY(hold, false);
       },
@@ -207,6 +247,8 @@
         playing?.kill();
         playing = null;
         hold = null;
+        follow?.kill();
+        builtAt = -1;
         exit?.progress(0);
         tl.progress(0);
         setHeaderHeight();
@@ -588,6 +630,7 @@
       tl,
       seen: introDone, // already watched this session: shown finished, never replayed
       startShown: true, // its start is the hero, a full page
+      followBack: true, // every frame is a full page: on the way back it follows the scroll
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
