@@ -109,99 +109,135 @@
   const siteHeader = $('.site-header');
   const setHeaderHeight = () => root.style.setProperty('--header-h', `${siteHeader.offsetHeight}px`);
 
-  /* Scroll scene: pins `trigger` and plays `tl` one step at a time as the visitor scrolls down.
-     The steps are the timeline's labels.
-     - Down, into a new step: the step plays at its own speed, and the scroll holds at that step
-       until it has finished, so a hard flick can't skip anything; then the next step can start.
-     - Back over what the visitor has seen (up, or down again), the scene follows the scroll
-       smoothly and nothing they have seen disappears: the story (`followBack`, every frame of it a
-       full page) moves back and forth with the scroll, e.g. the kiosk turning back into the hero
-       card; the other scenes stay built (questions, cards, answers remain and can be used) and only
-       their view scrolls back up through them. Only new steps play, and only on the way down.
-     Each second of the timeline gets PACE of a screen of scrolling; `tail` keeps the scene pinned
-     after its last step (the next section can slide up over it). `seen` starts the scene as
-     already watched (the intro, after a refresh past it); `startShown` says its first frame is
-     already a full page (the story's hero). `beforeMove` runs before the timeline
-     first moves (the story finishes the opening there); `top` is where it pins; `onUpdate` gets
-     the timeline's time as it changes. An optional `exit` follows the scroll over the tail. */
+  /* Scroll scene: pins `trigger` and plays `tl` as the visitor scrolls. The steps are the
+     timeline's labels. The page always moves the moment the visitor scrolls (nothing holds it).
+     - Down, into steps not seen yet: they play in order at their own speed; scrolling fast makes
+       them catch up quicker, so none is skipped and the scene never lags far behind.
+     - Over what the visitor has seen (up, or down again): the scene follows the scroll directly.
+       The story (`followBack`, every frame of it a full page) moves back and forth with it, e.g. the
+       kiosk turning back into the hero card. The other scenes stay built (questions, cards, answers
+       remain and can be used); only their view goes back through the positions the visitor saw at
+       each step, so e.g. the whole inbox card shows again exactly as it did.
+     New steps only ever play on the way down. Each second of the timeline gets PACE of a screen of
+     scrolling; `tail` keeps the scene pinned after its last step (the next section can slide up
+     over it). `seen` starts the scene as already watched (the intro, after a refresh past it);
+     `startShown` says its first frame is already a full page (the story's hero). `beforeMove` runs
+     before the timeline first moves (the story finishes the opening there); `top` is where it pins;
+     `onUpdate` gets the timeline's time as it changes. An optional `exit` follows the scroll over
+     the tail. */
   const PACE = 0.65; // screen heights of scrolling per second of animation
-  const STEP_SPEED = 0.9; // steps play a touch slower than the timeline, so they read calmly
-  let jumping = false; // an in-page link is gliding past scenes: show them finished, don't hold
+  const STEP_SPEED = 0.9; // new steps play a touch slower than the timeline, so they read calmly
+  const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
+  let jumping = false; // an in-page link is gliding past scenes: show them finished
   const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {} }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
     const stepAfter = time => stops().find(t => t >= time - 0.001) ?? tl.duration();
-    const nextStop = time => stops().find(t => t > time + 0.001) ?? tl.duration();
     // The scene's first moment worth showing: its start when that is already a full page (the story
     // opens on the hero), otherwise its first step (before it, most scenes are still empty)
     const firstStep = () => (startShown ? 0 : stops()[1] ?? tl.duration());
-    let seen = seenAll ? Infinity : 0; // the furthest step the visitor has watched
-    let playing = null; // the step under way
-    let hold = null;    // scroll position the visitor is held at until that step finishes
+    let seen = seenAll ? Infinity : 0; // the furthest point the visitor has watched
+    let playing = null; // new steps under way
+    let playingTo = 0;
+    let follow = null;  // the scene easing after the scroll over what was seen
+    let viewMove = null; // the view easing after the scroll (other scenes, over what was seen)
     let pin;
-    const toScroll = time => pin.start + (time / tl.duration()) * span();
 
-    let follow = null; // the story easing after the scroll over what was seen
-    // Show a step's finished frame straight away (no animation)
-    const show = (time) => {
-      follow?.kill();
+    // The view inside the pinned screen at each point the visitor has watched (time → y), so going
+    // back retraces it
+    const views = [[0, 0]];
+    const noteView = (time) => {
+      if (!content) return;
+      const y = gsap.getProperty(content, 'y');
+      const i = views.findIndex(([t]) => Math.abs(t - time) < 0.001);
+      if (i >= 0) views[i][1] = y; else views.push([time, y]);
+      views.sort((a, c) => a[0] - c[0]);
+    };
+    const viewAt = (time) => {
+      let i = views.findIndex(([t]) => t >= time);
+      if (i < 0) return views.at(-1)[1];
+      if (i === 0) return views[0][1];
+      const [t0, y0] = views[i - 1];
+      const [t1, y1] = views[i];
+      return y0 + (y1 - y0) * ((time - t0) / Math.max(0.001, t1 - t0));
+    };
+
+    const stopAll = () => {
       playing?.kill();
       playing = null;
-      hold = null;
-      tl.time(time);
-    };
-    // Over the part already seen, the scene follows the scroll (see above)
-    let builtY = 0; // the view's position inside the pinned screen once everything seen is built
-    let builtAt = -1; // the time builtY was measured at
-    const followSeen = (time, progress) => {
-      if (followBack) {
-        if (Math.abs(time - tl.time()) < 0.001) return;
-        follow?.kill();
-        follow = tl.tweenTo(time, { duration: 0.45, ease: 'power2.out' });
-        return;
-      }
-      const built = Math.min(seen, tl.duration());
-      if (Math.abs(builtAt - built) > 0.001) {
-        if (content) gsap.killTweensOf(content, 'y');
-        tl.time(Math.max(0, built - 0.0001), true);
-        tl.time(built);
-        builtY = content ? gsap.getProperty(content, 'y') : 0;
-        builtAt = built;
-      } else if (Math.abs(tl.time() - built) > 0.001) {
-        tl.time(built);
-      }
-      if (!content) return;
-      const builtProgress = built / tl.duration();
-      const share = builtProgress > 0 ? gsap.utils.clamp(0, 1, progress / builtProgress) : 1;
-      gsap.to(content, { y: builtY * share, duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
-    };
-    // Before a new step plays: back to exactly where the seen part ended (the view included)
-    const resume = () => {
       follow?.kill();
       follow = null;
-      const built = Math.min(seen, tl.duration());
-      if (content) gsap.killTweensOf(content, 'y');
-      tl.time(Math.max(0, built - 0.0001), true);
-      tl.time(built);
+      viewMove?.kill();
+      viewMove = null;
     };
-    // Play the next unseen step, holding the scroll at it until it has finished
-    const playNext = () => {
+    // Show a step's finished frame straight away (no animation)
+    const show = (time) => {
+      stopAll();
+      tl.time(time);
+      noteView(time);
+    };
+    // Built = everything seen so far is on screen (the other scenes, over what was seen)
+    let builtAt = -1;
+    const build = () => {
+      const built = Math.min(seen, tl.duration());
+      if (Math.abs(builtAt - built) < 0.001 && Math.abs(tl.time() - built) < 0.001) return;
+      viewMove?.kill();
+      tl.time(built);
+      builtAt = built;
+    };
+    // Over what was seen: follow the scroll
+    const followSeen = (time) => {
+      playing?.kill();
+      playing = null;
+      if (followBack) {
+        if (Math.abs(time - tl.time()) < 0.001 && !follow?.isActive()) return;
+        follow?.kill();
+        follow = tl.tweenTo(time, { duration: 0.35, ease: 'power2.out' });
+        return;
+      }
+      build();
+      if (!content) return;
+      viewMove?.kill();
+      viewMove = gsap.to(content, { y: viewAt(time), duration: 0.35, ease: 'power2.out', overwrite: false });
+    };
+    // New steps: play on from what was seen up to `target`, in order, catching up if far behind
+    const playOn = (target) => {
+      if (playing && Math.abs(target - playingTo) < 0.001) return;
+      follow?.kill();
+      follow = null;
+      viewMove?.kill();
+      viewMove = null;
       const from = Math.min(seen, tl.duration());
-      if (from >= tl.duration()) return;
-      if (tl.time() < from) tl.time(from);
-      const to = nextStop(from);
-      hold = toScroll(to);
-      playing = tl.tweenTo(to, {
-        duration: (to - from) / STEP_SPEED,
+      if (!playing) {
+        if (!followBack) {
+          build();
+          if (content) gsap.set(content, { y: viewAt(from) }); // the view where the seen part ended
+        }
+        else if (Math.abs(tl.time() - from) > 0.001) tl.time(from);
+      }
+      playing?.kill();
+      playingTo = target;
+      const distance = target - tl.time();
+      if (distance <= 0) return;
+      const natural = distance / STEP_SPEED;
+      const duration = natural <= CATCH_UP ? natural : CATCH_UP + (natural - CATCH_UP) * 0.35;
+      const passed = stops().filter(t => t > tl.time() + 0.001 && t <= target + 0.001);
+      playing = tl.tweenTo(target, {
+        duration,
         ease: 'none',
+        onUpdate: () => {
+          // each step reached counts as seen, with the view it had
+          while (passed.length && tl.time() >= passed[0] - 0.001) {
+            seen = Math.max(seen, passed[0]);
+            noteView(passed.shift());
+          }
+        },
         onComplete: () => {
           playing = null;
-          hold = null;
-          seen = Math.max(seen, to);
-          builtY = content ? gsap.getProperty(content, 'y') : 0;
+          seen = Math.max(seen, target);
+          noteView(target);
           builtAt = Math.min(seen, tl.duration());
-          steps.update(); // the visitor may have scrolled on: carry on from where they are
         }
       });
     };
@@ -228,27 +264,21 @@
           show(want);
           return;
         }
-        if (playing) {
-          // A step is under way: going further down waits for it
-          if (self.direction > 0 && hold !== null && self.scroll() > hold + 2) scrollToY(hold, false);
+        const watched = Math.min(seen, tl.duration());
+        if (self.direction > 0 && want > watched + 0.001) {
+          playOn(want);
           return;
         }
-        if (at <= Math.min(seen, tl.duration()) + 0.001 || self.direction < 0) {
-          followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, seen)), self.progress);
-          return;
-        }
-        resume();
-        playNext();
-        if (self.scroll() > hold + 2) scrollToY(hold, false);
+        if (playing && self.direction > 0) return; // still catching up on the way down
+        followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, watched)));
       },
       onRefresh: (self) => {
         // Rewind with the old measurements (the exit first: it ran last), re-measure the starting
         // state, then show (no replay) the finished step at the scroll position
-        playing?.kill();
-        playing = null;
-        hold = null;
-        follow?.kill();
+        stopAll();
         builtAt = -1;
+        views.length = 0;
+        views.push([0, 0]);
         exit?.progress(0);
         tl.progress(0);
         setHeaderHeight();
@@ -258,6 +288,7 @@
         const want = self.progress > 0 ? Math.max(firstStep(), stepAfter(self.progress * tl.duration())) : 0;
         seen = Math.max(seen === Infinity ? Infinity : seen, want);
         tl.time(Math.min(seen, want));
+        noteView(tl.time());
         exit?.invalidate();
       }
     });
@@ -275,6 +306,7 @@
           // reaching the tail means every step has been seen (finish one still under way)
           if (playing) { playing.progress(1); }
           seen = Infinity;
+          noteView(tl.duration());
           exit.invalidate();
         },
         onRefresh: (self) => exit.progress(self.progress)
