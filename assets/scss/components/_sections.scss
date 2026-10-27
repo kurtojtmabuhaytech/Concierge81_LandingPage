@@ -110,50 +110,58 @@
 .chat-section-header {
   display: flex;
   flex-direction: column;
-  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+  margin-bottom: clamp(2rem, 3.2vw, 3rem); // 48px to the content (Figma)
   &:last-child { margin-bottom: 0; }
 }
 
+// V2/Question then V2/Concierge Message: 32px apart, the concierge's two bubbles 8px apart
 .chat-header-row { display: flex; flex-direction: column; margin-bottom: $space-2; }
-.chat-header-row.right { align-items: flex-end; }
+.chat-header-row.right { align-items: flex-end; margin-bottom: clamp(1.25rem, 2.1vw, 2rem); }
 .chat-header-row.left { align-items: flex-start; }
-.chat-header-row .timestamp { margin-top: 6px; margin-right: 6px; }
+.chat-header-row .timestamp { margin-top: 8px; }
 
 .header-pill { display: inline-block; max-width: min(100%, 34rem); }
 
+// V2/Question: Medium 22/28, 18 × 26 padding
 .header-pill--user {
   background: $color-night;
   color: $color-white;
-  padding: 0.6rem 1.1rem;
-  border-radius: 14px 14px 4px 14px;
-  font-size: $type-label;
+  padding: 0.818em 1.18em;
+  border-radius: 22px 22px 6px 22px;
+  font-size: clamp(1.0625rem, 1.455vw, 1.375rem);
   font-weight: $font-weight-medium;
+  line-height: 1.27;
+  letter-spacing: -0.014em;
 }
 
+// V2/Concierge Message: Semibold 44/50, 24 × 28 padding
 .header-pill--ai {
   background: $color-cobalt-bright;
   color: $color-white;
-  padding: 0.55em 0.8em;
-  border-radius: 18px 18px 18px 6px;
-  font-size: $type-title; // section concierge bubbles measure ~32px in the Figma frames
+  padding: 0.545em 0.636em;
+  border-radius: 28px 28px 28px 8px;
+  font-size: $type-message;
   font-weight: $font-weight-semibold;
   letter-spacing: -0.027em;
-  line-height: 1.14;
+  line-height: 1.136;
+  max-width: min(100%, 56.25rem);
   margin: 0;
 }
 
-.header-pill--lg { font-size: $type-message; line-height: 1.14; border-radius: 22px 22px 22px 8px; max-width: min(100%, 40rem); } // contact "Leave your email."
-.header-pill--xl { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; border-radius: 24px 24px 24px 8px; max-width: min(100%, 40rem); } // intro h1
+.header-pill--lg { font-size: $type-message; line-height: 1.14; border-radius: 28px 28px 28px 8px; max-width: min(100%, 40rem); } // contact "Leave your email."
+.header-pill--xl { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; border-radius: 28px 28px 28px 8px; max-width: min(100%, 40rem); } // intro h1
 
+// Secondary concierge bubble: Regular 21/31, 16 × 24 padding
 .sub-pill-text {
   align-self: flex-start;
   background: $color-sand;
   color: $color-ink;
-  padding: 0.7rem 1.1rem;
-  border-radius: 4px 14px 14px 14px;
+  padding: 0.762em 1.143em;
+  border-radius: 24px 24px 24px 8px;
   font-size: $type-lead;
-  line-height: 1.45;
-  max-width: min(100%, 30rem);
+  line-height: 1.476;
+  letter-spacing: -0.014em;
+  max-width: min(100%, 38.75rem);
   margin: 0;
 }
 
@@ -632,9 +640,9 @@ $q-pile: (
   gap: 0.75rem;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  scroll-padding-inline: $space-4;
-  padding: 0 $space-4 0.5rem;
-  margin: 0 calc(50% - 50vw) 0 (-$space-4); // bleeds past the container to the right screen edge (Figma)
+  scroll-padding-inline: $container-gutter;
+  padding: 0 $container-gutter 0.5rem;
+  margin: 0 calc(50% - 50vw) 0 calc(-1 * #{$container-gutter}); // bleeds past the container to the right screen edge (Figma)
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   &::-webkit-scrollbar { display: none; }

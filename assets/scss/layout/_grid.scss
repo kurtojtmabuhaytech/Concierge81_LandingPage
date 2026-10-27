@@ -8,6 +8,6 @@
   max-width: $container-max-width;
   margin-left: auto;
   margin-right: auto;
-  padding-left: $space-4;
-  padding-right: $space-4;
+  padding-left: $container-gutter;
+  padding-right: $container-gutter;
 }
