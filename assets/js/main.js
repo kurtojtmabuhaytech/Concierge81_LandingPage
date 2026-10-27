@@ -270,7 +270,9 @@ document.addEventListener('DOMContentLoaded', () => {
         '.cta-sub', '.cta-actions', '.next-steps', '.footer-form-card',
         // blog pages
         '.blog-section-title', '.featured-card', '.post-filters', '.post-card', '.load-more',
-        '.post-header > *', '.post-hero', '.post-toc', '.post-body > *', '.keep-reading-head'
+        '.post-header > *', '.post-hero', '.post-toc', '.post-body > *', '.keep-reading-head',
+        // news pages
+        '.news-featured', '.news-list-wrap', '.news-hero', '.news-body > *'
       ].join(', '),
       stagger: 0.08
     }

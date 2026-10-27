@@ -1332,7 +1332,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 }
 .interest-pills { display: flex; flex-wrap: wrap; gap: 8px 6px; margin-top: 4px; }
 .interest-pill {
-  background: $color-white; border: 1px solid $neutral-300; padding: 10px 18px; border-radius: $radius-full;
+  background: $color-white; border: 1px solid $neutral-300; padding: 10px clamp(12px, 1.06vw, 18px); border-radius: $radius-full; white-space: nowrap;
   font: inherit; font-size: 0.9375rem; line-height: 1.47; color: $color-ink; cursor: pointer;
   &.is-active { background: $cobalt-50; color: $cobalt-600; border-color: $color-cobalt-bright; }
 }
