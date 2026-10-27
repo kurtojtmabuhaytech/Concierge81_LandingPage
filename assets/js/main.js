@@ -62,16 +62,26 @@ document.addEventListener('DOMContentLoaded', () => {
     else desktop.addListener(onDesktop);
   }
 
-  // Simple form submission handler
+  // Lead form: once sent, the card shows "Request sent." with the visitor's email (Figma); "Send
+  // another request" brings the empty form back. (Static site: nothing is sent anywhere yet.)
   const leadForm = document.getElementById('leadForm');
-  if (leadForm) {
+  const leadSent = document.getElementById('leadSent');
+  if (leadForm && leadSent) {
+    const card = leadForm.closest('.footer-form-card');
     leadForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const input = leadForm.querySelector('input[type="email"]');
-      if (input && input.value) {
-        alert(`Thank you! We received: ${input.value}. We will be in touch shortly.`);
-        leadForm.reset();
-      }
+      document.getElementById('leadSentEmail').textContent = leadForm.elements.email.value;
+      leadForm.hidden = true;
+      leadSent.hidden = false;
+      card.classList.add('is-sent');
+      leadSent.focus({ preventScroll: true });
+    });
+    document.getElementById('leadAgain').addEventListener('click', () => {
+      leadForm.reset();
+      leadSent.hidden = true;
+      leadForm.hidden = false;
+      card.classList.remove('is-sent');
+      leadForm.elements.name.focus();
     });
   }
 

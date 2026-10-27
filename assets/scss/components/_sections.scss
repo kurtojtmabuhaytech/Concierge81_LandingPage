@@ -1276,69 +1276,102 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 
 /* =========================================
    Section 12: Final CTA (Every Screen)
+   Figma: tag, 80px title (second line in the brand gradient), 21px sub, buttons, then the kiosk,
+   cut off by the contact section below it
    ========================================= */
-.cta-hero { text-align: center; } // keeps the section's bottom padding so the kiosk doesn't touch the dark contact section
-.status-line { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: $font-weight-semibold; margin-bottom: 1rem; }
-.cta-title { font-size: $type-display; font-weight: $font-weight-semibold; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 1rem;
-  span { display: block; background: $gradient-brand; -webkit-background-clip: text; background-clip: text; color: transparent; } // brand gradient (DS: hero words)
+.cta-hero { text-align: center; padding-bottom: 0; overflow: hidden; }
+.status-line { display: inline-flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: $font-weight-semibold; margin-bottom: 1.25rem;
+  .online-dot { font-size: $type-caption; font-weight: $font-weight-normal; color: #6E6B63; }
 }
-.cta-sub { color: $color-text-secondary; max-width: 34ch; margin: 0 auto 1.5rem; }
-.cta-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1.25rem; margin-bottom: clamp(2rem, 5vw, 3rem); }
-.cta-hero .kiosk-device { width: min(100%, 21.25rem); margin: 0 auto; border-radius: 28px 28px 14px 14px; }
+.cta-title { font-size: $type-display; font-weight: $font-weight-semibold; letter-spacing: -0.03em; line-height: 1.05; margin: 0 0 1.25rem;
+  span { display: block; background: linear-gradient(90deg, $cobalt-500, $cobalt-300); -webkit-background-clip: text; background-clip: text; color: transparent; }
+}
+.cta-sub { color: $color-text-secondary; font-size: $type-lead; line-height: 1.48; letter-spacing: -0.014em; max-width: 28.4rem; margin: 0 auto 2rem; }
+.cta-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1.75rem; margin-bottom: 4.5rem;
+  .btn { padding: 0.875rem 1.625rem; font-size: 1.0625rem; font-weight: $font-weight-medium; }
+  .link-btn { font-size: 1.0625rem; color: $cobalt-600; }
+}
+.cta-hero .kiosk-device { width: min(100%, 31.25rem); margin: 0 auto -6rem; border-radius: 36px 36px 14px 14px; padding: 14px 14px 0; border: 3px solid $neutral-700;
+  .kiosk-screen { border-radius: 22px; }
+}
 
 /* =========================================
    Section 13: Contact (Dark + Form Card)
+   Figma: 56px headline; "What happens next" steps beside the 640px form card
    ========================================= */
-.contact-split { display: flex; flex-wrap: wrap; gap: clamp(2rem, 6vw, 5rem); align-items: flex-start; }
-.next-steps { flex: 1 1 0; min-width: min(100%, 16.25rem); padding-top: 1rem; }
-.eyebrow { @extend %eyebrow; display: block; color: $color-text-accent-dark; margin-bottom: 1.25rem; }
-.step-list { list-style: none; margin: 0; padding: 0; }
-.step-item { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.1rem; font-size: 0.9rem; color: $neutral-200; }
-.step-number { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: $color-night-card; border: 1px solid $color-night-line; display: grid; place-items: center; font-size: 0.72rem; }
+#contact { padding-block: clamp(4rem, 8.466vw, 8rem); }
+#contact .header-pill--user { background: #F6F6F3; }
+#contact .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; max-width: none; }
+.contact-split { display: flex; flex-wrap: wrap; gap: 4rem; align-items: flex-start; }
+.next-steps { flex: 1 1 0; min-width: min(100%, 16.25rem); padding-top: 2.5rem; }
+.eyebrow { @extend %eyebrow; display: block; color: $color-text-accent-dark; margin-bottom: 2rem; }
+.step-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2rem; }
+.step-item { display: flex; align-items: center; gap: 1rem; font-size: 1.0625rem; line-height: 1.47; letter-spacing: -0.012em; color: #F6F6F3; }
+.step-number { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: $neutral-800; display: grid; place-items: center; font-size: 0.9375rem; font-weight: $font-weight-semibold; }
 
 .footer-form-card {
-  flex: 1 1 0;
+  flex: 0 1 40rem;
   min-width: min(100%, 20rem);
-  max-width: 38rem; // ~43% of the Figma frame, right-aligned to the container
   margin-left: auto;
-  background: $neutral-100;
+  background: #F6F6F3;
   color: $color-ink;
-  border-radius: 22px;
-  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-radius: 36px 36px 8px 36px;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
 }
-.form-group { margin-bottom: 1.1rem; }
-.form-group label, .form-group .form-label { display: block; font-size: 0.62rem; font-weight: $font-weight-bold; color: $color-text-secondary; margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+#leadForm { display: flex; flex-direction: column; gap: 1.5rem; }
+#leadForm[hidden] { display: none; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-group label, .form-group .form-label { @extend %eyebrow; color: #6E6B63; }
 .form-group input {
-  width: 100%; padding: 0.75rem 1rem;
-  border: 1px solid $neutral-300; border-radius: 10px; background: transparent;
-  font: inherit; font-size: 0.85rem; color: $color-ink;
+  width: 100%; padding: 1rem 1.25rem;
+  border: 1px solid $neutral-300; border-radius: 16px; background: transparent;
+  font: inherit; font-size: 1.0625rem; line-height: 1.47; color: $color-ink;
+  &::placeholder { color: #6E6B63; }
   transition: border-color $transition-fast, box-shadow $transition-fast;
   &:focus { outline: none; border-color: $color-cobalt-bright; box-shadow: 0 0 0 3px rgba($color-cobalt-bright, 0.15); }
 }
-.interest-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.interest-pills { display: flex; flex-wrap: wrap; gap: 8px 6px; margin-top: 4px; }
 .interest-pill {
-  background: $color-white; border: 1px solid $neutral-300; padding: 0.45rem 0.9rem; border-radius: $radius-full;
-  font: inherit; font-size: 0.75rem; color: $color-ink; cursor: pointer;
-  &.is-active { background: $cobalt-50; color: $color-cobalt-bright; border-color: $color-cobalt-bright; }
+  background: $color-white; border: 1px solid $neutral-300; padding: 10px 18px; border-radius: $radius-full;
+  font: inherit; font-size: 0.9375rem; line-height: 1.47; color: $color-ink; cursor: pointer;
+  &.is-active { background: $cobalt-50; color: $cobalt-600; border-color: $color-cobalt-bright; }
 }
-.privacy-text { text-align: center; font-size: 0.65rem; color: $neutral-500; margin: 0.9rem 0 0; }
+#leadForm .btn-primary { padding: 0.875rem 1.625rem; font-size: 1.0625rem; font-weight: $font-weight-medium; color: #F6F6F3; }
+.privacy-text { text-align: center; font-size: $type-caption; color: #6E6B63; margin: 0; }
+
+// "Request sent." (Figma, after the form is sent)
+.lead-sent { display: flex; flex-direction: column; gap: 1.5rem; outline: none;
+  &[hidden] { display: none; }
+  hr { width: 100%; margin: 0; border: 0; border-top: 1px solid $neutral-300; }
+}
+.lead-sent-badge { width: 64px; height: 64px; border-radius: 50%; background: $cobalt-50; color: $color-cobalt-bright; display: grid; place-items: center; svg { width: 28px; height: 28px; } }
+.lead-sent-message {
+  h3 { margin: 0 0 0.5rem; font-size: 1.75rem; line-height: 1.21; letter-spacing: -0.021em; font-weight: $font-weight-semibold; }
+  p { margin: 0; font-size: 1.0625rem; line-height: 1.47; color: $color-text-secondary; }
+}
+.btn-outline { background: transparent; border: 1.5px solid $color-cobalt-bright; color: $cobalt-600; padding: 0.875rem 1.625rem; font-size: 1.0625rem; font-weight: $font-weight-medium; justify-content: flex-start;
+  &:hover { background: $cobalt-50; }
+}
 
 /* =========================================
    Section 14: Footer
+   Figma: paper; the sign-off bubble and links, then the brand and legal links
    ========================================= */
-.site-footer { background: $color-cream; color: $color-ink; padding: 2rem 0 2.5rem; }
+.site-footer { background: #F6F6F3; color: $color-ink; padding: 2.5rem 0; }
 .footer-top, .footer-legal { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
-.footer-top { padding-bottom: 1.25rem; border-bottom: 1px solid $neutral-200; }
+.footer-top { padding-bottom: 1.25rem; border-bottom: 0.5px solid $neutral-300; margin-bottom: 0.5rem; }
 .footer-legal { padding-top: 1.25rem; }
 
 .mail-pill {
-  display: inline-flex; align-items: center; gap: 0.5rem;
-  background: $color-cobalt-bright; color: $color-white; border-radius: 10px; padding: 0.45rem 0.6rem 0.45rem 0.9rem;
-  a { color: $color-white; font-size: 0.8rem; }
+  display: inline-flex; align-items: center; gap: 8px;
+  background: $color-cobalt-bright; color: #F6F6F3; border-radius: 28px 28px 28px 6px; padding: 10px 16px;
+  a { color: inherit; font-size: 0.9375rem; line-height: 1.47; letter-spacing: -0.027em; b { font-weight: $font-weight-medium; } }
 }
-.copy-btn { background: transparent; border: none; color: $color-white; cursor: pointer; padding: 2px; display: grid; place-items: center; svg { width: 14px; height: 14px; } }
+.copy-btn { background: transparent; border: none; color: inherit; cursor: pointer; padding: 0; display: grid; place-items: center; svg { width: 16px; height: 16px; } }
 
-.footer-nav, .legal-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; }
-.footer-nav a { color: $color-ink; font-size: 0.8rem; }
-.legal-logo { font-weight: $font-weight-bold; font-size: 0.85rem; small { font-weight: $font-weight-normal; color: $neutral-500; margin-left: 0.75rem; } }
-.legal-links a { color: $neutral-500; font-size: 0.72rem; }
+.footer-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.75rem; }
+.legal-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; }
+.footer-nav a { color: $color-text-secondary; font-size: 0.875rem; line-height: 1.57; &:hover { color: $color-cobalt-bright; } }
+.legal-logo { font-weight: $font-weight-semibold; font-size: 0.9375rem; small { font-weight: $font-weight-normal; font-size: $type-caption; color: #6E6B63; margin-left: 1rem; } }
+.legal-links a { color: #6E6B63; font-size: $type-caption; &:hover { color: $color-ink; } }
+.footer-lang { gap: 6px; background: transparent; border-color: $neutral-300; padding: 4px 12px; font-size: $type-caption; letter-spacing: 0.1em; color: $color-text-secondary; svg { width: 12px; height: 12px; } }

@@ -923,16 +923,16 @@
   </section>
 
   <!-- 12. Final CTA -->
-  <section id="cta" class="section theme-light cta-hero">
+  <section id="cta" class="section theme-light cta-hero" data-motion>
     <div class="container">
-      <div class="status-line">Concierge81 <span class="online-dot">Online</span></div>
-      <h2 class="cta-title">Your AI assistant.<span>Now on every screen.</span></h2>
-      <p class="cta-sub">See Concierge81 answer your customers — live, with your own questions.</p>
-      <div class="cta-actions">
+      <div class="status-line" data-anim>Concierge81 <span class="online-dot">Online</span></div>
+      <h2 class="cta-title" data-anim>Your AI assistant.<span>Now on every screen.</span></h2>
+      <p class="cta-sub" data-anim>See Concierge81 answer your customers — live, with your own questions.</p>
+      <div class="cta-actions" data-anim>
         <a href="#contact" class="btn btn-primary">Request a demo</a>
         <a href="#contact" class="link-btn">Talk to our Team ›</a>
       </div>
-      <div class="kiosk-device">
+      <div class="kiosk-device" data-anim>
         <div class="kiosk-screen">
           <span class="brand-logo kiosk-logo">concierge<span>81</span></span>
           <img class="kiosk-avatar" src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy">
@@ -945,20 +945,20 @@
   </main>
 
   <!-- 13. Contact -->
-  <section id="contact" class="section theme-dark">
+  <section id="contact" class="section theme-dark" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">How do I get started?</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai header-pill--lg">Leave your email.<br>We'll take it from here.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Leave your email.<br>We’ll take it from here.</h2>
         </div>
       </div>
 
       <div class="contact-split">
-        <div class="next-steps">
+        <div class="next-steps" data-anim>
           <span class="eyebrow">What happens next</span>
           <ol class="step-list">
             <li class="step-item"><span class="step-number">1</span>We reply to schedule a short call.</li>
@@ -967,22 +967,22 @@
           </ol>
         </div>
 
-        <div class="footer-form-card">
+        <div class="footer-form-card" data-anim>
           <form id="leadForm">
             <div class="form-group">
               <label for="leadName">Full name</label>
-              <input id="leadName" type="text" placeholder="Your name" required>
+              <input id="leadName" name="name" type="text" placeholder="Your name" autocomplete="name" required>
             </div>
             <div class="form-group">
               <label for="leadEmail">Work email</label>
-              <input id="leadEmail" type="email" placeholder="you@company.com" required>
+              <input id="leadEmail" name="email" type="email" placeholder="you@company.com" autocomplete="email" required>
             </div>
             <div class="form-group">
               <label for="leadCompany">Company</label>
-              <input id="leadCompany" type="text" placeholder="Company name">
+              <input id="leadCompany" name="company" type="text" placeholder="Company name" autocomplete="organization">
             </div>
             <div class="form-group">
-              <span class="form-label">I'm interested in</span>
+              <span class="form-label">I’m interested in</span>
               <div class="interest-pills" id="interestPills">
                 <button type="button" class="interest-pill">Basic</button>
                 <button type="button" class="interest-pill">Professional</button>
@@ -993,11 +993,23 @@
             </div>
             <div class="form-group">
               <label for="leadNotes">Anything else?</label>
-              <input id="leadNotes" type="text" placeholder="Anything else we should know? (optional)">
+              <input id="leadNotes" name="notes" type="text" placeholder="Anything else we should know? (optional)">
             </div>
             <button type="submit" class="btn btn-primary btn-block">Send</button>
             <p class="privacy-text">By submitting, you agree to our <a href="#">Privacy Policy</a>.</p>
           </form>
+
+          <!-- Shown once the form is sent (main.js) -->
+          <div class="lead-sent" id="leadSent" role="status" tabindex="-1" hidden>
+            <span class="lead-sent-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+            <div class="lead-sent-message">
+              <h3>Request sent.</h3>
+              <p>We’ve sent a confirmation to <span id="leadSentEmail">your email</span>.<br>Expect a reply within one business day to schedule your short call.</p>
+            </div>
+            <hr>
+            <button type="button" class="btn btn-outline btn-block" id="leadAgain">Send another request</button>
+            <p class="privacy-text">Need to change something? Just reply to the confirmation email.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1008,7 +1020,7 @@
     <div class="container">
       <div class="footer-top">
         <div class="mail-pill">
-          <a href="mailto:info@mabuhaytech.com">Write us: info@mabuhaytech.com</a>
+          <a href="mailto:info@mabuhaytech.com">Write us: <b>info@mabuhaytech.com</b></a>
           <button type="button" class="copy-btn" data-copy="info@mabuhaytech.com" aria-label="Copy email address">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
           </button>
@@ -1028,7 +1040,7 @@
           <a href="#">Terms</a>
           <a href="#">Disclaimer</a>
           <a href="#">Commercial Transactions Act</a>
-          <button type="button" class="lang-btn" aria-label="Language: English">🌐 EN</button>
+          <button type="button" class="lang-btn footer-lang" aria-label="Language: English"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>EN</button>
         </div>
       </div>
     </div>

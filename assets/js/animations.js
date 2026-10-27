@@ -1787,6 +1787,64 @@
     };
   });
 
+  /* 16. Your AI assistant. Now on every screen. (Figma recording 2:45–2:48). Desktop: a scroll
+     scene that slides up over the FAQ. The status, the title line by line, the sub-line and the
+     buttons arrive, the kiosk rises in below them, then the view moves down onto the kiosk while
+     the contact section slides up over it. All with the scroll.
+     17. How do I get started? (2:48–). On every screen size the chat plays and the steps and the
+     form come in as the contact section scrolls into view (it is not pinned: the footer follows). */
+  const cta = {
+    section: $('#cta'),
+    content: $('#cta > .container'),
+    parts: $$('#cta .status-line, #cta .cta-title, #cta .cta-sub, #cta .cta-actions'),
+    kiosk: $('#cta .kiosk-device')
+  };
+  const contact = {
+    header: $('#contact .chat-section-header'),
+    steps: $('#contact .next-steps'),
+    form: $('#contact .footer-form-card')
+  };
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop) return;
+    const { section, content, parts, kiosk } = cta;
+    const actions = $('.cta-actions', section);
+    const next = $('#contact');
+    section.classList.add('is-staged');
+    next.classList.add('slides-over');
+
+    const applyStart = () => {
+      gsap.set(content, { y: 0 });
+      gsap.set(parts, { autoAlpha: 0, y: 24 });
+      gsap.set(kiosk, { autoAlpha: 0, y: 120 });
+    };
+    applyStart();
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } })
+      .addLabel('enter', 0)
+      // Step 1: the status, the title, the sub-line and the buttons, one after another
+      .to(parts, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.3 }, 0.01)
+      // Step 2: the kiosk rises in below them, then the view moves down onto it (the buttons stay
+      // at the top, as in the recording)
+      .to(kiosk, { autoAlpha: 1, y: 0, duration: 0.8 }, 'enter+=1.0')
+      .to(content, { y: showInStage(section, content, actions, kiosk), duration: MOTION.slow, ease: MOTION.easeInOut }, 'enter+=1.6')
+      .addLabel('built', 'enter+=2.4');
+
+    scrollScene({ trigger: section, tl, tail: () => section.offsetHeight, onRefresh: applyStart });
+
+    return () => {
+      next.classList.remove('slides-over');
+      section.classList.remove('is-staged');
+    };
+  });
+
+  // The contact section (every screen size): the chat, then the steps and the form
+  scenes.push(() => {
+    chatThread(contact.header);
+    scrollReveal(contact.steps, contact.steps, { autoAlpha: 0, y: 30 });
+    scrollReveal(contact.form, contact.form, { autoAlpha: 0, y: 40 });
+  });
+
   // Phones: the chats, then the step, mode and industry cards come in with the scroll
   scenes.push(({ isMobile }) => {
     if (!isMobile) return;
@@ -1797,6 +1855,7 @@
     [...pricing.cards, pricing.help].forEach(el => scrollReveal(el, el, { autoAlpha: 0, y: 30 }));
     chatThread(faq.header);
     [faq.filters, faq.box, faq.help].forEach(el => scrollReveal(el, el, { autoAlpha: 0, y: 30 }));
+    [...cta.parts, cta.kiosk].forEach(el => scrollReveal(el, el, { autoAlpha: 0, y: 30 }));
     values.cards.forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
     scrollReveal([...industries.cards, industries.controls], industries.gallery, { autoAlpha: 0, x: 40 }, { stagger: 0.1 });
     $$('#how .process-card, #interaction .mode-card').forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
