@@ -1557,12 +1557,122 @@
     };
   });
 
+  /* 14. Which setup is right for me? (Figma recording 2:06–2:16). Desktop: a scroll scene that
+     slides up over Where would my concierge live?. The visitor asks and the concierge answers;
+     then the four tiers arrive one after another, each dark at first and lighting up to its own
+     colour while its graphic builds: the basic rings ripple out from their dot, the two circles
+     slide together into their overlap, the business dot travels its orbit, and the enterprise
+     network draws its spokes and nodes. Then "Not sure which setup is right for you?" arrives.
+     All with the scroll. */
+  const pricing = {
+    section: $('#pricing'),
+    content: $('#pricing > .container'),
+    header: $('#pricing .chat-section-header'),
+
+    cards: $$('#pricing .tier-card'),
+    help: $('#pricing .cta-pill')
+  };
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop) return;
+    const { section, content, header, cards, help } = pricing;
+    const user = $('.chat-header-row.right', header);
+    const pill = $('.header-pill--user', user);
+    const reply = $('.header-pill--ai', header);
+    const pillColor = getComputedStyle(pill).backgroundColor;
+    const [basic, capacity, business, enterprise] = cards;
+    const texts = cards.map(card => $$('.tier-label, h3, p, .btn', card));
+    const parts = (card, selector) => $$(selector, card);
+    const spokes = parts(enterprise, '.tier-spokes path');
+    spokes.forEach(path => path.setAttribute('pathLength', '1'));
+    const next = $('#faq');
+    section.classList.add('is-staged');
+    next.classList.add('slides-over');
+
+    const applyStart = () => {
+      gsap.set(content, { y: 0, autoAlpha: 1 });
+      gsap.set(user, { autoAlpha: 0, y: 12 });
+      gsap.set(pill, { backgroundColor: '#5B5F66' });
+      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      gsap.set(cards, { autoAlpha: 0, y: 24, filter: 'brightness(0.35) saturate(0.6)' });
+      gsap.set(texts.flat(), { opacity: 0.4 });
+      // basic: the dot and its disc, the rings drawn in towards it
+      gsap.set(parts(basic, '.tier-dot, .tier-disc'), { scale: 0, svgOrigin: '245 114' });
+      gsap.set(parts(basic, '.tier-ring'), { scale: 0.5, opacity: 0, svgOrigin: '245 114' });
+      // more capacity: the two circles apart, no overlap yet
+      gsap.set(parts(capacity, '.tier-left'), { x: -40 });
+      gsap.set(parts(capacity, '.tier-right'), { x: 40 });
+      gsap.set(parts(capacity, '.tier-overlap'), { opacity: 0 });
+      // business: the dot a third of the way back round its orbit, the disc small
+      gsap.set(parts(business, '.tier-dot'), { rotation: -150, svgOrigin: '275.36 59' });
+      gsap.set(parts(business, '.tier-disc'), { scale: 0.4, opacity: 0, svgOrigin: '231.36 104' });
+      gsap.set(parts(business, '.tier-orbit, .tier-ring'), { opacity: 0 });
+      // enterprise: spokes undrawn, nodes and hub hidden
+      gsap.set(spokes, { strokeDasharray: 1, strokeDashoffset: 1 });
+      gsap.set(parts(enterprise, '.tier-nodes circle'), { scale: 0, transformOrigin: '50% 50%' });
+      gsap.set(parts(enterprise, '.tier-dot, .tier-disc'), { scale: 0, svgOrigin: '245 114' });
+      gsap.set(parts(enterprise, '.tier-ring'), { opacity: 0 });
+      gsap.set(help, { autoAlpha: 0, y: 16 });
+    };
+    applyStart();
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
+    tl.addLabel('enter', 0)
+
+      // Step 1 (2:06–2:08): the visitor asks (grey → white), then the concierge bubble grows
+      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
+      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
+    bubbleIn(tl, reply, 0.6)
+      .addLabel('ask')
+      .to(content, { y: showInStage(section, content, header, help), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
+      .addLabel('tiers', 'ask+=0.2');
+
+    // Steps 2–5 (2:08–2:11): each tier arrives dark, lights up to its colour, then its graphic builds
+    cards.forEach((card, i) => {
+      const at = `tiers+=${i * 0.8}`;
+      tl.to(card, { autoAlpha: 1, y: 0, duration: 0.4 }, at)
+        .to(card, { filter: 'brightness(1) saturate(1)', duration: 0.5, ease: 'none' }, `${at}+=0.2`)
+        .to(texts[i], { opacity: 1, duration: 0.4, stagger: 0.06 }, `${at}+=0.3`);
+    });
+    tl.to(parts(basic, '.tier-dot, .tier-disc'), { scale: 1, duration: 0.5, ease: 'back.out(1.6)', stagger: 0.1 }, 'tiers+=0.4')
+      .to(parts(basic, '.tier-ring'), { scale: 1, opacity: 1, duration: 0.7, stagger: 0.15 }, 'tiers+=0.6')
+      .to(parts(capacity, '.tier-left, .tier-right'), { x: 0, duration: 0.7, ease: MOTION.easeInOut }, 'tiers+=1.2')
+      .to(parts(capacity, '.tier-overlap'), { opacity: 1, duration: 0.4 }, 'tiers+=1.7')
+      .to(parts(business, '.tier-orbit, .tier-ring'), { opacity: 1, duration: 0.4, stagger: 0.1 }, 'tiers+=2.0')
+      .to(parts(business, '.tier-disc'), { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.4)' }, 'tiers+=2.1')
+      .to(parts(business, '.tier-dot'), { rotation: 0, duration: 0.9, ease: MOTION.easeInOut }, 'tiers+=2.1')
+      .to(parts(enterprise, '.tier-ring'), { opacity: 1, duration: 0.4, stagger: 0.1 }, 'tiers+=2.8')
+      .to(parts(enterprise, '.tier-dot, .tier-disc'), { scale: 1, duration: 0.4, ease: 'back.out(1.6)', stagger: 0.08 }, 'tiers+=2.8')
+      .to(spokes, { strokeDashoffset: 0, duration: 0.45, ease: 'power1.inOut', stagger: 0.07 }, 'tiers+=3.0')
+      .to(parts(enterprise, '.tier-nodes circle'), { scale: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.07 }, 'tiers+=3.3')
+
+      // Step 6 (2:11–2:13): the view moves down to the tiers and the visitor's follow-up arrives
+      .to(content, { y: showInStage(section, content, cards[0], help), duration: MOTION.slow, ease: MOTION.easeInOut }, 'tiers+=3.7')
+      .to(help, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'tiers+=3.9')
+      .addLabel('built', 'tiers+=4.6');
+
+    // Leaving, as the FAQ section slides up over it: the content fades out
+    const exit = gsap.timeline({ paused: true })
+      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .set({}, {}, 1);
+
+    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+
+    return () => {
+      next.classList.remove('slides-over');
+      section.classList.remove('is-staged');
+      gsap.set(cards, { clearProps: 'filter' });
+    };
+  });
+
   // Phones: the chats, then the step, mode and industry cards come in with the scroll
   scenes.push(({ isMobile }) => {
     if (!isMobile) return;
     [how.header, modes.header, industries.header, values.header, deployment.header].forEach(header => chatThread(header));
     scrollReveal(deployment.stage, deployment.stage, { autoAlpha: 0, y: 30 });
     deployment.cards.forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
+    chatThread(pricing.header);
+    [...pricing.cards, pricing.help].forEach(el => scrollReveal(el, el, { autoAlpha: 0, y: 30 }));
     values.cards.forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
     scrollReveal([...industries.cards, industries.controls], industries.gallery, { autoAlpha: 0, x: 40 }, { stagger: 0.1 });
     $$('#how .process-card, #interaction .mode-card').forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));

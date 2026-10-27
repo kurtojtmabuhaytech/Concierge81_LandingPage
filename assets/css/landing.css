@@ -1688,14 +1688,14 @@ code, kbd, samp, pre {
   #how {
     background: #080908;
   }
-  #how > .container {
+  #how > .container, #pricing > .container {
     max-width: calc(84.5rem + 10.582vw);
     padding-inline: max(1.5rem, 5.291vw);
   }
-  #how .header-pill--user {
+  #how .header-pill--user, #pricing .header-pill--user {
     background: #F6F6F3;
   }
-  #how .header-pill--ai {
+  #how .header-pill--ai, #pricing .header-pill--ai {
     font-size: clamp(2.1rem, 5.5vw, 3.5rem);
     line-height: 1.07;
     letter-spacing: -0.025em;
@@ -3268,20 +3268,21 @@ code, kbd, samp, pre {
 }
 
 /* =========================================
-   Section 10: Pricing (Dark, Gradient Tiers)
+   Section 10: Pricing (Dark, Tiers)
+   Figma: four 340px cards, 16px apart, 32px corners (8px bottom-left), 29px padding
    ========================================= */
 .pricing-tier-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.75rem), 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem;
 }
 
 .tier-card {
   position: relative;
   overflow: hidden;
-  border-radius: 18px;
-  padding: 1.5rem;
-  min-height: 18.75rem;
+  border-radius: 32px 32px 32px 8px;
+  padding: 1.8rem;
+  min-height: 21.25rem;
   display: flex;
   flex-direction: column;
   color: #FFFFFF;
@@ -3291,68 +3292,69 @@ code, kbd, samp, pre {
   position: absolute;
   top: 0;
   right: 0;
-  width: 80%;
-  height: auto;
+  width: 20.3rem;
+  height: 100%;
   z-index: -1;
   pointer-events: none;
+  overflow: visible;
 }
 .tier-card h3 {
-  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  font-size: 1.75rem;
   font-weight: 600;
-  margin: 1rem 0 0.75rem;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  margin: 2.25rem 0 0.8rem;
+  line-height: 1.14;
+  letter-spacing: -0.021em;
 }
 .tier-card p {
-  font-size: 0.78rem;
-  opacity: 0.85;
-  line-height: 1.5;
-  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.57;
+  letter-spacing: -0.007em;
+  max-width: 16.7rem;
+  margin: 0 0 1.25rem;
 }
 .tier-card .btn {
   margin-top: auto;
   align-self: flex-start;
-}
-
-.tier-label {
-  opacity: 0.85;
+  padding: 0.8rem 1.25rem;
+  font-size: 0.9375rem;
 }
 
 .tier-1 {
-  background: linear-gradient(160deg, #94A7CB, #6B80A9);
+  background: #849AC3;
 }
 
 .tier-2 {
-  background: linear-gradient(160deg, #84A1F6, #5A7FEF);
+  background: #6893E5;
 }
 
 .tier-3 {
-  background: linear-gradient(160deg, #3F77FF, #2456EE);
+  background: #276FF8;
 }
 
 .tier-4 {
-  background: linear-gradient(160deg, #1F50D9, #0B2D99);
+  background: #003EB5;
 }
 
 .cta-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 1.5rem;
+  margin-top: 3rem;
 }
 
 .cta-pill {
   display: inline-flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: clamp(0.5rem, 2vw, 0.75rem);
+  gap: 0.875rem;
   max-width: 100%;
-  background: #FFFFFF;
-  color: #0E1013;
-  border-radius: 24px;
-  padding: 0.4rem 0.4rem 0.4rem clamp(0.9rem, 3vw, 1.25rem);
-  font-size: clamp(0.85rem, 2.6vw, 0.95rem);
+  background: #F6F6F3;
+  color: #080908;
+  border-radius: 28px 28px 6px 28px;
+  padding: 1.125rem 1.125rem 1.125rem 1.625rem;
+  font-size: clamp(1rem, 1.455vw, 1.375rem);
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 1.27;
+  letter-spacing: -0.014em;
 }
 .cta-pill span {
   min-width: 0;
@@ -3360,6 +3362,8 @@ code, kbd, samp, pre {
 .cta-pill .btn {
   flex-shrink: 0;
   white-space: nowrap;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
 }
 
 .cta-pill--dark {
@@ -4939,6 +4943,7 @@ main > .blog-section:last-child {
 #interaction.is-staged,
 #industries.is-staged,
 #deployment.is-staged,
+#pricing.is-staged,
 #values.is-staged {
   --stage-h: 100svh;
   height: var(--stage-h);
@@ -4949,6 +4954,7 @@ main > .blog-section:last-child {
 #interaction.is-staged > .container,
 #industries.is-staged > .container,
 #deployment.is-staged > .container,
+#pricing.is-staged > .container,
 #values.is-staged > .container {
   padding-block: 1.5rem;
   will-change: transform;

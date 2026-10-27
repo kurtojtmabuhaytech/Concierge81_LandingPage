@@ -636,9 +636,9 @@ $q-pile: (
 // Desktop: the How section sits in the 80px frame like the story, with a 56px headline
 @media (min-width: 901px) {
   #how { background: $neutral-950; }
-  #how > .container { max-width: calc(84.5rem + 10.582vw); padding-inline: max(1.5rem, 5.291vw); }
-  #how .header-pill--user { background: #F6F6F3; }
-  #how .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; }
+  #how > .container, #pricing > .container { max-width: calc(84.5rem + 10.582vw); padding-inline: max(1.5rem, 5.291vw); }
+  #how .header-pill--user, #pricing .header-pill--user { background: #F6F6F3; }
+  #how .header-pill--ai, #pricing .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; }
   #how .sub-pill-text { font-size: 1.375rem; padding: 0.68em 1.09em; }
   #how .stepper { margin-bottom: 1.75rem; }
 }
@@ -1170,47 +1170,48 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 .platform-icon { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: $color-cobalt-soft; color: $color-cobalt-bright; display: grid; place-items: center; svg { width: 20px; height: 20px; } }
 
 /* =========================================
-   Section 10: Pricing (Dark, Gradient Tiers)
+   Section 10: Pricing (Dark, Tiers)
+   Figma: four 340px cards, 16px apart, 32px corners (8px bottom-left), 29px padding
    ========================================= */
 .pricing-tier-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.75rem), 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem;
 }
 .tier-card {
   position: relative;
   overflow: hidden;
-  border-radius: 18px;
-  padding: 1.5rem;
-  min-height: 18.75rem;
+  border-radius: 32px 32px 32px 8px;
+  padding: 1.8rem;
+  min-height: 21.25rem;
   display: flex;
   flex-direction: column;
   color: $color-white;
   isolation: isolate;
 
-  // Per-tier line art (rings / venn / bubbles / network) sits behind the text
-  .tier-art { position: absolute; top: 0; right: 0; width: 80%; height: auto; z-index: -1; pointer-events: none; }
+  // The tier's graphic (rings / venn / orbit / network) fills the card's right side, behind the text
+  .tier-art { position: absolute; top: 0; right: 0; width: 20.3rem; height: 100%; z-index: -1; pointer-events: none; overflow: visible; }
 
-  h3 { font-size: $type-subtitle; font-weight: $font-weight-semibold; margin: 1rem 0 0.75rem; line-height: 1.15; letter-spacing: -0.01em; }
-  p { font-size: 0.78rem; opacity: 0.85; line-height: 1.5; margin-bottom: 1.5rem; }
-  .btn { margin-top: auto; align-self: flex-start; }
+  h3 { font-size: 1.75rem; font-weight: $font-weight-semibold; margin: 2.25rem 0 0.8rem; line-height: 1.14; letter-spacing: -0.021em; }
+  p { font-size: 0.875rem; line-height: 1.57; letter-spacing: -0.007em; max-width: 16.7rem; margin: 0 0 1.25rem; }
+  .btn { margin-top: auto; align-self: flex-start; padding: 0.8rem 1.25rem; font-size: 0.9375rem; }
 }
-.tier-label { @extend %eyebrow; opacity: 0.85; }
-.tier-1 { background: linear-gradient(160deg, #94A7CB, #6B80A9); }
-.tier-2 { background: linear-gradient(160deg, #84A1F6, #5A7FEF); }
-.tier-3 { background: linear-gradient(160deg, #3F77FF, #2456EE); }
-.tier-4 { background: linear-gradient(160deg, #1F50D9, #0B2D99); }
+.tier-label { @extend %eyebrow; }
+.tier-1 { background: #849AC3; }
+.tier-2 { background: #6893E5; }
+.tier-3 { background: $cobalt-500; }
+.tier-4 { background: #003EB5; }
 
-.cta-row { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
+.cta-row { display: flex; justify-content: flex-end; margin-top: 3rem; }
 .cta-pill {
-  display: inline-flex; flex-wrap: nowrap; align-items: center; gap: clamp(0.5rem, 2vw, 0.75rem);
+  display: inline-flex; flex-wrap: nowrap; align-items: center; gap: 0.875rem;
   max-width: 100%;
-  background: $color-white; color: $color-ink;
-  border-radius: 24px; padding: 0.4rem 0.4rem 0.4rem clamp(0.9rem, 3vw, 1.25rem);
-  font-size: clamp(0.85rem, 2.6vw, 0.95rem); font-weight: $font-weight-medium; line-height: 1.3;
+  background: #F6F6F3; color: $neutral-950;
+  border-radius: 28px 28px 6px 28px; padding: 1.125rem 1.125rem 1.125rem 1.625rem;
+  font-size: clamp(1rem, 1.455vw, 1.375rem); font-weight: $font-weight-medium; line-height: 1.27; letter-spacing: -0.014em;
 
   span { min-width: 0; } // text wraps inside the pill instead of pushing the button down
-  .btn { flex-shrink: 0; white-space: nowrap; }
+  .btn { flex-shrink: 0; white-space: nowrap; padding: 0.5rem 1rem; font-size: 1rem; }
 }
 .cta-pill--dark { background: $color-night; color: $color-white; }
 

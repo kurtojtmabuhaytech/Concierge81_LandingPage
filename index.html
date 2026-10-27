@@ -772,51 +772,74 @@
   </section>
 
   <!-- 10. Setup / Pricing -->
-  <section id="pricing" class="section theme-dark">
+  <section id="pricing" class="section theme-dark" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">Which setup is right for me?</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Find the setup that<br>fits your business.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Find the setup that<br>fits your business.</h2>
         </div>
       </div>
 
       <div class="pricing-tier-grid">
-        <div class="tier-card tier-1">
-          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><g stroke="#fff"><circle cx="110" cy="68" r="70" stroke-opacity=".22"/><circle cx="110" cy="68" r="50" stroke-opacity=".3"/></g><circle cx="110" cy="68" r="30" fill="#fff" fill-opacity=".22"/><circle cx="110" cy="68" r="9" fill="#fff" fill-opacity=".9"/></svg>
-          <span class="tier-label">BASIC</span>
+        <article class="tier-card tier-1" data-anim>
+          <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
+            <circle class="tier-ring" cx="245" cy="114" r="112" stroke="#fff" stroke-opacity=".22" stroke-width="1.25"/>
+            <circle class="tier-ring" cx="245" cy="114" r="80" stroke="#fff" stroke-opacity=".32" stroke-width="1.25"/>
+            <circle class="tier-disc" cx="245" cy="114" r="48" fill="#fff" fill-opacity=".22"/>
+            <circle class="tier-dot" cx="245" cy="114" r="14" fill="#fff" fill-opacity=".85"/>
+          </svg>
+          <span class="tier-label">Basic</span>
           <h3>Start simple.<br>Start with AI.</h3>
           <p>For businesses beginning their AI-powered customer assistance journey.</p>
-          <a href="#contact" class="btn btn-white btn-small">Learn More</a>
-        </div>
-        <div class="tier-card tier-2">
-          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><circle cx="94" cy="70" r="44" fill="#fff" fill-opacity=".16" stroke="#fff" stroke-opacity=".4"/><circle cx="132" cy="70" r="44" stroke="#fff" stroke-opacity=".4"/><circle cx="113" cy="70" r="72" stroke="#fff" stroke-opacity=".12"/></svg>
-          <span class="tier-label">BASIC</span>
+          <a href="#contact" class="btn btn-white">Learn More</a>
+        </article>
+        <article class="tier-card tier-2" data-anim>
+          <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
+            <defs><clipPath id="tierVenn"><circle cx="210" cy="114" r="68"/></clipPath></defs>
+            <circle class="tier-overlap" cx="280" cy="114" r="68" fill="#fff" fill-opacity=".3" clip-path="url(#tierVenn)"/>
+            <circle class="tier-left" cx="210" cy="114" r="68" stroke="#fff" stroke-opacity=".4" stroke-width="1.25"/>
+            <circle class="tier-right" cx="280" cy="114" r="68" stroke="#fff" stroke-opacity=".4" stroke-width="1.25"/>
+          </svg>
+          <span class="tier-label">Basic</span>
           <h3>More capacity.<br>More ways to assist.</h3>
           <p>For businesses with higher customer interaction volumes and dedicated deployment needs.</p>
-          <a href="#contact" class="btn btn-white btn-small">Learn More</a>
-        </div>
-        <div class="tier-card tier-3">
-          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><g stroke="#fff"><circle cx="102" cy="76" r="70" stroke-opacity=".18"/><circle cx="126" cy="54" r="26" stroke-opacity=".45"/><circle cx="132" cy="44" r="16" stroke-opacity=".35"/></g><circle cx="112" cy="74" r="22" fill="#fff" fill-opacity=".3"/><circle cx="142" cy="34" r="7" fill="#fff" fill-opacity=".95"/></svg>
-          <span class="tier-label">BUSINESS</span>
-          <h3>Built for growing operations.</h3>
+          <a href="#contact" class="btn btn-white">Learn More</a>
+        </article>
+        <article class="tier-card tier-3" data-anim>
+          <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
+            <circle class="tier-ring" cx="253" cy="81" r="112" stroke="#fff" stroke-opacity=".16" stroke-width="1.25"/>
+            <circle class="tier-orbit" cx="275.36" cy="59" r="35.35" stroke="#fff" stroke-opacity=".3" stroke-width="1.3"/>
+            <circle class="tier-orbit" cx="253.36" cy="81" r="35.35" stroke="#fff" stroke-opacity=".3" stroke-width="1.3"/>
+            <circle class="tier-disc" cx="231.36" cy="104" r="36" fill="#fff" fill-opacity=".37"/>
+            <circle class="tier-dot" cx="288.36" cy="45" r="11" fill="#fff" fill-opacity=".87"/>
+          </svg>
+          <span class="tier-label">Business</span>
+          <h3>Built for growing<br>operations.</h3>
           <p>For organizations with higher customer traffic and broader operational requirements.</p>
-          <a href="#contact" class="btn btn-white btn-small">Learn More</a>
-        </div>
-        <div class="tier-card tier-4">
-          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><circle cx="112" cy="68" r="72" stroke="#fff" stroke-opacity=".12"/><g stroke="#fff" stroke-opacity=".35"><path d="M112 68L112 23M112 68L151 45.5M112 68L151 90.5M112 68L112 113M112 68L73 90.5M112 68L73 45.5"/><path d="M112 23L151 45.5L151 90.5L112 113L73 90.5L73 45.5Z" stroke-opacity=".18"/></g><g stroke="#fff" stroke-opacity=".7"><circle cx="112" cy="23" r="5"/><circle cx="151" cy="45.5" r="5"/><circle cx="151" cy="90.5" r="5"/><circle cx="112" cy="113" r="5"/><circle cx="73" cy="90.5" r="5"/><circle cx="73" cy="45.5" r="5"/></g><circle cx="112" cy="68" r="18" fill="#fff" fill-opacity=".15"/><circle cx="112" cy="68" r="9" fill="#9DB8FF"/></svg>
-          <span class="tier-label">ENTERPRISE</span>
-          <h3>Built around your organization.</h3>
+          <a href="#contact" class="btn btn-white">Learn More</a>
+        </article>
+        <article class="tier-card tier-4" data-anim>
+          <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
+            <circle class="tier-ring" cx="245" cy="114" r="118" stroke="#7DA7F9" stroke-opacity=".16" stroke-width="1.25"/>
+            <circle class="tier-ring" cx="245" cy="114" r="78" stroke="#7DA7F9" stroke-opacity=".3" stroke-width="1.25"/>
+            <g class="tier-spokes" stroke="#7DA7F9" stroke-opacity=".35" stroke-width="1.25"><path d="M245 114V36"/><path d="M245 114L312.5 75"/><path d="M245 114L312.5 153"/><path d="M245 114V192"/><path d="M245 114L177.5 153"/><path d="M245 114L177.5 75"/></g>
+            <circle class="tier-disc" cx="245" cy="114" r="30" fill="#7DA7F9" fill-opacity=".18"/>
+            <circle class="tier-dot" cx="245" cy="114" r="14" fill="#7DA7F9" fill-opacity=".9"/>
+            <g class="tier-nodes" fill="#003EB5" stroke="#7DA7F9" stroke-opacity=".8" stroke-width="1.5"><circle cx="245" cy="36" r="7"/><circle cx="312.5" cy="75" r="7"/><circle cx="312.5" cy="153" r="7"/><circle cx="245" cy="192" r="7"/><circle cx="177.5" cy="153" r="7"/><circle cx="177.5" cy="75" r="7"/></g>
+          </svg>
+          <span class="tier-label">Enterprise</span>
+          <h3>Built around your<br>organization.</h3>
           <p>For multi-location businesses and customized implementations.</p>
-          <a href="#contact" class="btn btn-white btn-small">Talk to Our Team</a>
-        </div>
+          <a href="#contact" class="btn btn-white">Talk to Our Team</a>
+        </article>
       </div>
 
       <div class="cta-row">
-        <div class="cta-pill">
+        <div class="cta-pill" data-anim>
           <span>Not sure which setup is right for you?</span>
           <a href="#contact" class="btn btn-primary btn-small">Talk to Our Team</a>
         </div>
