@@ -99,7 +99,6 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   .kiosk-avatar { height: 100%; }
   .intro-split .kiosk-device { flex: 0 0 auto; width: calc(var(--hero-avatar-w, 22.5rem) + 20px); }
   #features .chat-section-header { margin-bottom: 1.5rem; }
-  .feature-stage .kiosk-device { flex-basis: min(21.25rem, calc(var(--stage-h) * 0.62 - 6rem)); }
 }
 
 // Copy of the hero card surface (and its 1px edge) that shrinks into the kiosk screen.

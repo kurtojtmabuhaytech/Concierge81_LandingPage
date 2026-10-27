@@ -887,6 +887,197 @@ code, kbd, samp, pre {
   }
 }
 /* =========================================
+   Sections 1–3 on desktop: sized as the Figma frame
+   The story fills one screen like the 1512 × 839 animation frame, so it scales with the screen's
+   width and height: u(n) is n Figma pixels (--u = one Figma pixel, the smaller of the two ratios).
+   ========================================= */
+@media (min-width: 901px) {
+  :root {
+    --u: min(calc(100vw / 1512), calc(100svh / 839));
+  }
+  .site-header > .container {
+    max-width: none;
+    padding-inline: max(1.5rem, (100% - calc(1350 * var(--u))) / 2);
+  }
+  .story > .section > .container {
+    max-width: calc(1350 * var(--u));
+    padding-inline: 0;
+  }
+  .hero-card {
+    padding: calc(36 * var(--u)) calc(39 * var(--u)) 0;
+    border-radius: calc(28 * var(--u));
+  }
+  .hero-card-top .brand-logo {
+    font-size: calc(22 * var(--u));
+  }
+  .mode-toggle button {
+    font-size: calc(13 * var(--u));
+    padding: calc(6 * var(--u)) calc(20 * var(--u));
+  }
+  .hero-card-tools .lang-btn {
+    font-size: calc(13 * var(--u));
+    padding: calc(6 * var(--u)) calc(14 * var(--u));
+  }
+  .hero-split-area {
+    grid-template-columns: 1fr calc(672 * var(--u));
+    gap: 0;
+  }
+  .hero-avatar img {
+    width: calc(430 * var(--u));
+  }
+  .hero-chat-interface {
+    gap: calc(16 * var(--u));
+    padding: calc(30 * var(--u)) 0 calc(27 * var(--u));
+  }
+  .chat-messages-area {
+    gap: calc(14 * var(--u));
+  }
+  .hero-chat-interface .bubble {
+    font-size: calc(21 * var(--u));
+    line-height: 1.333;
+    padding: calc(17 * var(--u)) calc(22 * var(--u));
+    border-radius: calc(20 * var(--u));
+    max-width: 100%;
+  }
+  .hero-chat-interface .bubble--ai {
+    border-bottom-left-radius: calc(6 * var(--u));
+  }
+  .hero-chat-interface .bubble--user {
+    border-bottom-right-radius: calc(6 * var(--u));
+  }
+  .hero-chat-interface .timestamp {
+    font-size: calc(12 * var(--u));
+  }
+  .chat-composer {
+    border-radius: calc(24 * var(--u));
+    padding: calc(24 * var(--u));
+    gap: calc(40 * var(--u));
+    margin-top: calc(56 * var(--u));
+  }
+  .suggest-label {
+    font-size: calc(13 * var(--u));
+    margin-bottom: calc(10 * var(--u));
+  }
+  .chat-composer .chip-row {
+    gap: calc(10 * var(--u));
+  }
+  .chat-composer .chip {
+    font-size: calc(15 * var(--u));
+    padding: calc(8 * var(--u)) calc(14 * var(--u));
+  }
+  .category-btn {
+    font-size: calc(15 * var(--u));
+    padding: calc(9 * var(--u)) calc(16 * var(--u));
+    gap: calc(8 * var(--u));
+  }
+  .category-btn svg {
+    width: calc(15 * var(--u));
+    height: calc(15 * var(--u));
+  }
+  .mic-btn {
+    width: calc(75 * var(--u));
+    height: calc(75 * var(--u));
+  }
+  .mic-btn svg {
+    width: calc(28 * var(--u));
+    height: calc(28 * var(--u));
+  }
+  .splash-bubble {
+    font-size: calc(21 * var(--u));
+    line-height: 1.333;
+    padding: calc(17 * var(--u)) calc(22 * var(--u));
+    border-radius: calc(20 * var(--u)) calc(20 * var(--u)) calc(20 * var(--u)) calc(6 * var(--u));
+  }
+  .intro-split {
+    gap: calc(78 * var(--u));
+    flex-wrap: nowrap;
+  }
+  .intro-split .kiosk-device {
+    flex: 0 0 calc(447 * var(--u));
+    width: calc(447 * var(--u));
+  }
+  .intro-thread {
+    flex: 0 1 calc(717 * var(--u));
+    gap: calc(12 * var(--u));
+  }
+  .intro-thread .msg-row--user {
+    margin-bottom: calc(26 * var(--u));
+  }
+  .intro-thread .bubble--user {
+    font-size: calc(22 * var(--u));
+    line-height: 1.27;
+    padding: calc(18 * var(--u)) calc(26 * var(--u));
+    border-radius: calc(22 * var(--u)) calc(22 * var(--u)) calc(6 * var(--u)) calc(22 * var(--u));
+    max-width: none;
+  }
+  .intro-thread .timestamp {
+    font-size: calc(12 * var(--u));
+  }
+  .header-pill--xl {
+    font-size: calc(56 * var(--u));
+    line-height: 1.07;
+    padding: calc(32 * var(--u)) calc(34 * var(--u));
+    border-radius: calc(28 * var(--u)) calc(28 * var(--u)) calc(28 * var(--u)) calc(8 * var(--u));
+    max-width: calc(600 * var(--u));
+  }
+  .bubble-lead {
+    font-size: calc(26 * var(--u));
+    line-height: 1.5;
+    padding: calc(20 * var(--u)) calc(24 * var(--u));
+    border-radius: calc(24 * var(--u)) calc(24 * var(--u)) calc(24 * var(--u)) calc(8 * var(--u));
+    max-width: calc(668 * var(--u));
+  }
+  .intro-actions {
+    gap: calc(24 * var(--u));
+    margin-top: calc(22 * var(--u));
+  }
+  .intro-actions .btn {
+    font-size: calc(17 * var(--u));
+    padding: calc(14 * var(--u)) calc(26 * var(--u));
+  }
+  .intro-actions .link-btn {
+    font-size: calc(17 * var(--u));
+  }
+  #features .header-pill--ai {
+    font-size: calc(44 * var(--u));
+    padding: calc(24 * var(--u)) calc(28 * var(--u));
+    border-radius: calc(28 * var(--u)) calc(28 * var(--u)) calc(28 * var(--u)) calc(8 * var(--u));
+    max-width: none;
+  }
+  .feature-stage {
+    flex-wrap: nowrap;
+    gap: calc(80 * var(--u));
+  }
+  .feature-stage .kiosk-device {
+    flex: 0 0 calc(498 * var(--u));
+    width: calc(498 * var(--u));
+  }
+  .feature-col {
+    flex: 0 1 calc(380 * var(--u));
+    max-width: none;
+    gap: calc(56 * var(--u));
+  }
+  .feature-item {
+    gap: calc(18 * var(--u));
+  }
+  .feature-item h3 {
+    font-size: calc(20 * var(--u));
+    margin-bottom: calc(4 * var(--u));
+  }
+  .feature-item p {
+    font-size: calc(16 * var(--u));
+  }
+  .feature-icon {
+    width: calc(52 * var(--u));
+    height: calc(52 * var(--u));
+    border-radius: calc(14 * var(--u));
+  }
+  .feature-icon svg {
+    width: calc(24 * var(--u));
+    height: calc(24 * var(--u));
+  }
+}
+/* =========================================
    Section 4: Problem (Team Inbox Pile)
    ========================================= */
 .inbox-card {
@@ -3861,9 +4052,6 @@ main > .blog-section:last-child {
 }
 .story.is-staged #features .chat-section-header {
   margin-bottom: 1.5rem;
-}
-.story.is-staged .feature-stage .kiosk-device {
-  flex-basis: min(21.25rem, var(--stage-h) * 0.62 - 6rem);
 }
 
 .story-morph {

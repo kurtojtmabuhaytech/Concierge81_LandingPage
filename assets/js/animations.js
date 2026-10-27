@@ -355,11 +355,12 @@
       return axis === 'x' ? to.right - (from.right - current) : to.top - (from.top - current);
     };
     // Features step: with the site header gone, the feature stage and kiosk rise until the kiosk is
-    // centred in the whole screen (as in the recording; the story sits under the header's height)
+    // centred in the whole screen (as in the recording; the story sits under the header's height).
+    // A kiosk taller than the screen keeps its top in view and runs off the bottom edge instead.
     const centreLift = () => {
       const slot = within(featuresKiosk);
       const top = siteHeader.offsetHeight + slot.y - gsap.getProperty(featuresStage, 'y');
-      return Math.max(0, top - (innerHeight - slot.height) / 2);
+      return Math.max(0, Math.min(top - (innerHeight - slot.height) / 2, top - innerHeight * 0.04));
     };
     const towardKiosk = (i, el) => {
       const k = featuresKiosk.getBoundingClientRect();
