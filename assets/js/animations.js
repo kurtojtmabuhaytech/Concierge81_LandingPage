@@ -362,6 +362,12 @@
       const top = siteHeader.offsetHeight + slot.y - gsap.getProperty(featuresStage, 'y');
       return Math.max(0, Math.min(top - (innerHeight - slot.height) / 2, top - innerHeight * 0.04));
     };
+    // The features headline settles just below the top edge of the screen, wherever the
+    // (screen-centred) features block puts it
+    const headlineToTop = () => {
+      const top = featuresHeadline.getBoundingClientRect().top - gsap.getProperty(featuresHeadline, 'y');
+      return Math.min(0, innerHeight * 0.035 - top);
+    };
     const towardKiosk = (i, el) => {
       const k = featuresKiosk.getBoundingClientRect();
       const r = el.getBoundingClientRect();
@@ -440,17 +446,18 @@
       .addLabel('intro')
 
       // Step 3 (18–20s): the intro moves out before the kiosk glides to the centre (so scrolling
-      // back never slides the kiosk over the text), then the headline grows
+      // back never slides the kiosk over the text) and the site header slides up off the screen
+      // (so the features headline, which grows next, never sits under it)
       .to([intro.question, intro.headline, ...intro.rest], { autoAlpha: 0, y: -50, duration: 0.4, stagger: 0.05, ease: 'power2.in' }, 'intro')
+      .to(siteHeader, { yPercent: -100, duration: 0.5, ease: MOTION.easeInOut }, 'intro+=0.3')
       .to(traveller, { ...onSlot(featuresKiosk), duration: MOTION.slow, ease: MOTION.easeInOut }, 'intro+=0.5');
     bubbleIn(tl, featuresHeadline, 'intro+=1.2')
       .addLabel('features')
 
-      // Step 4 (21–24s): the site header slides up off the screen and everything moves up into its
-      // space: the headline rides up to the top edge, and the kiosk and features rise to show the
-      // whole kiosk; once the kiosk is in place the features slide out from behind it row by row
-      .to(siteHeader, { yPercent: -100, duration: 0.6, ease: MOTION.easeInOut }, 'features')
-      .to(featuresHeadline, { y: () => -(siteHeader.offsetHeight + featuresHeadline.offsetHeight * 0.45), duration: 0.6, ease: MOTION.easeInOut }, 'features')
+      // Step 4 (21–24s): everything moves up into the header's space: the headline to just below
+      // the top edge, and the kiosk and features rise to show the whole kiosk; once the kiosk is in
+      // place the features slide out from behind it row by row
+      .to(featuresHeadline, { y: headlineToTop, duration: 0.5, ease: MOTION.easeInOut }, 'features')
       .to(featuresStage, { y: () => -centreLift(), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
       .to(traveller, { ...onSlot(featuresKiosk, centreLift), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
       .addLabel('popOut', 'features+=0.7');
@@ -460,7 +467,7 @@
     tl.addLabel('fan');
 
     // The site header stays away for the rest of the page; it comes back only when the visitor
-    // scrolls back up to the features step (the header tween above runs back)
+    // scrolls back up to the intro step (the header tween above runs back)
     const scene = scrollScene({
       trigger: story,
       tl,
