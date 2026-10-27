@@ -72,7 +72,9 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   position: relative;
   z-index: 0; // own stacking context: the kiosk stays under the section that slides over it
   height: var(--stage-h);
-  overflow: hidden;
+  // Clipped sideways only: once the site header slides away (features step) the content moves up into its space
+  overflow-x: clip;
+  overflow-y: visible;
   background: $color-white;
 
   > .section {
@@ -118,14 +120,14 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 #how.is-staged,
 #interaction.is-staged,
 #industries.is-staged {
-  --stage-h: calc(100svh - var(--header-h, 4rem));
+  --stage-h: 100svh; // the site header has slid away by now (features step)
   height: var(--stage-h);
   overflow: hidden;
   padding: 0;
   > .container { padding-block: 1.5rem; will-change: transform; }
 }
 #problem.is-staged {
-  --stage-h: calc(100svh - var(--header-h, 4rem));
+  --stage-h: 100svh; // the site header has slid away by now (features step)
   height: var(--stage-h);
   overflow: hidden;
   padding: 0;
@@ -146,6 +148,10 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 .slides-over {
   position: relative;
   z-index: 1;
+  margin-top: -100svh; // the scenes it slides over are a full screen
+}
+// The inbox slides over the story, which is pinned under the header (one header shorter)
+#problem.slides-over {
   margin-top: calc(-1 * (100svh - var(--header-h, 4rem)));
 }
 
@@ -164,4 +170,14 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   .js-motion [data-anim] { visibility: visible; }
   .js-motion .hero-card { --hero-surface: 1; }
   .js-motion .splash { display: none; }
+}
+
+// Landing page, desktop: the site header has no bar of its own (transparent, no blur or line),
+// so the page shows through behind the logo and menu (Figma)
+@media (min-width: 901px) {
+  .js-motion .site-header {
+    background: transparent;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    border-bottom-color: transparent;
+  }
 }

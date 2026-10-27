@@ -87,16 +87,18 @@
      timeline takes PACE of a screen to scroll through, so one wheel notch moves it a little.
      The scene never unpins before its last moment has played; `tail` keeps it pinned after that
      (the next section can slide up over it). `beforeMove` runs before the timeline first moves
-     (the story finishes the opening there, so the two never overlap); `onUpdate` gets the
+     (the story finishes the opening there, so the two never overlap); `top` is where it pins
+     (the story under the site header; the later scenes, after the header has slid away, at the
+     very top of the screen); `onUpdate` gets the
      timeline's time as it changes. An optional `exit` timeline plays over the tail, also with
      the scroll, as the scene leaves. */
   const PACE = 0.65; // screen heights of scrolling per second of animation
-  const scrollScene = ({ trigger, tl, exit, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {} }) => {
+  const scrollScene = ({ trigger, tl, exit, top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {} }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     let pin;
     pin = ScrollTrigger.create({
       trigger,
-      start: () => `top ${siteHeader.offsetHeight}px`,
+      start: () => `top ${top()}px`,
       end: () => `+=${span() + tail()}`,
       pin: true,
       anticipatePin: 1,
@@ -352,8 +354,13 @@
       const current = gsap.getProperty(el, axis);
       return axis === 'x' ? to.right - (from.right - current) : to.top - (from.top - current);
     };
-    // Header out: the feature stage and kiosk rise into its space (as in the recording)
-    const rise = () => featuresHeader.offsetHeight + parseFloat(getComputedStyle(featuresHeader).marginBottom);
+    // Features step: with the site header gone, the feature stage and kiosk rise until the kiosk is
+    // centred in the whole screen (as in the recording; the story sits under the header's height)
+    const centreLift = () => {
+      const slot = within(featuresKiosk);
+      const top = siteHeader.offsetHeight + slot.y - gsap.getProperty(featuresStage, 'y');
+      return Math.max(0, top - (innerHeight - slot.height) / 2);
+    };
     const towardKiosk = (i, el) => {
       const k = featuresKiosk.getBoundingClientRect();
       const r = el.getBoundingClientRect();
@@ -438,20 +445,25 @@
     bubbleIn(tl, featuresHeadline, 'intro+=1.2')
       .addLabel('features')
 
-      // Step 4 (21–23.5s): the headline moves off and everything rises; once the kiosk is in place
-      // the features slide out from behind it row by row (fan, below)
-      .to(featuresHeadline, { y: -40, autoAlpha: 0, duration: 0.4, ease: 'power2.in' }, 'features')
-      .to(featuresStage, { y: () => -rise(), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
-      .to(traveller, { ...onSlot(featuresKiosk, rise), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
+      // Step 4 (21–24s): the site header slides up off the screen and everything moves up into its
+      // space: the headline rides up to the top edge, and the kiosk and features rise to show the
+      // whole kiosk; once the kiosk is in place the features slide out from behind it row by row
+      .to(siteHeader, { yPercent: -100, duration: 0.6, ease: MOTION.easeInOut }, 'features')
+      .to(featuresHeadline, { y: () => -(siteHeader.offsetHeight + featuresHeadline.offsetHeight * 0.45), duration: 0.6, ease: MOTION.easeInOut }, 'features')
+      .to(featuresStage, { y: () => -centreLift(), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
+      .to(traveller, { ...onSlot(featuresKiosk, centreLift), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
       .addLabel('popOut', 'features+=0.7');
     left.forEach((el, i) => {
       tl.to([el, right[i]].filter(Boolean), { autoAlpha: 1, x: 0, duration: 0.7 }, `popOut+=${i * 0.3}`);
     });
     tl.addLabel('fan');
 
+    // The site header stays away for the rest of the page; it comes back only when the visitor
+    // scrolls back up to the features step (the header tween above runs back)
     const scene = scrollScene({
       trigger: story,
       tl,
+      top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
       onRefresh: () => {
@@ -476,6 +488,7 @@
 
     return () => {
       document.removeEventListener('click', onStepLink, true);
+      gsap.set(siteHeader, { clearProps: 'transform' });
       traveller.remove();
       morph.remove();
       morphEdge.remove();
@@ -644,8 +657,8 @@
 
     // The pinned screen shows part of the content; moving it works like scrolling
     const offsetIn = el => el.getBoundingClientRect().top - content.getBoundingClientRect().top;
-    const showCard = () => -gsap.utils.clamp(0, offsetIn(card) - 16, offsetIn(card) + card.offsetHeight + 24 - section.clientHeight);
-    const showClosing = () => -Math.max(0, content.offsetHeight - section.clientHeight); // down to the section's end
+    const showCard = () => -gsap.utils.clamp(0, offsetIn(card) - 16, offsetIn(card) + card.offsetHeight + 24 - innerHeight);
+    const showClosing = () => -Math.max(0, content.offsetHeight - innerHeight); // down to the section's end
 
     const applyStart = () => {
       gsap.set(content, { y: 0 });
@@ -778,7 +791,7 @@
   const showInStage = (section, content, el, last = el) => () => {
     const top = el.getBoundingClientRect().top - content.getBoundingClientRect().top;
     const bottom = last.getBoundingClientRect().bottom - content.getBoundingClientRect().top;
-    const stageH = innerHeight - siteHeader.offsetHeight; // the pinned screen (the section can measure taller while ScrollTrigger re-measures)
+    const stageH = innerHeight; // the pinned screen (the section can measure taller while ScrollTrigger re-measures)
     return -gsap.utils.clamp(0, top - 16, bottom + 24 - stageH);
   };
 

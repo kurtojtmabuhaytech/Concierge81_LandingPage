@@ -3823,7 +3823,8 @@ main > .blog-section:last-child {
   position: relative;
   z-index: 0;
   height: var(--stage-h);
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   background: #FFFFFF;
 }
 .story.is-staged > .section {
@@ -3876,7 +3877,7 @@ main > .blog-section:last-child {
 #how.is-staged,
 #interaction.is-staged,
 #industries.is-staged {
-  --stage-h: calc(100svh - var(--header-h, 4rem));
+  --stage-h: 100svh;
   height: var(--stage-h);
   overflow: hidden;
   padding: 0;
@@ -3889,7 +3890,7 @@ main > .blog-section:last-child {
 }
 
 #problem.is-staged {
-  --stage-h: calc(100svh - var(--header-h, 4rem));
+  --stage-h: 100svh;
   height: var(--stage-h);
   overflow: hidden;
   padding: 0;
@@ -3925,6 +3926,10 @@ main > .blog-section:last-child {
 .slides-over {
   position: relative;
   z-index: 1;
+  margin-top: -100svh;
+}
+
+#problem.slides-over {
   margin-top: calc(-1 * (100svh - var(--header-h, 4rem)));
 }
 
@@ -3948,6 +3953,14 @@ main > .blog-section:last-child {
   }
   .js-motion .splash {
     display: none;
+  }
+}
+@media (min-width: 901px) {
+  .js-motion .site-header {
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-bottom-color: transparent;
   }
 }
 
