@@ -811,9 +811,9 @@
     dots: $$('#how .step-dot'),
     cards: $$('#how .process-card')
   };
-  how.answer = $('path', how.cards[2]);
+  how.answer = $('.how-mark', how.cards[2]);
   how.check = how.answer.getAttribute('d');
-  how.bubble = 'M5 6h14v9h-8l-4.5 3.5V15H5Z'; // card 3's icon starts as a chat bubble
+  how.bubble = 'M62 80c6 4 12 6 18 6s12-2 18-6'; // card 3's reply starts as a small "typing" curve
 
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
@@ -824,7 +824,7 @@
     const sub = $('.sub-pill-text', header);
     const icons = cards.map(card => $('.process-icon', card));
     const texts = cards.map(card => $$('.process-label, h3, p', card));
-    const dial = $('.process-glyph--round', cards[1]);
+    const dial = $('.process-glyph--round', cards[1]); // its tick ring turns with --dial
     const pillColor = getComputedStyle(pill).backgroundColor;
     const pillText = getComputedStyle(pill).color;
     const next = $('#interaction');

@@ -580,62 +580,68 @@ $q-pile: (
 .step-dot {
   --on: 0;
   justify-self: center; position: relative;
-  width: 26px; height: 26px; border-radius: 50%;
+  width: 40px; height: 40px; border-radius: 50%;
   display: grid; place-items: center;
   background: color-mix(in srgb, $color-cobalt-bright calc(var(--on) * 100%), $color-night-card);
   border: 1px solid color-mix(in srgb, $color-cobalt-bright calc(var(--on) * 100%), $neutral-700);
-  font-size: 0.65rem;
-  color: color-mix(in srgb, $color-white calc(var(--on) * 100%), $neutral-300);
-  box-shadow: 0 0 18px 4px rgba($color-cobalt-bright, calc(var(--on) * 0.55));
+  font-size: 0.875rem; font-weight: $font-weight-medium;
+  color: color-mix(in srgb, $color-white calc(var(--on) * 100%), $neutral-200);
+  box-shadow: 0 0 28px 8px rgba($color-cobalt-bright, calc(var(--on) * 0.45));
   &.is-active { --on: 1; }
 }
 
 .process-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-  gap: 1rem;
+  gap: 1.375rem;
 }
 
 @container (max-width: 700px) {
   .stepper { display: none; }
 }
 
+// Step cards (Figma: 436 × 425, illustration in a 152px ring, then eyebrow, 32px title, body)
 .process-card {
   background: $color-night-card;
-  border-radius: 18px;
-  padding: 1.75rem 1.5rem;
+  border: 1px solid rgba($color-white, 0.06);
+  border-radius: 28px;
+  padding: 3.5rem 0.75rem 2.5rem 2.3rem; // text starts 37px in; the right side leaves room for the longest title
   color: $neutral-400;
 
-  h3 { color: $color-white; font-size: $type-subtitle; font-weight: $font-weight-semibold; margin: 0 0 0.5rem; }
-  p { font-size: 0.85rem; line-height: 1.5; margin: 0; }
+  h3 { color: $color-white; font-size: $type-title; line-height: 1.19; letter-spacing: -0.032em; font-weight: $font-weight-semibold; margin: 0 0 0.9rem; }
+  p { font-size: 1.0625rem; line-height: 1.47; letter-spacing: -0.012em; margin: 0; }
 }
+// Illustration: soft cobalt glow behind a faint ring
 .process-icon {
-  width: 110px; height: 110px; margin: 0 auto 1.75rem;
-  border-radius: 50%;
-  display: grid; place-items: center;
-  background: radial-gradient(circle, rgba($color-cobalt-bright, 0.35) 0%, rgba($color-cobalt-bright, 0.08) 45%, transparent 70%);
-}
-.process-glyph {
-  width: 54px; height: 54px; border-radius: 14px;
-  display: grid; place-items: center;
-  background: linear-gradient(160deg, $cobalt-400, $cobalt-600);
-  color: $color-white;
-  box-shadow: 0 8px 24px rgba($color-cobalt-bright, 0.45);
-  svg { width: 26px; height: 26px; }
-}
-.process-glyph--round {
-  border-radius: 50%;
   position: relative;
-  // dial ring around the "understands" sparkle; the scroll animation turns it
-  &::after {
+  width: 10rem; height: 10rem; margin: 0 auto 3.4rem;
+  &::before {
     content: '';
-    position: absolute; inset: -10px;
+    position: absolute; inset: -40%;
     border-radius: 50%;
-    border: 2px dotted rgba($color-cobalt-bright, 0.55);
-    transform: rotate(var(--dial, 0deg));
+    background: radial-gradient(circle, rgba($color-cobalt-bright, 0.16) 0%, rgba($color-cobalt-bright, 0.06) 40%, transparent 68%);
+    pointer-events: none;
   }
 }
-.process-label { @extend %eyebrow; display: block; color: $color-text-accent-dark; margin-bottom: 0.6rem; }
+.how-art { position: relative; display: block; width: 100%; height: 100%; overflow: visible; }
+.how-ring { fill: none; stroke: rgba($color-white, 0.07); stroke-width: 1.5; }
+// Card 2's dial of ticks; the scroll animation turns it (--dial)
+.how-dial {
+  stroke: rgba($color-white, 0.28); stroke-width: 1.5; stroke-linecap: round;
+  transform: rotate(var(--dial, 0deg)); transform-origin: 80px 80px;
+  .is-lit { stroke: $cobalt-300; }
+}
+.process-label { @extend %eyebrow; display: block; color: $color-text-accent-dark; margin-bottom: 0.75rem; }
+
+// Desktop: the How section sits in the 80px frame like the story, with a 56px headline
+@media (min-width: 901px) {
+  #how { background: $neutral-950; }
+  #how > .container { max-width: calc(84.5rem + 10.582vw); padding-inline: max(1.5rem, 5.291vw); }
+  #how .header-pill--user { background: #F6F6F3; }
+  #how .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; }
+  #how .sub-pill-text { font-size: 1.375rem; padding: 0.68em 1.09em; }
+  #how .stepper { margin-bottom: 1.75rem; }
+}
 
 /* =========================================
    Section 6: Interaction Modes
