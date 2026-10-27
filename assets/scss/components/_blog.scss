@@ -30,7 +30,8 @@ main > .blog-section:last-child { padding-bottom: $space-section; }
   overflow: hidden;
   background: linear-gradient(120deg, #3A2E25, #8C7360);
 }
-.story-photo { position: absolute; inset: 0; border: none; border-radius: 0; background: transparent; color: rgba(255, 255, 255, 0.55); justify-content: flex-start; padding-left: 8%; }
+// The lobby photo with the avatar (chat removed from it; the chat on top is live text)
+.story-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 30% 30%; }
 
 .story-chat {
   position: absolute;
@@ -64,7 +65,7 @@ main > .blog-section:last-child { padding-bottom: $space-section; }
 // Narrow cards: image on top, chat strip below on dark
 @container (max-width: 47.5rem) {
   .story-media { aspect-ratio: auto; display: flex; flex-direction: column; background: $color-night; }
-  .story-photo { position: relative; aspect-ratio: 4 / 3; background: linear-gradient(120deg, #3A2E25, #8C7360); }
+  .story-photo { position: relative; aspect-ratio: 4 / 3; object-position: 22% 30%; } // narrow cards: the avatar, then the chat below
   .story-chat { position: static; width: auto; padding: 1rem; gap: 0.6rem; }
   .story-suggest { margin-top: 0.5rem; }
 }
