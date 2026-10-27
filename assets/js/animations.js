@@ -354,19 +354,22 @@
       const current = gsap.getProperty(el, axis);
       return axis === 'x' ? to.right - (from.right - current) : to.top - (from.top - current);
     };
+    // The features headline settles just below the top edge of the screen, wherever the
+    // (screen-centred) features block puts it
+    const headlineTop = () => innerHeight * 0.035;
+    const headlineToTop = () => {
+      const top = featuresHeadline.getBoundingClientRect().top - gsap.getProperty(featuresHeadline, 'y');
+      return Math.min(0, headlineTop() - top);
+    };
     // Features step: with the site header gone, the feature stage and kiosk rise until the kiosk is
     // centred in the whole screen (as in the recording; the story sits under the header's height).
-    // A kiosk taller than the screen keeps its top in view and runs off the bottom edge instead.
+    // It never rises past the headline: a kiosk too tall to centre stops just under it and runs
+    // off the bottom edge instead.
     const centreLift = () => {
       const slot = within(featuresKiosk);
       const top = siteHeader.offsetHeight + slot.y - gsap.getProperty(featuresStage, 'y');
-      return Math.max(0, Math.min(top - (innerHeight - slot.height) / 2, top - innerHeight * 0.04));
-    };
-    // The features headline settles just below the top edge of the screen, wherever the
-    // (screen-centred) features block puts it
-    const headlineToTop = () => {
-      const top = featuresHeadline.getBoundingClientRect().top - gsap.getProperty(featuresHeadline, 'y');
-      return Math.min(0, innerHeight * 0.035 - top);
+      const highest = headlineTop() + featuresHeadline.offsetHeight + innerHeight * 0.03;
+      return Math.max(0, Math.min(top - (innerHeight - slot.height) / 2, top - highest));
     };
     const towardKiosk = (i, el) => {
       const k = featuresKiosk.getBoundingClientRect();
