@@ -57,8 +57,8 @@
   const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
   const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Played once the scroll reaches them, at their own pace; reversed when the visitor scrolls back above
-  const PLAY = 'play none none reverse';
+  // Played once the scroll reaches them, at their own pace; they stay shown when the visitor scrolls back
+  const PLAY = 'play none none none';
 
   // Chat thread (phones): visitor bubble → concierge bubble (pops in whole) → everything else,
   // played when the thread scrolls into view
@@ -147,8 +147,8 @@
       end: () => pin.start + span(),
       onUpdate: (self) => {
         if (self.progress > 0) beforeMove();
-        const at = self.progress * tl.duration();
-        playTo(self.direction < 0 ? stepBefore(at) : stepAfter(at));
+        if (self.direction < 0) return; // animations only play on the way down
+        playTo(stepAfter(self.progress * tl.duration()));
       },
       onRefresh: (self) => {
         // Rewind with the old measurements (the exit first: it ran last), re-measure the starting
@@ -168,8 +168,9 @@
     tl.eventCallback('onUpdate', () => onUpdate(tl.time()));
     // The exit runs over the tail. It starts from wherever things are when the visitor gets there
     // (questions may have been moved by hand), so it re-measures each time it is entered from above.
+    let exitTrigger = null;
     if (exit) {
-      ScrollTrigger.create({
+      exitTrigger = ScrollTrigger.create({
         trigger,
         start: () => pin.start + span(),
         end: () => pin.start + span() + tail(),
@@ -181,8 +182,38 @@
     }
     // Scroll position of a step (in-page links to a step)
     const labelToScroll = label => pin.start + (tl.labels[label] / tl.duration()) * span();
+
+    // Settling: the scene stops for good and becomes a plain, finished section (no pin, nothing
+    // hidden), for when the visitor scrolls back up through it (settleAbove)
+    const entry = {
+      trigger,
+      start: () => pin.start,
+      end: () => pin.end,
+      settled: false,
+      cleanup: null, // the scene's own cleanup (set by the matchMedia below)
+      settle() {
+        if (entry.settled) return;
+        entry.settled = true;
+        chase?.kill();
+        steps.kill();
+        exitTrigger?.kill();
+        exit?.kill();
+        tl.kill();
+        pin.kill(true);
+        entry.cleanup?.();
+        gsap.set([trigger, ...trigger.querySelectorAll('*')], { clearProps: SETTLED_PROPS });
+        gsap.set(trigger.querySelectorAll('[data-anim]'), { autoAlpha: 1 });
+        gsap.set(trigger.querySelectorAll('.hero-card'), { '--hero-surface': 1 });
+      }
+    };
+    sceneEntries.push(entry);
     return { pin, scrub: { labelToScroll }, steps };
   };
+  // Everything the scenes animate, cleared when a scene settles (back to the page's own styles)
+  const SETTLED_PROPS = 'transform,opacity,visibility,color,backgroundColor,filter,clipPath,' +
+    'strokeDasharray,strokeDashoffset,width,height,padding,borderRadius,marginTop,overflow,display,' +
+    'left,top,right,zIndex,--fs,--dial,--line,--on,--at,--grow,--pile-glow,--avatar-clip-bottom,--avatar-glow';
+  const sceneEntries = [];
 
   const hero = {
     surface: $('.hero-card'),
@@ -244,6 +275,7 @@
     };
     gsap.set(bubble, { ...typing, autoAlpha: 0 });
     gsap.set([text, caption], { autoAlpha: 0 });
+    gsap.set(msg, { visibility: 'visible' }); // everything inside starts hidden now
     dotsLoop = gsap.to($$('i', dots), {
       y: -3, opacity: 0.4, duration: 0.35, ease: 'sine.inOut',
       stagger: { each: 0.12, repeat: -1, yoyo: true }
@@ -290,6 +322,16 @@
       setTimeout(start, 4000);
     }
   };
+
+  // Without the pinned story, the site header slides away as the inbox comes in (as it does in the
+  // story) and back when the visitor returns above it
+  const headerFollowsInbox = () => ScrollTrigger.create({
+    trigger: '#problem',
+    start: 'top 60%',
+    onEnter: () => gsap.to(siteHeader, { yPercent: -100, duration: 0.4, ease: MOTION.easeInOut }),
+    onLeaveBack: () => gsap.to(siteHeader, { yPercent: 0, duration: 0.4, ease: MOTION.easeInOut }),
+    onRefresh: self => gsap.set(siteHeader, { yPercent: self.progress > 0 || self.direction > 0 && scrollY > self.start ? -100 : 0 })
+  });
 
   /* ---- Scenes: each is ({ isDesktop, isMobile }) => cleanup?, rebuilt when the breakpoint changes ---- */
   const scenes = [];
@@ -564,13 +606,10 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop || !introDone) return;
     gsap.set('.story [data-anim]', { autoAlpha: 1 });
-    const header = ScrollTrigger.create({
-      trigger: '#problem',
-      start: 'top 60%',
-      onEnter: () => gsap.to(siteHeader, { yPercent: -100, duration: 0.4, ease: MOTION.easeInOut }),
-      onLeaveBack: () => gsap.to(siteHeader, { yPercent: 0, duration: 0.4, ease: MOTION.easeInOut })
-    });
+    root.classList.add('story-plain');
+    const header = headerFollowsInbox();
     return () => {
+      root.classList.remove('story-plain');
       header.kill();
       gsap.set(siteHeader, { clearProps: 'transform' });
     };
@@ -1940,6 +1979,46 @@
 
   runOpening();
 
+  // Where the visitor is, as a section and a distance into it (positions shift when the intro
+  // story is shown finished instead of pinned), saved as they scroll
+  const places = ['.story', '#problem', '#how', '#interaction', '#industries', '#values', '#deployment', '#pricing', '#faq', '#cta', '#contact'];
+  const topOf = (target) => {
+    const el = typeof target === 'string' ? $(target) : target;
+    const box = el.parentElement.classList.contains('pin-spacer') ? el.parentElement : el;
+    // (with smooth scrolling the content trails the scrollbar, so ask the smoother)
+    return smoother ? smoother.offset(box, 'top top') : box.getBoundingClientRect().top + scrollY;
+  };
+  /* Scrolling back up: every scene the visitor has reached settles into a plain, finished section,
+     so going back shows the pages they have seen, in full, with nothing pinned or playing. The view
+     stays on the same content while the page above it changes height. Scenes below still play when
+     the visitor gets to them. */
+  let headerAfterStory = null;
+  let settling = false;
+  const settleAbove = () => {
+    if (settling) return;
+    const y = scrollY;
+    const due = sceneEntries.filter(e => !e.settled && e.start() <= y + 1);
+    if (!due.length) return;
+    settling = true;
+    const inside = due.find(e => y < e.end());
+    const progress = inside ? (y - inside.start()) / Math.max(1, inside.end() - inside.start()) : 0;
+    const anchor = inside ? null : places.map(sel => $(sel)).find(el => topOf(el) > y);
+    const anchorOffset = anchor ? topOf(anchor) - y : 0;
+    const storySettles = due.some(e => e.trigger.classList.contains('story'));
+    due.forEach(e => e.settle());
+    if (storySettles && !headerAfterStory) {
+      headerAfterStory = headerFollowsInbox();
+      root.classList.add('story-plain');
+    }
+    ScrollTrigger.refresh();
+    const to = inside
+      ? topOf(inside.trigger) + progress * Math.max(0, inside.trigger.offsetHeight - innerHeight)
+      : anchor ? topOf(anchor) - anchorOffset : y;
+    scrollToY(Math.max(0, to), false);
+    ScrollTrigger.update();
+    settling = false;
+  };
+
   const mm = gsap.matchMedia();
   mm.add(
     {
@@ -1960,9 +2039,24 @@
         root.classList.add('is-smooth');
         smoother = ScrollSmoother.create({ wrapper: '#smooth-wrapper', content: '#smooth-content', smooth: 1.1, smoothTouch: false });
       }
-      const cleanups = scenes.map(scene => scene(context.conditions)).filter(Boolean);
+      const cleanups = scenes.map((scene) => {
+        const first = sceneEntries.length;
+        const cleanup = scene(context.conditions);
+        sceneEntries.slice(first).forEach(entry => { entry.cleanup = cleanup; });
+        return cleanup;
+      }).filter(Boolean);
+      const upward = ScrollTrigger.create({
+        start: 0,
+        end: 'max',
+        onUpdate: self => { if (self.direction < 0) settleAbove(); }
+      });
       return () => {
+        upward.kill();
         cleanups.forEach(cleanup => cleanup());
+        sceneEntries.length = 0;
+        headerAfterStory?.kill();
+        headerAfterStory = null;
+        root.classList.remove('story-plain');
         smoother?.kill();
         smoother = null;
         root.classList.remove('is-smooth');
@@ -1982,15 +2076,6 @@
     history.replaceState(null, '', href);
   }, true);
 
-  // Where the visitor is, as a section and a distance into it (positions shift when the intro
-  // story is shown finished instead of pinned), saved as they scroll
-  const places = ['.story', '#problem', '#how', '#interaction', '#industries', '#values', '#deployment', '#pricing', '#faq', '#cta', '#contact'];
-  const topOf = (selector) => {
-    const el = $(selector);
-    const box = el.parentElement.classList.contains('pin-spacer') ? el.parentElement : el;
-    // (with smooth scrolling the content trails the scrollbar, so ask the smoother)
-    return smoother ? smoother.offset(box, 'top top') : box.getBoundingClientRect().top + scrollY;
-  };
   const savePlace = () => {
     if (root.classList.contains('is-opening')) return;
     const y = scrollY;
