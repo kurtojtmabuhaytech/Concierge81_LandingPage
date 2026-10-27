@@ -72,7 +72,9 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   position: relative;
   z-index: 0; // own stacking context: the kiosk stays under the section that slides over it
   height: var(--stage-h);
-  overflow: hidden;
+  // Clipped sideways only: once the site header slides away (features step) the content moves up into its space
+  overflow-x: clip;
+  overflow-y: visible;
   background: $color-white;
 
   > .section {
@@ -90,10 +92,13 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   // The avatar shrinks into the kiosk screen, which can sit past the card's edge
   .hero-card { overflow: visible; }
 
-  // Each step fits one screen: kiosk sizes follow the available height
-  .intro-split .kiosk-device { flex-basis: min(18.75rem, calc(var(--stage-h) * 0.66 - 5rem)); }
+  // One avatar at one size: the kiosk screens frame the avatar exactly like the hero (same
+  // artwork, same shape), and the intro kiosk's screen is the hero avatar's size, so the morph
+  // only moves the avatar. The logo sits over the empty space above her head.
+  .kiosk-screen { aspect-ratio: 1672 / 2180; }
+  .kiosk-avatar { height: 100%; }
+  .intro-split .kiosk-device { flex: 0 0 auto; width: calc(var(--hero-avatar-w, 22.5rem) + 20px); }
   #features .chat-section-header { margin-bottom: 1.5rem; }
-  .feature-stage .kiosk-device { flex-basis: min(21.25rem, calc(var(--stage-h) * 0.62 - 6rem)); }
 }
 
 // Copy of the hero card surface (and its 1px edge) that shrinks into the kiosk screen.
@@ -112,15 +117,16 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
 // Desktop scenes (animations.js adds .is-staged): one pinned screen; the content moves inside it
 #how.is-staged,
-#interaction.is-staged {
-  --stage-h: calc(100svh - var(--header-h, 4rem));
+#interaction.is-staged,
+#industries.is-staged {
+  --stage-h: 100svh; // the site header has slid away by now (features step)
   height: var(--stage-h);
   overflow: hidden;
   padding: 0;
   > .container { padding-block: 1.5rem; will-change: transform; }
 }
 #problem.is-staged {
-  --stage-h: calc(100svh - var(--header-h, 4rem));
+  --stage-h: 100svh; // the site header has slid away by now (features step)
   height: var(--stage-h);
   overflow: hidden;
   padding: 0;
@@ -128,10 +134,23 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   .inbox-card { margin-bottom: 2rem; }
 }
 
+// Desktop industries carousel: the cards sit on a track that moves one card per step
+#industries.is-staged {
+  // starts at the container's edge, so the card that has moved out is fully hidden
+  .industry-gallery { overflow: hidden; scroll-snap-type: none; cursor: grab; touch-action: pan-y; margin-left: 0; padding-left: 0; }
+  .industry-gallery.is-dragging { cursor: grabbing; }
+  .industry-track { display: flex; gap: inherit; will-change: transform; }
+  .gallery-dots span { cursor: pointer; }
+}
+
 // The section after a pinned scene slides up over it (the scene stays pinned for one more screen)
 .slides-over {
   position: relative;
   z-index: 1;
+  margin-top: -100svh; // the scenes it slides over are a full screen
+}
+// The inbox slides over the story, which is pinned under the header (one header shorter)
+#problem.slides-over {
   margin-top: calc(-1 * (100svh - var(--header-h, 4rem)));
 }
 
@@ -150,4 +169,14 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   .js-motion [data-anim] { visibility: visible; }
   .js-motion .hero-card { --hero-surface: 1; }
   .js-motion .splash { display: none; }
+}
+
+// Landing page, desktop: the site header has no bar of its own (transparent, no blur or line),
+// so the page shows through behind the logo and menu (Figma)
+@media (min-width: 901px) {
+  .js-motion .site-header {
+    background: transparent;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    border-bottom-color: transparent;
+  }
 }

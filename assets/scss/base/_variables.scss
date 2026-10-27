@@ -1,9 +1,9 @@
 /* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
 $font-family-base: 'SF Pro', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans JP', sans-serif;
 $font-family-mono: 'SFMono-Regular', Consolas, monospace;
-// Fluid root size: 16px up to a 1440px screen (the Figma frame), then grows to 20px
+// Fluid root size: 16px up to a 1512px screen (the Figma landing frame), then grows to 20px
 // so the whole rem-based layout scales up on large desktops
-$font-size-base: clamp(16px, 1.111vw, 20px); // 1.111vw = 16px at 1440px
+$font-size-base: clamp(16px, 1.0582vw, 20px); // 1.0582vw = 16px at 1512px
 $line-height-base: 1.5;
 $font-weight-normal: 400;
 $font-weight-medium: 500;
@@ -80,8 +80,9 @@ $color-screen-tint: #F5F7FF;       // light lavender of kiosk screens and the he
 $gradient-brand: linear-gradient(135deg, $cobalt-500, $cobalt-300);
 
 /* Layout & Spacing (8-point rhythm) */
-// 1120 content + 2 × 24 gutter at 1440px (78% of the Figma frame); keeps that ratio on wider screens
-$container-max-width: min(max(73rem, 78vw), 1800px);
+// Figma landing frame: 1312 content between 100px gutters at 1512px; both scale with the screen
+$container-gutter: max(1.5rem, 6.614vw); // 100px at 1512px, 24px on phones
+$container-max-width: calc(82rem + 13.228vw); // 82rem = 1312px at 1512px, plus both gutters
 $space-1: 0.25rem;
 $space-2: 0.5rem;
 $space-3: 1rem;
@@ -90,7 +91,7 @@ $space-5: 2rem;
 $space-6: 3rem;
 $space-8: 4rem;
 $space-12: 6rem;
-$space-section: clamp(4rem, 10vw, 8rem); // 128px desktop
+$space-section: clamp(4rem, 6.614vw, 6.25rem); // 100px at 1512px (Figma)
 
 /* Radius */
 $radius-sm: 2px;
