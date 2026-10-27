@@ -139,6 +139,11 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   .inbox-card { margin-bottom: 2rem; }
 }
 
+// Desktop Why concierge81?: Hello. and こんにちは。 share one spot and swap with the language tab
+#values.is-staged .hello { display: grid; place-items: center;
+  > span { grid-area: 1 / 1; }
+}
+
 // Desktop industries carousel: the cards sit on a track that moves one card per step
 #industries.is-staged {
   // starts at the container's edge, so the card that has moved out is fully hidden
