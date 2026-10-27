@@ -1230,10 +1230,169 @@
     };
   });
 
+  /* 12. Why concierge81? (Figma recording 1:15–1:37). Desktop: a scroll scene. The visitor asks
+     and the concierge answers; the view moves down the bento one row at a time and each card's
+     graphic plays as it arrives: the 24/7 dot travels the day past "Answered at 2:14 AM" and the
+     hand-off line draws to your team (row 1); the business info branches out to kiosk, web and
+     app, the language tab moves to JP and back as Hello. turns into こんにちは。, and the places
+     spread out from the hub (row 2); Parking appears and the week's bars grow, then the demo card
+     rises in (row 3). All with the scroll. As the deployment section slides up over it, the content
+     fades out. */
+  const values = {
+    section: $('#values'),
+    content: $('#values > .container'),
+    header: $('#values .chat-section-header'),
+    rows: $$('#values .bento-row'),
+    cards: $$('#values .bento-card')
+  };
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop) return;
+    const { section, content, header, rows, cards } = values;
+    const user = $('.chat-header-row.right', header);
+    const pill = $('.header-pill--user', user);
+    const reply = $('.header-pill--ai', header);
+    const sub = $('.sub-pill-text', header);
+    const pillColor = getComputedStyle(pill).backgroundColor;
+    const part = selector => $(selector, section);
+    const parts = selector => $$(selector, section);
+    const timeline = part('.timeline');
+    const tip = part('.timeline-tip');
+    const fill = part('.timeline-fill');
+    const marks = parts('.timeline-sun, .timeline-moon');
+    const lines = parts('.handoff-line');
+    const handoffPill = part('.handoff-pill');
+    const team = part('.handoff-team');
+    const infoBox = part('.info-box');
+    const branches = parts('.info-branches path');
+    const nodes = parts('.info-nodes > div');
+    const langPill = part('.lang-pill');
+    const tabs = parts('.lang-tabs span');
+    const hello = part('.hello-en');
+    const konnichiwa = part('.hello-jp');
+    const network = parts('.network-lines path');
+    const places = parts('.network-node');
+    const tags = parts('.network-tag');
+    const hub = parts('.network-glow, .network-hub, .network-home');
+    const word = parts('.insight-copy > *');
+    const bars = parts('.bar');
+    const demo = part('.bento-card--cta');
+    branches.forEach(path => path.setAttribute('pathLength', '1'));
+    // The places start on the hub and move out along their lines
+    const fromHub = (el) => {
+      const c = $('circle', el);
+      return { x: 180 - +c.getAttribute('cx'), y: 112 - +c.getAttribute('cy') };
+    };
+    const tabShift = () => tabs[1].offsetLeft - tabs[0].offsetLeft;
+    const next = $('#deployment');
+    section.classList.add('is-staged');
+    next.classList.add('slides-over');
+
+    const applyStart = () => {
+      gsap.set(content, { y: 0, autoAlpha: 1 });
+      gsap.set(user, { autoAlpha: 0, y: 12 });
+      gsap.set(pill, { backgroundColor: '#5B5F66' });
+      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      gsap.set(cards, { autoAlpha: 0, y: 30 });
+      gsap.set(timeline, { '--at': '0%' });
+      gsap.set(fill, { scaleX: 0 });
+      gsap.set([tip, ...marks], { autoAlpha: 0, y: 6 });
+      gsap.set(lines, { scaleX: 0 });
+      gsap.set(handoffPill, { autoAlpha: 0, scale: 0.8 });
+      gsap.set(team, { opacity: 0.35 });
+      gsap.set(infoBox, { autoAlpha: 0, y: 14 });
+      gsap.set(branches, { strokeDasharray: 1, strokeDashoffset: 1 });
+      gsap.set(nodes, { autoAlpha: 0, scale: 0.7 });
+      gsap.set(langPill, { x: 0 });
+      gsap.set(tabs, { color: '' });
+      gsap.set(konnichiwa, { autoAlpha: 0, y: 10 });
+      gsap.set(hello, { autoAlpha: 1 });
+      gsap.set(network, { opacity: 0 });
+      gsap.set(places, { autoAlpha: 0, x: i => fromHub(places[i]).x, y: i => fromHub(places[i]).y });
+      gsap.set(tags, { autoAlpha: 0, y: 6 });
+      gsap.set(hub, { autoAlpha: 0, scale: 0.6, transformOrigin: '50% 50%' });
+      gsap.set(word, { autoAlpha: 0, y: 12 });
+      gsap.set(bars, { '--grow': 0 });
+      gsap.set(demo, { y: 60 });
+    };
+    applyStart();
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
+    tl.addLabel('enter', 0)
+
+      // Step 1 (1:15–1:19): the visitor asks (grey → white), the concierge bubble grows, then the sub-bubble
+      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
+      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
+    bubbleIn(tl, reply, 0.6)
+      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+      .addLabel('ask')
+
+      // Step 2 (1:19–1:25): the view moves to row 1; its two cards rise in. The dot travels the day,
+      // the answer label appears as it passes 2:14 AM; the hand-off line draws to the team
+      .to(content, { y: showInStage(section, content, rows[0]), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
+      .to(rows[0].children, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.2 }, 'ask+=0.4')
+      .addLabel('row1', 'ask+=0.9')
+      .to(timeline, { '--at': '9.3%', duration: 0.5, ease: 'power1.inOut' }, 'row1')
+      .to(fill, { scaleX: 0.093, duration: 0.5, ease: 'power1.inOut' }, 'row1')
+      .to(tip, { autoAlpha: 1, y: 0, duration: 0.3 }, 'row1+=0.4')
+      .to(marks, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.25 }, 'row1+=0.6')
+      .to(timeline, { '--at': '100%', duration: 1.6, ease: 'power1.inOut' }, 'row1+=0.9')
+      .to(fill, { scaleX: 1, duration: 1.6, ease: 'power1.inOut' }, 'row1+=0.9')
+      .to(lines[0], { scaleX: 1, duration: 0.5, ease: 'power1.inOut' }, 'row1+=0.3')
+      .to(handoffPill, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)' }, 'row1+=0.7')
+      .to(lines[1], { scaleX: 1, duration: 0.5, ease: 'power1.inOut' }, 'row1+=0.95')
+      .to(team, { opacity: 1, duration: 0.3 }, 'row1+=1.35')
+      .addLabel('row1Done', 'row1+=2.6')
+
+      // Step 3 (1:25–1:32): on to row 2. The business info card branches out to kiosk, web and
+      // app; the tab slides to JP as Hello. gives way to こんにちは。, then back to EN; the places
+      // spread out from the hub along their lines and get their names
+      .to(content, { y: showInStage(section, content, rows[1]), duration: MOTION.slow, ease: MOTION.easeInOut }, 'row1Done')
+      .to(rows[1].children, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.2 }, 'row1Done+=0.3')
+      .addLabel('row2', 'row1Done+=0.9')
+      .to(infoBox, { autoAlpha: 1, y: 0, duration: 0.4 }, 'row2')
+      .to(branches, { strokeDashoffset: 0, duration: 0.6, ease: 'power1.inOut', stagger: 0.1 }, 'row2+=0.4')
+      .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, 'row2+=0.8')
+      .to(langPill, { x: tabShift, duration: 0.45, ease: MOTION.easeInOut }, 'row2+=0.5')
+      .to(hello, { autoAlpha: 0.2, duration: 0.3 }, 'row2+=0.6')
+      .to(konnichiwa, { autoAlpha: 1, y: 0, duration: 0.4 }, 'row2+=0.75')
+      .to(langPill, { x: 0, duration: 0.45, ease: MOTION.easeInOut }, 'row2+=1.7')
+      .to(hello, { autoAlpha: 1, duration: 0.3 }, 'row2+=1.85')
+      .to(hub, { autoAlpha: 1, scale: 1, duration: 0.4, ease: 'back.out(1.7)', stagger: 0.08 }, 'row2+=0.4')
+      .to(network, { opacity: 1, duration: 0.4, stagger: 0.1 }, 'row2+=0.8')
+      .to(places, { autoAlpha: 1, x: 0, y: 0, duration: 0.6, ease: MOTION.easeInOut, stagger: 0.12 }, 'row2+=0.8')
+      .to(tags, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.12 }, 'row2+=1.3')
+      .addLabel('row2Done', 'row2+=2.4')
+
+      // Step 4 (1:32–1:37): on to row 3. Parking and its quote appear, the week's bars grow (the
+      // last, today, lit), then the demo card rises in
+      .to(content, { y: showInStage(section, content, rows[2]), duration: MOTION.slow, ease: MOTION.easeInOut }, 'row2Done')
+      .to(rows[2].children[0], { autoAlpha: 1, y: 0, duration: MOTION.base }, 'row2Done+=0.3')
+      .addLabel('row3', 'row2Done+=0.7')
+      .to(word, { autoAlpha: 1, y: 0, duration: 0.35, stagger: 0.12 }, 'row3')
+      .to(bars, { '--grow': 1, duration: 0.5, ease: 'power2.out', stagger: 0.1 }, 'row3+=0.3')
+      .to(demo, { autoAlpha: 1, y: 0, duration: 0.6 }, 'row3+=0.6')
+      .addLabel('built', 'row3+=1.6');
+
+    // Leaving, as the deployment section slides up over it: the content fades out
+    const exit = gsap.timeline({ paused: true })
+      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .set({}, {}, 1);
+
+    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+
+    return () => {
+      next.classList.remove('slides-over');
+      section.classList.remove('is-staged');
+    };
+  });
+
   // Phones: the chats, then the step, mode and industry cards come in with the scroll
   scenes.push(({ isMobile }) => {
     if (!isMobile) return;
-    [how.header, modes.header, industries.header].forEach(header => chatThread(header));
+    [how.header, modes.header, industries.header, values.header].forEach(header => chatThread(header));
+    values.cards.forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
     scrollReveal([...industries.cards, industries.controls], industries.gallery, { autoAlpha: 0, x: 40 }, { stagger: 0.1 });
     $$('#how .process-card, #interaction .mode-card').forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
   });

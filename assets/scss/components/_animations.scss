@@ -118,7 +118,8 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 // Desktop scenes (animations.js adds .is-staged): one pinned screen; the content moves inside it
 #how.is-staged,
 #interaction.is-staged,
-#industries.is-staged {
+#industries.is-staged,
+#values.is-staged {
   --stage-h: 100svh; // the site header has slid away by now (features step)
   height: var(--stage-h);
   overflow: hidden;

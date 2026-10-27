@@ -161,7 +161,7 @@
   font-size: $type-lead;
   line-height: 1.476;
   letter-spacing: -0.014em;
-  max-width: min(100%, 38.75rem);
+  max-width: min(100%, 41.75rem); // 620px of text plus the padding
   margin: 0;
 }
 
@@ -887,99 +887,186 @@ $q-pile: (
 
 /* =========================================
    Section 8: Value Bento (Dark)
+   Figma: rows of 491 / 504 / 466px; cards 423 wide (wide ones 867), 21px apart, 41px padding
    ========================================= */
-.bento { display: flex; flex-direction: column; gap: 1rem; }
-.bento-row { display: flex; flex-wrap: wrap; gap: 1rem; }
+.bento { display: flex; flex-direction: column; gap: 1.3125rem; }
+.bento-row { display: flex; flex-wrap: wrap; gap: 1.3125rem; }
 
 .bento-card {
   flex: 1 1 0;
   min-width: min(100%, 15.625rem);
+  position: relative;
   background: $color-night-card;
-  border: 1px solid $color-night-line;
-  border-radius: 18px;
-  padding: 1.5rem;
+  border: 1px solid rgba($color-white, 0.06);
+  border-radius: 28px;
+  padding: clamp(1.5rem, 3vw, 3rem) clamp(1.25rem, 2.7vw, 2.5625rem) clamp(1.5rem, 3vw, 2.5rem);
   display: flex;
   flex-direction: column;
-  min-height: 17.5rem;
   overflow: hidden;
 
-  h3 { color: $color-white; font-size: $type-subtitle; font-weight: $font-weight-semibold; margin: 0.4rem 0; letter-spacing: -0.01em; }
-  p { color: $neutral-400; font-size: 0.8rem; line-height: 1.5; margin: 0; }
+  h3 { color: $color-white; font-size: $type-title; line-height: 1.19; letter-spacing: -0.03em; font-weight: $font-weight-semibold; margin: 0.9rem 0 0.75rem; }
+  p { color: $neutral-400; font-size: 1.0625rem; line-height: 1.47; margin: 0; }
 }
-.bento-card--wide { flex: 2 1 0; min-width: min(100%, 28.75rem); }
+.bento-card--wide { flex: 2.05 1 0; min-width: min(100%, 28.75rem); }
 .bento-label { @extend %eyebrow; color: $color-text-accent-dark; }
-.bento-graphic { margin-top: auto; padding-top: 1.5rem; }
+.bento-graphic { position: relative; margin-top: auto; padding-top: 2rem; }
 
-// Availability
-.availability { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.5rem; }
-.big-247 { font-size: clamp(4rem, 10vw, 6.5rem); font-weight: $font-weight-semibold; color: $color-cobalt-bright; line-height: 0.9; letter-spacing: -0.04em; }
-.timeline { flex: 1 1 13.75rem; position: relative; padding-top: 2.25rem; }
-.timeline-track { height: 2px; background: linear-gradient(90deg, $color-cobalt-bright 25%, $color-night-line 25%); border-radius: 2px; position: relative;
-  &::after { content: ''; position: absolute; left: 25%; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: $color-white; box-shadow: 0 0 0 4px rgba($color-cobalt-bright, 0.35); }
-}
-.timeline-tip { position: absolute; top: 0; left: 25%; transform: translateX(-50%); white-space: nowrap; background: $color-night-line; color: $color-white; font-size: 0.62rem; padding: 3px 8px; border-radius: $radius-full; }
-.timeline-labels { display: flex; justify-content: space-between; margin-top: 0.6rem; font-size: 0.6rem; color: $neutral-500; }
-
-// Handoff
-.handoff { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.6rem; color: $neutral-400; text-align: center; }
-.handoff-node { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.handoff-avatar { width: 44px; height: 44px; border-radius: 50%; border: 2px solid $color-cobalt-bright; }
-.handoff-team { width: 44px; height: 44px; border-radius: 50%; background: $color-night-line; display: grid; place-items: center; color: $neutral-300; svg { width: 20px; height: 20px; } }
-.handoff-link { flex: 1; position: relative; display: grid; place-items: center;
-  &::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dashed $neutral-700; }
-  span { position: relative; background: $color-night-line; color: $color-white; padding: 3px 8px; border-radius: $radius-full; white-space: nowrap; }
+@media (min-width: 901px) {
+  .bento-row:nth-child(1) .bento-card { min-height: 30.6875rem; }
+  .bento-row:nth-child(2) .bento-card { min-height: 31.5rem; }
+  .bento-row:nth-child(3) .bento-card { min-height: 29.125rem; }
 }
 
-// Accuracy
-.info-tree { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-.info-box { background: $color-night-line; border-radius: 10px; padding: 0.6rem 0.85rem; font-size: 0.65rem; color: $color-white; width: min(100%, 190px);
-  small { display: block; margin-top: 4px; background: rgba($color-cobalt-bright, 0.2); color: $cobalt-200; border-radius: 4px; padding: 2px 6px; }
+// Availability: big 24/7, then a day timeline with the 2:14 AM answer
+.availability { display: flex; flex-wrap: wrap; align-items: center; gap: clamp(1.5rem, 3.5vw, 3.2rem); margin-bottom: 3rem; }
+.big-247 {
+  font-size: clamp(5rem, 10vw, 9.4rem); font-weight: $font-weight-bold; line-height: 0.85; letter-spacing: -0.03em;
+  background: linear-gradient(90deg, $cobalt-500 0%, $cobalt-400 50%, $cobalt-300 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  span { font-weight: $font-weight-semibold; margin: 0 0.04em; }
 }
-.info-nodes { display: flex; gap: 1.5rem; position: relative; padding-top: 1rem; font-size: 0.6rem; color: $neutral-400; text-align: center;
-  &::before { content: ''; position: absolute; top: 0; left: 18px; right: 18px; height: 1rem; border: 1px solid $neutral-700; border-bottom: none; border-radius: 6px 6px 0 0; }
-  div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  i { width: 32px; height: 32px; border-radius: 50%; background: $color-night-line; display: grid; place-items: center; color: $neutral-300; svg { width: 15px; height: 15px; } }
+.timeline { flex: 1 1 13.75rem; position: relative; padding-top: 4.6rem; }
+.timeline-track { position: relative; height: 5px; border-radius: 3px; background: rgba($cobalt-500, 0.22); }
+.timeline-fill { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(90deg, $cobalt-500, $cobalt-300); transform-origin: left center; }
+.timeline-dot {
+  position: absolute; top: 50%; left: var(--at, 9.3%);
+  width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%;
+  background: $color-white; box-shadow: 0 0 0 4px rgba($color-cobalt-bright, 0.45), 0 0 16px rgba($color-cobalt-bright, 0.6);
+}
+// The answer label hangs over the dot on a thin stem
+.timeline-tip {
+  position: absolute; top: 0; left: 9.3%; transform: translateX(-15%); // 2:14 AM
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  padding: 6px 13px; border-radius: $radius-full;
+  background: $neutral-800; border: 1px solid rgba($color-white, 0.12);
+  color: $color-white; font-size: 0.8125rem; font-weight: $font-weight-medium;
+  i { width: 6px; height: 6px; border-radius: 50%; background: $color-success; }
+  &::after { content: ''; position: absolute; left: 15%; top: 100%; height: 2.5rem; border-left: 1px solid rgba($color-white, 0.25); }
+}
+.timeline-sun, .timeline-moon { position: absolute; top: 2.7rem; width: 18px; height: 18px; margin-left: -9px; svg { width: 100%; height: 100%; } }
+.timeline-sun { left: 50%; color: #F5B83D; }
+.timeline-moon { left: 92%; color: $neutral-300; }
+.timeline-ticks { position: relative; height: 12px; margin-top: 8px;
+  i { position: absolute; left: calc(var(--t) * 100%); top: 0; height: 6px; border-left: 1px solid $neutral-600; &.is-major { height: 12px; border-color: $neutral-500; } }
+}
+.timeline-labels { display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.75rem; color: $neutral-400; }
+
+// Hand-off: avatar — "Full context" — your team
+.handoff { display: flex; align-items: flex-start; justify-content: space-between; gap: 0; margin-bottom: 6.5rem; font-size: 0.75rem; color: $neutral-400; text-align: center; }
+.handoff-node { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.handoff-avatar { display: block; width: 82px; height: 82px; border-radius: 50%; border: 3px solid $color-cobalt-bright; box-shadow: 0 0 0 3px $color-night-card, 0 0 24px rgba($color-cobalt-bright, 0.45); }
+.handoff-team { width: 72px; height: 72px; margin-top: 5px; border-radius: 50%; background: $neutral-700; display: grid; place-items: center; color: $neutral-200; svg { width: 26px; height: 26px; } }
+.handoff-link { flex: 1; display: flex; align-items: center; margin-top: 41px; transform: translateY(-50%); }
+.handoff-line { flex: 1; height: 2px; background: $color-cobalt-bright; transform-origin: left center; &:last-child { background: $neutral-600; } }
+.handoff-pill {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  padding: 6px 12px; border-radius: $radius-full; background: $neutral-700; border: 1px solid rgba($color-white, 0.1);
+  color: $color-white; font-size: 0.8125rem; font-weight: $font-weight-medium;
+  svg { width: 13px; height: 13px; }
 }
 
-// Languages
-.lang-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 1rem;
-  span { font-size: 0.6rem; padding: 3px 8px; border-radius: $radius-full; background: $color-night-line; color: $neutral-400; }
-  .is-active { background: $color-cobalt-bright; color: $color-white; }
+// Accuracy: the business info card branches out to kiosk, web and app
+.info-tree { display: flex; flex-direction: column; align-items: center; margin-bottom: 1rem; }
+.info-box {
+  min-width: min(100%, 11.25rem); padding: 0.9rem 1rem 1rem;
+  display: flex; flex-direction: column; gap: 8px;
+  border-radius: 14px; background: $neutral-700; border: 1px solid rgba($color-white, 0.1);
 }
-.hello { font-size: clamp(1.8rem, 3.5vw, 2.4rem); font-weight: $font-weight-semibold; line-height: 1.1; color: $color-white; text-align: center;
-  span { display: block; color: $color-cobalt-bright; }
+.info-title { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; font-weight: $font-weight-medium; color: $color-white; svg { width: 13px; height: 13px; } }
+.info-chip { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; white-space: nowrap; padding: 5px 11px; border-radius: $radius-full; background: $color-cobalt-bright; color: $color-white; font-size: 0.8125rem; font-weight: $font-weight-medium; svg { width: 11px; height: 11px; } }
+.info-line { display: block; height: 4px; border-radius: 2px; background: $neutral-600; width: 75%; &--short { width: 52%; } }
+.info-branches { width: 66%; height: 3rem; overflow: visible; path { fill: none; stroke: #3B5FA8; stroke-width: 1.5; vector-effect: non-scaling-stroke; } }
+.info-nodes { display: flex; justify-content: space-between; width: 76%; font-size: 0.8125rem; color: $neutral-400; text-align: center;
+  div { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  i { width: 48px; height: 48px; border-radius: 50%; background: $neutral-700; border: 1px solid rgba($color-white, 0.12); display: grid; place-items: center; color: $neutral-200; svg { width: 18px; height: 18px; } }
 }
-.hello-alt { font-size: 0.62rem; color: $neutral-500; text-align: center; margin-top: 0.5rem; }
 
-// Scale
-.network { width: 100%; height: auto; max-height: 170px; }
-
-// Insights
-.insights { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.5rem; }
-.insight-copy { flex: 1 1 12.5rem; }
-.insight-kicker { font-size: 0.62rem; color: $neutral-500; }
-.insight-word { font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: $font-weight-semibold; color: $color-white; line-height: 1; letter-spacing: -0.03em; margin: 0.25rem 0; }
-.insight-quote { font-size: 0.75rem; color: $neutral-400; margin-bottom: 0.6rem; }
-.trend-chip { display: inline-block; font-size: 0.62rem; padding: 3px 9px; border-radius: $radius-full; background: $color-night-line; color: $neutral-300; }
-.bars-wrap { flex: 1 1 13.75rem; }
-.bars-caption { font-size: 0.6rem; color: $neutral-500; text-align: center; margin-bottom: 0.5rem; }
-.bars { display: flex; align-items: flex-end; gap: 8px; height: 140px; }
-.bar { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 6px; height: 100%; font-size: 0.55rem; color: $neutral-500;
-  &::before { content: ''; width: 100%; height: var(--h); border-radius: 4px 4px 2px 2px; background: $neutral-700; }
-  &:last-child::before { background: linear-gradient(180deg, $cobalt-300, $color-cobalt-bright); box-shadow: 0 0 20px rgba($color-cobalt-bright, 0.5); }
+// Languages: tabs, then Hello. / こんにちは。 over a faint globe
+.languages { display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem; }
+.lang-globe { position: absolute; left: 50%; top: 2.5rem; width: 12.75rem; transform: translateX(-50%); fill: none; stroke: rgba($color-white, 0.07); stroke-width: 1; }
+.lang-tabs {
+  position: relative; display: flex; gap: 2px; padding: 3px; margin-bottom: 2.5rem;
+  border-radius: $radius-full; background: $neutral-800; border: 1px solid rgba($color-white, 0.12);
+  span { position: relative; z-index: 1; min-width: 46px; padding: 6px 12px; text-align: center; font-size: 0.8125rem; font-weight: $font-weight-semibold; color: $neutral-400; }
+  .is-active { color: $color-white; }
 }
-$bar-heights: 35%, 48%, 40%, 55%, 62%, 74%, 100%;
+.lang-pill { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 3px; width: 46px; border-radius: $radius-full; background: $color-cobalt-bright; }
+.hello { position: relative; display: flex; flex-direction: column; align-items: center; font-weight: $font-weight-semibold; line-height: 1.12; letter-spacing: -0.03em; }
+.hello-en { font-size: clamp(2.4rem, 3.6vw, 3.4rem); color: $color-white; }
+.hello-jp { font-size: clamp(2.2rem, 3.2vw, 3rem); font-weight: $font-weight-bold; letter-spacing: 0; color: $color-cobalt-bright; }
+.hello-alt { position: relative; margin-top: 0.4rem; font-size: 1.0625rem; color: $neutral-500; text-align: center; }
+
+// Scale: the hub links four places on a dotted map
+.scale {
+  margin: 0 -0.5rem 1rem;
+  background-image: radial-gradient(rgba($color-white, 0.12) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+.network { display: block; width: 100%; height: auto; overflow: visible; }
+.network-lines path { fill: none; stroke: rgba($cobalt-300, 0.45); stroke-width: 1.2; stroke-dasharray: 3 4; }
+.network-glow { fill: rgba($color-cobalt-bright, 0.22); }
+.network-hub { fill: $color-cobalt-bright; }
+.network-home { fill: none; stroke: $color-white; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+.network-node circle { fill: #1F3463; }
+.network-node .network-core { fill: $color-white; }
+.network-tag {
+  position: absolute; left: var(--x); top: var(--y); transform: translateX(-50%);
+  padding: 5px 12px; border-radius: $radius-full; white-space: nowrap;
+  background: $neutral-800; border: 1px solid rgba($color-white, 0.14);
+  color: $color-white; font-size: 0.8125rem; font-weight: $font-weight-medium;
+}
+
+// Insights: the most asked topic and its week of questions
+.insights { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.5rem 2.5rem; margin-bottom: 0.5rem; }
+.insight-copy { flex: 1 1 15rem; }
+.insight-kicker { font-size: 0.9375rem; color: $neutral-400; }
+.insight-word {
+  margin: 0.6rem 0 0.4rem;
+  font-size: clamp(3rem, 4.4vw, 4.2rem); font-weight: $font-weight-bold; line-height: 1.05; letter-spacing: -0.04em;
+  background: linear-gradient(90deg, $cobalt-500, $cobalt-300); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.insight-quote { font-size: 1.0625rem; color: $neutral-200; margin-bottom: 0.9rem; }
+.trend-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: $radius-full;
+  background: $neutral-800; border: 1px solid rgba($color-white, 0.14); color: $color-white; font-size: 0.8125rem; font-weight: $font-weight-medium;
+  svg { width: 14px; height: 14px; }
+}
+.bars-wrap { flex: 1 1 15rem; max-width: 24.5rem; }
+.bars-caption { font-size: 0.8125rem; color: $neutral-400; padding-bottom: 0.9rem; border-bottom: 1px solid rgba($color-white, 0.08); }
+.bars { display: flex; align-items: stretch; gap: clamp(10px, 1.8vw, 27px); height: 15rem; padding: 0 0.75rem; }
+// Each day: its bar (grown by the scroll, --grow) above the day's initial
+.bar {
+  flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 14px;
+  font-size: 0.8125rem; line-height: 1; color: $neutral-400;
+  &::before {
+    content: ''; align-self: stretch; height: calc(var(--h) * 0.84);
+    border-radius: 7px 7px 2px 2px; background: $neutral-700;
+    transform-origin: bottom; transform: scaleY(var(--grow, 1));
+  }
+  &:last-child { color: $color-white; }
+  &:last-child::before { background: linear-gradient(180deg, $cobalt-300, $color-cobalt-bright); box-shadow: 0 0 24px rgba($color-cobalt-bright, 0.55); }
+}
+$bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 @each $h in $bar-heights {
   .bar:nth-child(#{index($bar-heights, $h)}) { --h: #{$h}; }
 }
 
-// CTA card
+// CTA card: cobalt with rings around the avatar
 .bento-card--cta {
-  background: linear-gradient(160deg, $cobalt-400, $cobalt-600);
+  background: linear-gradient(160deg, $cobalt-400 0%, $cobalt-500 45%, #1747D6 100%);
   border-color: transparent;
   align-items: center; justify-content: center; text-align: center;
-  p { color: rgba(255,255,255,0.85); margin-bottom: 1.25rem; }
-  .avatar-circle { margin-bottom: 1rem; }
+  h3 { font-size: $type-title; margin: 1.6rem 0 0.9rem; }
+  p { color: rgba($color-white, 0.9); margin-bottom: 1.4rem; }
+  .avatar-circle { position: relative; width: 86px; height: 86px; border: 0; box-shadow: none; }
+  .btn { position: relative; padding: 0.9rem 1.4rem; font-size: 1rem; }
+}
+.cta-rings { position: absolute; left: 50%; top: 32%; width: 0; height: 0; pointer-events: none;
+  i { position: absolute; left: 50%; top: 50%; border-radius: 50%; border: 1px solid rgba($color-white, 0.16); transform: translate(-50%, -50%); }
+  i:nth-child(1) { width: 150px; height: 150px; }
+  i:nth-child(2) { width: 260px; height: 260px; }
+  i:nth-child(3) { width: 380px; height: 380px; }
+  i:nth-child(4) { width: 520px; height: 520px; }
 }
 
 /* =========================================
