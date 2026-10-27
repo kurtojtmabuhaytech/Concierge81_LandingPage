@@ -175,6 +175,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
   }
 
+  // Industry cards: the ＋ opens the "More info" panel (and turns into ×)
+  document.querySelectorAll('.industry-plus[aria-controls]').forEach(btn => {
+    const name = btn.getAttribute('aria-label');
+    btn.addEventListener('click', () => {
+      const open = btn.closest('.industry-card').classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', String(open));
+      btn.setAttribute('aria-label', open ? name.replace('More about', 'Close details for') : name);
+    });
+  });
+
   // Draggable inbox questions. With GSAP, animations.js runs the pile instead (drag and throw).
   const pile = document.getElementById('qPile');
   if (pile && !window.gsap) {

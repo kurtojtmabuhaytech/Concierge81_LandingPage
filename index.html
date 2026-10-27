@@ -431,51 +431,121 @@
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--hotel" src="assets/images/cards/industry-hotel.jpg" alt="A concierge81 kiosk greeting guests in a hotel lobby" width="1440" height="802" loading="lazy">
           <span class="industry-label">Hotels &amp; Resorts</span>
-          <h3>Check-in help, day or night.</h3>
-          <button type="button" class="industry-plus" aria-label="More about hotels">+</button>
+          <h3>Check-in help,<br>day or night.</h3>
+          <button type="button" class="industry-plus" aria-label="More about hotels" aria-expanded="false" aria-controls="more-hotels">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">What time is checkout?</p>
             <p class="bubble bubble--white">11 AM. Want me to arrange a late checkout?</p>
+          </div>
+          <div class="industry-more" id="more-hotels">
+            <p class="industry-more-summary">Greets guests at the desk, in the lobby and on the room tablet.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Check-in, checkout and late arrivals</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Rooms, amenities and event directions</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Room service and local recommendations</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Lobby kiosk · Room tablet</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Front desk, in one tap</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--office" src="assets/images/cards/industry-office.jpg" alt="A concierge81 kiosk welcoming visitors at a corporate reception" width="1440" height="802" loading="lazy">
           <span class="industry-label">Corporate Offices</span>
-          <h3>Reception, without the wait.</h3>
-          <button type="button" class="industry-plus" aria-label="More about offices">+</button>
+          <h3>Reception,<br>without the wait.</h3>
+          <button type="button" class="industry-plus" aria-label="More about offices" aria-expanded="false" aria-controls="more-offices">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Where is meeting room B?</p>
             <p class="bubble bubble--white">Third floor — take the lift on your left.</p>
+          </div>
+          <div class="industry-more" id="more-offices">
+            <p class="industry-more-summary">Checks visitors in and tells the host they’ve arrived — no queue.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Visitor check-in and badge pickup</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Meeting-room directions and bookings</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Deliveries and contractor sign-in</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Reception kiosk · Tablet</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Reception or host</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--airport" src="assets/images/cards/industry-airport.jpg" alt="A traveller asking a concierge81 kiosk for directions at an airport" width="1440" height="802" loading="lazy">
           <span class="industry-label">Airports &amp; Transit</span>
-          <h3>Wayfinding in the moment.</h3>
-          <button type="button" class="industry-plus" aria-label="More about airports">+</button>
+          <h3>Wayfinding<br>in the moment.</h3>
+          <button type="button" class="industry-plus" aria-label="More about airports" aria-expanded="false" aria-controls="more-airports">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Which way to Gate 12?</p>
             <p class="bubble bubble--white">Straight ahead, about 4 minutes on foot.</p>
+          </div>
+          <div class="industry-more" id="more-airports">
+            <p class="industry-more-summary">Answers gate, platform and timing questions in the terminal.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Gate, platform and walking directions</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Lounges, lost &amp; found and facilities</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Schedule changes and delay updates</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Terminal kiosk · Info desk</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Ground staff</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--healthcare" src="assets/images/cards/industry-healthcare.jpg" alt="A visitor talking to a concierge81 kiosk in a hospital waiting area" width="1440" height="802" loading="lazy">
           <span class="industry-label">Healthcare</span>
-          <h3>Calm guidance for every visitor.</h3>
-          <button type="button" class="industry-plus" aria-label="More about healthcare">+</button>
+          <h3>Calm guidance<br>for every visitor.</h3>
+          <button type="button" class="industry-plus" aria-label="More about healthcare" aria-expanded="false" aria-controls="more-healthcare">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Where is Pharmacy?</p>
             <p class="bubble bubble--white">Level 2, east wing. I'll show you the way.</p>
+          </div>
+          <div class="industry-more" id="more-healthcare">
+            <p class="industry-more-summary">Calmly guides patients and visitors through the building.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Department and ward directions</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Appointment check-in and wait times</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Visiting hours and pharmacy info</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Lobby kiosk · Tablet</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Nurse station, urgent first</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--retail" src="assets/images/cards/industry-retail.jpg" alt="Visitors asking a concierge81 kiosk for help at an information centre" width="1440" height="802" loading="lazy">
           <span class="industry-label">Retail</span>
-          <h3>Answers right on the shop floor.</h3>
-          <button type="button" class="industry-plus" aria-label="More about retail">+</button>
+          <h3>Answers right<br>on the shop floor.</h3>
+          <button type="button" class="industry-plus" aria-label="More about retail" aria-expanded="false" aria-controls="more-retail">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Do you have this in blue?</p>
             <p class="bubble bubble--white">Yes — sizes M and L are in aisle 4.</p>
+          </div>
+          <div class="industry-more" id="more-retail">
+            <p class="industry-more-summary">Helps shoppers find products and offers on the shop floor.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Product location, sizes and stock</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Promotions, loyalty and returns</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Store hours and services</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Shop-floor kiosk · Tablet</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Store associate</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card industry-card--cta" data-anim>

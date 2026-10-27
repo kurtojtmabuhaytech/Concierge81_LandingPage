@@ -114,7 +114,7 @@ code, kbd, samp, pre {
 /* =========================================
    Global Utilities & Buttons
    ========================================= */
-.post-eyebrow, .eyebrow, .tier-label, .bento-label, .mode-tag, .process-label {
+.post-eyebrow, .eyebrow, .tier-label, .bento-label, .industry-more-label, .mode-tag, .process-label {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -2002,7 +2002,7 @@ code, kbd, samp, pre {
 
 .bubble--glass {
   align-self: flex-end;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(38, 38, 42, 0.62);
   color: #FFFFFF;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
@@ -2103,6 +2103,184 @@ code, kbd, samp, pre {
   cursor: default;
 }
 
+.industry-card .industry-more {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  height: 75%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  border-radius: 24px 24px 28px 28px;
+  background: rgba(18, 18, 20, 0.9);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: #FFFFFF;
+  transform: translateY(101%);
+  visibility: hidden;
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), visibility 0s 0.45s;
+}
+
+.industry-card.is-open .industry-more {
+  transform: none;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.industry-more-summary {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.47;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.industry-more-label {
+  display: block;
+  margin-bottom: -1rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.industry-more-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.industry-more-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9375rem;
+  line-height: 1.33;
+}
+.industry-more-list svg {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+}
+.industry-more-list circle {
+  fill: #276FF8;
+}
+.industry-more-list path {
+  fill: none;
+  stroke: #FFFFFF;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.industry-more-facts {
+  margin: 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8125rem;
+  line-height: 1.38;
+}
+.industry-more-facts div {
+  display: flex;
+  gap: 12px;
+}
+.industry-more-facts dt {
+  flex: 0 0 84px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.industry-more-facts dd {
+  margin: 0;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.industry-card .industry-plus {
+  z-index: 3;
+  transition: transform 0.3s ease, background 0.2s ease;
+}
+
+.industry-card.is-open .industry-plus {
+  transform: rotate(45deg);
+}
+
+@media (min-width: 901px) {
+  .industry-gallery {
+    gap: 1.25rem;
+  }
+  .industry-card {
+    flex: 0 0 min(25rem, (100svh - 13rem) * 0.69);
+    aspect-ratio: 400/580;
+    border-radius: 28px;
+    padding: 2rem;
+  }
+  .industry-card::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0) 32%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.72) 100%);
+  }
+  .industry-card h3 {
+    font-size: 1.875rem;
+    line-height: 1.13;
+    letter-spacing: -0.02em;
+    margin-top: 0.5rem;
+    max-width: none;
+  }
+  .industry-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    opacity: 1;
+  }
+  .industry-card .industry-plus {
+    top: 2rem;
+    right: 2rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.22);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+  .industry-chat {
+    gap: 0.6rem;
+  }
+  .industry-chat .bubble {
+    font-size: 0.875rem;
+    line-height: 1.43;
+    padding: 0.6rem 0.9rem;
+    border-radius: 14px;
+    max-width: 78%;
+  }
+  .industry-chat .bubble--glass {
+    border-bottom-right-radius: 4px;
+  }
+  .industry-chat .bubble--white {
+    border-bottom-left-radius: 4px;
+  }
+  .industry-card--cta p {
+    font-size: 0.9375rem;
+    line-height: 1.47;
+    margin-top: 0.6rem;
+    max-width: 18rem;
+  }
+  .industry-card--cta .avatar-circle {
+    width: 72px;
+    height: 72px;
+  }
+  .gallery-dots {
+    background: #E5E2D9;
+    border-radius: 999px;
+    padding: 4px 8px;
+  }
+  .gallery-arrows button {
+    width: 34px;
+    height: 34px;
+    font-size: 1.1rem;
+  }
+}
 /* =========================================
    Section 8: Value Bento (Dark)
    ========================================= */

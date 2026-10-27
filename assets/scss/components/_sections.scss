@@ -783,7 +783,7 @@ $q-pile: (
 .industry-chat { margin-top: auto; display: flex; flex-direction: column; gap: 0.4rem;
   .bubble { font-size: 0.68rem; padding: 0.45rem 0.7rem; border-radius: 10px; max-width: 80%; }
 }
-.bubble--glass { align-self: flex-end; background: rgba(255,255,255,0.22); color: $color-white; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-bottom-right-radius: 4px; }
+.bubble--glass { align-self: flex-end; background: rgba(38, 38, 42, 0.62); color: $color-white; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); border-bottom-right-radius: 4px; }
 
 .industry-card--cta {
   background: linear-gradient(165deg, $cobalt-400 0%, $cobalt-600 55%, $cobalt-800 100%);
@@ -814,6 +814,75 @@ $q-pile: (
     &:hover:not(:disabled) { background: $color-ink; border-color: $color-ink; color: $color-white; }
     &:disabled { opacity: 0.35; cursor: default; }
   }
+}
+
+// "More info" (Figma static state): the ＋ slides a dark glass panel up over the card's lower part
+.industry-card .industry-more { // card prefix: beats the card's `> *` position: relative
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  height: 75%;
+  display: flex; flex-direction: column; gap: 1.5rem;
+  padding: 1.5rem 1.75rem;
+  overflow-y: auto;
+  border-radius: 24px 24px 28px 28px;
+  background: rgba(18, 18, 20, 0.9);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  color: $color-white;
+  transform: translateY(101%);
+  visibility: hidden;
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), visibility 0s 0.45s;
+}
+.industry-card.is-open .industry-more { transform: none; visibility: visible; transition-delay: 0s; }
+.industry-more-summary { margin: 0; font-size: 0.9375rem; line-height: 1.47; color: rgba($color-white, 0.85); }
+.industry-more-label { @extend %eyebrow; display: block; margin-bottom: -1rem; color: rgba($color-white, 0.55); }
+.industry-more-list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  li { display: flex; align-items: center; gap: 10px; font-size: 0.9375rem; line-height: 1.33; }
+  svg { flex: 0 0 16px; width: 16px; height: 16px; }
+  circle { fill: $color-cobalt-bright; }
+  path { fill: none; stroke: $color-white; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+}
+.industry-more-facts {
+  margin: 0; padding-top: 1.5rem;
+  border-top: 1px solid rgba($color-white, 0.12);
+  display: flex; flex-direction: column; gap: 6px;
+  font-size: 0.8125rem; line-height: 1.38;
+  div { display: flex; gap: 12px; }
+  dt { flex: 0 0 84px; color: rgba($color-white, 0.55); }
+  dd { margin: 0; font-weight: $font-weight-medium; color: rgba($color-white, 0.95); }
+}
+.industry-card .industry-plus { z-index: 3; transition: transform 0.3s ease, background 0.2s ease; }
+.industry-card.is-open .industry-plus { transform: rotate(45deg); }
+
+// Desktop: the Figma cards (400 × 580, 28px corners), kept within the screen's height
+@media (min-width: 901px) {
+  .industry-gallery { gap: 1.25rem; }
+  .industry-card {
+    flex: 0 0 min(25rem, calc((100svh - 13rem) * 0.69));
+    aspect-ratio: 400 / 580;
+    border-radius: 28px;
+    padding: 2rem;
+    &::after { background: linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.72) 100%); }
+    h3 { font-size: 1.875rem; line-height: 1.13; letter-spacing: -0.02em; margin-top: 0.5rem; max-width: none; }
+  }
+  .industry-label { font-size: 0.875rem; font-weight: $font-weight-semibold; opacity: 1; }
+  .industry-card .industry-plus {
+    top: 2rem; right: 2rem; width: 36px; height: 36px; font-size: 1.25rem;
+    border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.22);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  }
+  .industry-chat { gap: 0.6rem;
+    .bubble { font-size: 0.875rem; line-height: 1.43; padding: 0.6rem 0.9rem; border-radius: 14px; max-width: 78%; }
+    .bubble--glass { border-bottom-right-radius: 4px; }
+    .bubble--white { border-bottom-left-radius: 4px; }
+  }
+  .industry-card--cta {
+    p { font-size: 0.9375rem; line-height: 1.47; margin-top: 0.6rem; max-width: 18rem; }
+    .avatar-circle { width: 72px; height: 72px; }
+  }
+  // Pagination: dots in a pale pill; arrows 34px
+  .gallery-dots { background: $neutral-200; border-radius: $radius-full; padding: 4px 8px; }
+  .gallery-arrows button { width: 34px; height: 34px; font-size: 1.1rem; }
 }
 
 /* =========================================
