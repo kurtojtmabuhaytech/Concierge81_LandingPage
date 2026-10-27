@@ -719,11 +719,20 @@
         <div class="deploy-stage" data-anim>
           <!-- One device that changes shape with the list (animations.js); the website screen by default -->
           <div class="device" data-shape="website">
-            <div class="device-screen">
-              <img class="device-ui" data-device="website" src="assets/images/screens/screen-web.webp" alt="Concierge81 on a website: the avatar beside a chat with suggested questions" width="1440" height="900" loading="lazy">
-              <img class="device-ui" data-device="kiosk" src="assets/images/screens/screen-kiosk.webp" alt="" width="720" height="1280" loading="lazy">
-              <img class="device-ui" data-device="tablet" src="assets/images/screens/screen-tablet.webp" alt="" width="834" height="1194" loading="lazy">
-              <img class="device-ui" data-device="mobile" src="assets/images/screens/screen-mobile.webp" alt="" width="393" height="852" loading="lazy">
+            <!-- One live concierge screen; animations.js moves its parts into each device's layout -->
+            <div class="device-screen" aria-label="Concierge81 on a website: the avatar beside a chat with suggested questions" role="img">
+              <span class="ds-logo">concierge<span>81</span></span>
+              <span class="ds-toggle"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar</b><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg>Chat</i></span>
+              <span class="ds-lang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>EN</span>
+              <span class="ds-avatar"><img src="assets/images/Avatar.png" alt="" width="1672" height="2495" loading="lazy"></span>
+              <span class="ds-greet">Hi! I'm concierge81.<br>How may I assist you today?</span>
+              <span class="ds-question">What is concierge81?<small>You · 9:12 PM</small></span>
+              <span class="ds-composer">
+                <span class="ds-suggest">✦ Suggested next</span>
+                <span class="ds-chips"><i>Where is the café?</i><i>Any vegetarian options?</i><i>Room service hours</i></span>
+                <span class="ds-categories"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>Categories</span>
+                <span class="ds-mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg></span>
+              </span>
             </div>
           </div>
         </div>

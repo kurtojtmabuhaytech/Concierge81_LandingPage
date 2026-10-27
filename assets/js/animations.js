@@ -1398,7 +1398,8 @@
   /* 13. Where would my concierge live? (Figma recording 1:38–2:01). Desktop: a scroll scene that
      slides up over Why concierge81?. The visitor asks and the concierge answers; then the device
      appears as a website screen, and each place joins the list in turn while the device turns into
-     it: kiosk, website, tablet, then phone, each with its own screen. All with the scroll. */
+     it: kiosk, website, tablet, then phone. It is one live screen: the same avatar and chat move and
+     resize into each device's layout as it reshapes. All with the scroll. */
   const deployment = {
     section: $('#deployment'),
     content: $('#deployment > .container'),
@@ -1417,8 +1418,10 @@
     const reply = $('.header-pill--ai', header);
     const sub = $('.sub-pill-text', header);
     const pillColor = getComputedStyle(pill).backgroundColor;
-    const screens = Object.fromEntries($$('.device-ui', device).map(img => [img.dataset.device, img]));
-    screens.website.removeAttribute('loading'); // the default screen: shown before the scene starts
+    const screen = $('.device-screen', device);
+    const ui = Object.fromEntries(['logo', 'toggle', 'lang', 'avatar', 'greet', 'question', 'composer']
+      .map(key => [key, $(`.ds-${key}`, screen)]));
+    $('img', ui.avatar).removeAttribute('loading'); // shown before the scene starts
     section.classList.add('is-staged');
     stage.classList.add('is-shaping');
 
@@ -1445,8 +1448,54 @@
     const shapeTo = name => Object.fromEntries(
       ['width', 'height', 'padding', 'borderRadius'].map(key => [key, () => shape(name)[key]])
     );
-    const showScreen = (name, at) => Object.entries(screens).forEach(([key, img]) =>
-      tl.to(img, { opacity: key === name ? 1 : 0, duration: 0.35, ease: 'none' }, at));
+    // The concierge screen's layout on each device (Figma frames, in % of the screen; --fs is the
+    // bubble text as a share of the screen's width). One avatar and one chat move between them.
+    const layouts = {
+      website: {
+        screen: { '--fs': 1.53 },
+        logo: { left: '3%', top: '5%' },
+        toggle: { left: '77%', top: '4%' },
+        lang: { right: '3%', top: '4%' },
+        avatar: { left: '4%', top: '10%', width: '39%', height: '90%' },
+        greet: { left: '47%', top: '15%' },
+        question: { right: '4%', top: '27%' },
+        composer: { left: '47%', top: '64%', width: '50%', height: '31%' }
+      },
+      kiosk: {
+        screen: { '--fs': 3.61 },
+        logo: { left: '4%', top: '3.5%' },
+        toggle: { left: '63%', top: '2.6%' },
+        lang: { right: '4%', top: '2.6%' },
+        avatar: { left: '16%', top: '7%', width: '68%', height: '53%' },
+        greet: { left: '4%', top: '61.5%' },
+        question: { right: '4%', top: '68.5%' },
+        composer: { left: '4%', top: '79%', width: '92%', height: '17.5%' }
+      },
+      tablet: {
+        screen: { '--fs': 2.63 },
+        logo: { left: '4.5%', top: '4%' },
+        toggle: { left: '62%', top: '3%' },
+        lang: { right: '4.5%', top: '3%' },
+        avatar: { left: '24%', top: '7%', width: '52%', height: '49%' },
+        greet: { left: '3.5%', top: '57.5%' },
+        question: { right: '4.5%', top: '65%' },
+        composer: { left: '3.5%', top: '76%', width: '92%', height: '20.5%' }
+      },
+      mobile: {
+        screen: { '--fs': 5.16 },
+        logo: { left: '4%', top: '3.5%' },
+        toggle: { left: '25%', top: '8%' },
+        lang: { right: '4.5%', top: '2.6%' },
+        avatar: { left: '20%', top: '13%', width: '60%', height: '28%' },
+        greet: { left: '4%', top: '43%' },
+        question: { right: '4.5%', top: '54%' },
+        composer: { left: '4%', top: '66%', width: '91.5%', height: '30.5%' }
+      }
+    };
+    const layoutTo = (name, at) => Object.entries(layouts[name]).forEach(([key, props]) =>
+      tl.to(key === 'screen' ? screen : ui[key], { ...props, duration: 0.8, ease: MOTION.easeInOut }, at));
+    const setLayout = name => Object.entries(layouts[name]).forEach(([key, props]) =>
+      gsap.set(key === 'screen' ? screen : ui[key], props));
 
     const applyStart = () => {
       gsap.set(content, { y: 0 });
@@ -1456,7 +1505,7 @@
       gsap.set(sub, { autoAlpha: 0, y: 16 });
       gsap.set(stage, { autoAlpha: 0, y: 30 });
       gsap.set(device, { ...shape('website'), scale: 0.92 });
-      Object.entries(screens).forEach(([key, img]) => gsap.set(img, { opacity: key === 'website' ? 1 : 0 }));
+      setLayout('website');
       gsap.set(cards, { autoAlpha: 0, x: 24 });
     };
     applyStart();
@@ -1486,7 +1535,7 @@
       tl.to(content, { y: keepInView, duration: 0.5, ease: MOTION.easeInOut }, at)
         .to(card, { autoAlpha: 1, x: 0, duration: MOTION.base }, at)
         .to(device, { ...shapeTo(name), duration: 0.8, ease: MOTION.easeInOut }, `${at}+=0.2`);
-      showScreen(name, `${at}+=0.4`);
+      layoutTo(name, `${at}+=0.2`);
     });
     tl.addLabel('built', `places+=${cards.length * 1.4}`);
 
@@ -1504,6 +1553,7 @@
       section.classList.remove('is-staged');
       stage.classList.remove('is-shaping');
       gsap.set(device, { clearProps: 'width,height,padding,borderRadius,transform' });
+      gsap.set([screen, ...Object.values(ui)], { clearProps: 'all' });
     };
   });
 

@@ -3025,38 +3025,196 @@ code, kbd, samp, pre {
   background: linear-gradient(180deg, #1E2024, #1C1E22);
   border: 3px solid #050415;
   box-shadow: 0 30px 60px rgba(14, 16, 19, 0.16);
+  container-type: inline-size;
 }
 
 .device-screen {
+  --fs: 1.53;
   position: relative;
   height: 100%;
   aspect-ratio: 1440/900;
   overflow: hidden;
   border-radius: 10px;
-  background: #F5F7FF;
+  font-size: calc(var(--fs) * 1cqw);
+  line-height: 1.33;
+  color: #0E1013;
+  background: radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%);
 }
-
-.device-ui {
+.device-screen > * {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 0;
-  opacity: 0;
 }
-
-.device-ui[data-device=website] {
-  position: relative;
-  display: block;
-  opacity: 1;
+.device-screen svg {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
 }
 
 .deploy-stage.is-shaping .device-screen {
   aspect-ratio: auto;
 }
-.deploy-stage.is-shaping .device-ui[data-device=website] {
+
+.ds-logo {
+  left: 3%;
+  top: 5%;
+  font-size: 1.05em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.ds-logo span {
+  color: #276FF8;
+}
+
+.ds-toggle {
+  left: 77%;
+  top: 4%;
+  display: flex;
+  gap: 0.15em;
+  padding: 0.18em;
+  border-radius: 999px;
+  background: #E5E2D9;
+  font-size: 0.6em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.ds-toggle b, .ds-toggle i {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.35em 0.9em;
+  border-radius: 999px;
+  font-style: normal;
+  font-weight: inherit;
+}
+.ds-toggle b {
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.ds-toggle i {
+  color: #8A867B;
+}
+
+.ds-lang {
+  right: 3%;
+  top: 4%;
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.53em 0.9em;
+  border-radius: 999px;
+  border: 1px solid #E5E2D9;
+  font-size: 0.6em;
+  font-weight: 500;
+}
+.ds-lang svg {
+  color: #276FF8;
+}
+
+.ds-avatar {
+  left: 4%;
+  top: 10%;
+  width: 39%;
+  height: 90%;
+}
+.ds-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.ds-greet, .ds-question {
+  padding: 0.62em 0.95em;
+  border-radius: 0.95em;
+  white-space: nowrap;
+}
+
+.ds-greet {
+  left: 47%;
+  top: 15%;
+  background: #276FF8;
+  color: #FFFFFF;
+  border-bottom-left-radius: 0.3em;
+}
+
+.ds-question {
+  right: 4%;
+  top: 27%;
+  background: #0E1013;
+  color: #FFFFFF;
+  border-bottom-right-radius: 0.3em;
+}
+.ds-question small {
   position: absolute;
+  right: 0;
+  top: calc(100% + 0.6em);
+  font-size: 0.5em;
+  color: #8A867B;
+}
+
+.ds-composer {
+  left: 47%;
+  width: 50%;
+  top: 64%;
+  height: 31%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  padding: 0.9em 1em;
+  border-radius: 1.1em;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #D4E2FD;
+}
+
+.ds-suggest {
+  font-size: 0.55em;
+  font-weight: 600;
+  color: #276FF8;
+}
+
+.ds-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4em;
+}
+.ds-chips i {
+  padding: 0.45em 0.8em;
+  border-radius: 999px;
+  background: #EDF3FE;
+  color: #174395;
+  font-style: normal;
+  font-size: 0.6em;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ds-categories {
+  position: absolute;
+  left: 1em;
+  bottom: 1em;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5em 0.9em;
+  border-radius: 999px;
+  background: #FFFFFF;
+  border: 1px solid #E5E2D9;
+  font-size: 0.55em;
+  font-weight: 600;
+}
+
+.ds-mic {
+  position: absolute;
+  left: 50%;
+  bottom: 0.7em;
+  transform: translateX(-50%);
+  width: 2.6em;
+  height: 2.6em;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #276FF8;
+  color: #FFFFFF;
+  box-shadow: 0 0.4em 1em rgba(39, 111, 248, 0.35);
 }
 
 .platform-list {

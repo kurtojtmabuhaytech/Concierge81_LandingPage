@@ -1095,14 +1095,66 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   background: linear-gradient(180deg, #1E2024, #1C1E22);
   border: 3px solid #050415;
   box-shadow: 0 30px 60px rgba(14, 16, 19, 0.16);
+  container-type: inline-size; // the screen's text scales with the device's width (cqw)
 }
-.device-screen { position: relative; height: 100%; aspect-ratio: 1440 / 900; overflow: hidden; border-radius: 10px; background: $color-screen-tint; }
-.device-ui { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; opacity: 0; }
-.device-ui[data-device="website"] { position: relative; display: block; opacity: 1; }
-// While the scroll scene sizes the device (animations.js), the screen fills it and the screens stack
-.deploy-stage.is-shaping {
-  .device-screen { aspect-ratio: auto; }
-  .device-ui[data-device="website"] { position: absolute; }
+.device-screen {
+  // Text scales with the screen (--fs: the bubble text as a share of the screen's width);
+  // every part is placed in % of the screen, website layout by default
+  --fs: 1.53;
+  position: relative; height: 100%; aspect-ratio: 1440 / 900; overflow: hidden; border-radius: 10px;
+  font-size: calc(var(--fs) * 1cqw);
+  line-height: 1.33;
+  color: $color-ink;
+  background: radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%);
+  > * { position: absolute; }
+  svg { width: 1em; height: 1em; flex-shrink: 0; }
+}
+.deploy-stage.is-shaping .device-screen { aspect-ratio: auto; }
+
+.ds-logo { left: 3%; top: 5%; font-size: 1.05em; font-weight: $font-weight-semibold; letter-spacing: -0.02em; span { color: $color-cobalt-bright; } }
+.ds-toggle {
+  left: 77%; top: 4%;
+  display: flex; gap: 0.15em; padding: 0.18em; border-radius: $radius-full; background: $neutral-200;
+  font-size: 0.6em; font-weight: $font-weight-medium; white-space: nowrap;
+  b, i { display: flex; align-items: center; gap: 0.35em; padding: 0.35em 0.9em; border-radius: $radius-full; font-style: normal; font-weight: inherit; }
+  b { background: $color-white; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+  i { color: $neutral-500; }
+}
+.ds-lang {
+  right: 3%; top: 4%;
+  display: flex; align-items: center; gap: 0.35em; padding: 0.53em 0.9em; border-radius: $radius-full;
+  border: 1px solid $neutral-200; font-size: 0.6em; font-weight: $font-weight-medium;
+  svg { color: $color-cobalt-bright; }
+}
+.ds-avatar {
+  left: 4%; top: 10%; width: 39%; height: 90%;
+  img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; }
+}
+.ds-greet, .ds-question { padding: 0.62em 0.95em; border-radius: 0.95em; white-space: nowrap; }
+.ds-greet { left: 47%; top: 15%; background: $color-cobalt-bright; color: $color-white; border-bottom-left-radius: 0.3em; }
+.ds-question {
+  right: 4%; top: 27%; background: $color-ink; color: $color-white; border-bottom-right-radius: 0.3em;
+  small { position: absolute; right: 0; top: calc(100% + 0.6em); font-size: 0.5em; color: $neutral-500; }
+}
+.ds-composer {
+  left: 47%; width: 50%; top: 64%; height: 31%;
+  display: flex; flex-direction: column; gap: 0.5em; padding: 0.9em 1em;
+  border-radius: 1.1em; background: rgba($color-white, 0.85); border: 1px solid $cobalt-100;
+}
+.ds-suggest { font-size: 0.55em; font-weight: $font-weight-semibold; color: $color-cobalt-bright; }
+.ds-chips {
+  display: flex; flex-wrap: wrap; gap: 0.4em;
+  i { padding: 0.45em 0.8em; border-radius: $radius-full; background: $cobalt-50; color: $cobalt-700; font-style: normal; font-size: 0.6em; font-weight: $font-weight-medium; white-space: nowrap; }
+}
+.ds-categories {
+  position: absolute; left: 1em; bottom: 1em;
+  display: flex; align-items: center; gap: 0.4em; padding: 0.5em 0.9em; border-radius: $radius-full;
+  background: $color-white; border: 1px solid $neutral-200; font-size: 0.55em; font-weight: $font-weight-semibold;
+}
+.ds-mic {
+  position: absolute; left: 50%; bottom: 0.7em; transform: translateX(-50%);
+  width: 2.6em; height: 2.6em; border-radius: 50%; display: grid; place-items: center;
+  background: $color-cobalt-bright; color: $color-white; box-shadow: 0 0.4em 1em rgba($color-cobalt-bright, 0.35);
 }
 
 .platform-list { flex: 0 1 29.1875rem; min-width: min(100%, 16.25rem); display: flex; flex-direction: column; gap: 1.25rem; }
