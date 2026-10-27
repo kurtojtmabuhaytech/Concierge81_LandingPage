@@ -533,6 +533,29 @@ $q-pile: (
 }
 .q-pile .q-tag--float { --x: 50%; --y: 74%; --r: 4deg; z-index: 5; }
 
+// Desktop: the Figma card (1310 × 580, 28px corners) with the pile heaped across its whole width,
+// the bottom row cut off by the card's edge
+@media (min-width: 901px) {
+  .inbox-card { border-radius: 28px; padding: 2.5rem 2.5rem 0; }
+  .inbox-title { font-size: 1.375rem; gap: 0.9rem; }
+  .inbox-meta { font-size: 0.9375rem; }
+  .badge-red { font-size: 0.8125rem; padding: 4px 12px; }
+  .drag-hint { font-size: 0.8125rem; padding: 7px 16px; }
+  .q-pile { height: clamp(22rem, 33.6vw, 31.75rem); margin: 0 -2.5rem -0.75rem; }
+  .q-tag { font-size: clamp(0.85rem, 1.29vw, 1.22rem); padding: 0.62em 1.25em; }
+  .q-tag--float { font-size: clamp(1rem, 1.46vw, 1.375rem); padding: 0.7em 1.2em; }
+  @each $pos in $q-pile {
+    $i: index($q-pile, $pos);
+    // Centres spread over 7%–93% of the card; rows heaped up to about half its height
+    .q-pile .q-tag:nth-child(#{$i}) {
+      --x: #{50% + (nth($pos, 1) + 10% - 50%) * 1.08};
+      --y: #{nth($pos, 2) * 1.3};
+    }
+  }
+  .q-pile .q-tag--float { --x: 60%; --y: 72%; --r: 8deg; }
+  .q-pile::before { width: 95%; height: 80%; }
+}
+
 /* =========================================
    Section 5: How It Works (Dark 3-Step)
    ========================================= */
