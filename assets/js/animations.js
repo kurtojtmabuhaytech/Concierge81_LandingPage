@@ -1669,6 +1669,124 @@
     };
   });
 
+  /* 15. I still have a few questions. (Figma recording 2:16–2:45). Desktop: a scroll scene that
+     slides up over the pricing. The visitor asks and the concierge answers; the topics and an
+     empty thread appear with the suggested questions; then the visitor asks two of them in turn:
+     each question opens into the thread (its suggestion leaves the list), the concierge types and
+     answers, pushing the suggestions down; then "Was this helpful?", "Anything else I can help you
+     with?" and "Can't find your answer?". All with the scroll. */
+  const faq = {
+    section: $('#faq'),
+    content: $('#faq > .container'),
+    header: $('#faq .chat-section-header'),
+    filters: $('#faqFilters'),
+    box: $('#faq .faq-chat-box'),
+    help: $('#faq .cta-pill')
+  };
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop) return;
+    const { section, content, header, filters, box, help } = faq;
+    const user = $('.chat-header-row.right', header);
+    const pill = $('.header-pill--user', user);
+    const reply = $('.header-pill--ai', header);
+    const sub = $('.sub-pill-text', header);
+    const pillColor = getComputedStyle(pill).backgroundColor;
+    const [first, second] = $$('.faq-pair:not([hidden])', box);
+    const asks = $$('.faq-ask', box);
+    const thread = {
+      q1: $('.faq-q', first), a1: $('.faq-a', first),
+      q2: $('.faq-q', second), typing: $('.faq-typing', second), a2: $('.faq-a', second),
+      helpful: $('.helpful', second), anything: $('.faq-anything', box)
+    };
+    const gap = () => parseFloat(getComputedStyle(box).rowGap) || 0;
+    // A message opens into the thread: from no height (its gap taken back) to its own
+    const closed = () => ({ height: 0, marginTop: -gap(), autoAlpha: 0, overflow: 'hidden' });
+    const open = { height: 'auto', marginTop: 0, autoAlpha: 1, duration: 0.45, ease: MOTION.easeInOut };
+    // The view follows the thread like a chat: the topics stay at the top while everything fits,
+    // and scroll off when the newest message (or `el`) would fall below the screen
+    const follow = (el = box) => () => {
+      const top = content.getBoundingClientRect().top;
+      const from = filters.getBoundingClientRect().top - top - 16;
+      const to = el.getBoundingClientRect().bottom - top + 24 - innerHeight;
+      return -Math.max(0, from, to);
+    };
+    const followTo = (at, el) => tl.to(content, { y: follow(el), duration: 0.5, ease: MOTION.easeInOut }, at);
+    const next = $('#cta');
+    section.classList.add('is-staged');
+    next.classList.add('slides-over');
+
+    const applyStart = () => {
+      gsap.set(content, { y: 0, autoAlpha: 1 });
+      gsap.set(user, { autoAlpha: 0, y: 12 });
+      gsap.set(pill, { backgroundColor: '#A8A49A' });
+      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      gsap.set([filters, box], { autoAlpha: 0, y: 24 });
+      gsap.set([first, second], { marginTop: -gap() }); // the empty pairs take no room
+      gsap.set(Object.values(thread), closed());
+      gsap.set(asks, { display: 'inline-flex', autoAlpha: 1 });
+      gsap.set(help, { autoAlpha: 0, y: 16 });
+    };
+    applyStart();
+
+    // The visitor taps a suggestion: it leaves the list and the question opens in the thread
+    const ask = (chip, pair, question, at) => tl
+      .to(chip, { autoAlpha: 0, duration: 0.25 }, at)
+      .set(chip, { display: 'none' }, `${at}+=0.25`)
+      .to(pair, { marginTop: 0, duration: 0.45, ease: MOTION.easeInOut }, `${at}+=0.2`)
+      .to(question, open, `${at}+=0.2`);
+
+    const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
+    tl.addLabel('enter', 0)
+
+      // Step 1 (2:16–2:18): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
+      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
+      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
+    bubbleIn(tl, reply, 0.6)
+      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+      .addLabel('ask')
+
+      // Step 2 (2:18–2:24): the view moves to the topics; they and the empty thread with its
+      // suggestions rise in
+      .to(content, { y: follow(), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
+      .to([filters, box], { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.15 }, 'ask+=0.3')
+      .addLabel('thread', 'ask+=1.0');
+
+    // Step 3 (2:24–2:27): "What is Concierge81?", then its answer
+    ask(asks[0], first, thread.q1, 'thread');
+    tl.to(thread.a1, open, 'thread+=0.8');
+    followTo('thread+=1.3');
+    tl.addLabel('second', 'thread+=1.9');
+
+    // Step 4 (2:27–2:34): "Will it replace my staff?", the concierge types, then answers
+    ask(asks[1], second, thread.q2, 'second');
+    tl.to(thread.typing, open, 'second+=0.6')
+      .to(thread.typing, closed(), 'second+=1.3')
+      .to(thread.a2, open, 'second+=1.3')
+      .to(thread.helpful, open, 'second+=1.9')
+      .to(thread.anything, open, 'second+=2.3');
+    followTo('second+=2.8');
+
+    // Step 5 (2:34–2:38): the view moves on to the thread's end and "Can't find your answer?" arrives
+    followTo('second+=3.4', help);
+    tl.to(help, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'second+=3.6')
+      .addLabel('built', 'second+=4.3');
+
+    // Leaving, as the final call to action slides up over it: the content fades out
+    const exit = gsap.timeline({ paused: true })
+      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
+      .set({}, {}, 1);
+
+    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+
+    return () => {
+      next.classList.remove('slides-over');
+      section.classList.remove('is-staged');
+      gsap.set([first, second, ...Object.values(thread), ...asks], { clearProps: 'all' });
+    };
+  });
+
   // Phones: the chats, then the step, mode and industry cards come in with the scroll
   scenes.push(({ isMobile }) => {
     if (!isMobile) return;
@@ -1677,6 +1795,8 @@
     deployment.cards.forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
     chatThread(pricing.header);
     [...pricing.cards, pricing.help].forEach(el => scrollReveal(el, el, { autoAlpha: 0, y: 30 }));
+    chatThread(faq.header);
+    [faq.filters, faq.box, faq.help].forEach(el => scrollReveal(el, el, { autoAlpha: 0, y: 30 }));
     values.cards.forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
     scrollReveal([...industries.cards, industries.controls], industries.gallery, { autoAlpha: 0, x: 40 }, { stagger: 0.1 });
     $$('#how .process-card, #interaction .mode-card').forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));

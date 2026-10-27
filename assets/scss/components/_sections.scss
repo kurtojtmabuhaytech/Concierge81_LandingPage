@@ -1213,7 +1213,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   span { min-width: 0; } // text wraps inside the pill instead of pushing the button down
   .btn { flex-shrink: 0; white-space: nowrap; padding: 0.5rem 1rem; font-size: 1rem; }
 }
-.cta-pill--dark { background: $color-night; color: $color-white; }
+.cta-pill--dark { background: $neutral-950; color: #F6F6F3; border-radius: 28px 28px 6px 28px; }
 
 /* =========================================
    Section 11: FAQ (Chat Card)
@@ -1226,28 +1226,53 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   &:hover { border-color: $color-cobalt-bright; }
   &.is-active { background: $color-cobalt-bright; color: $color-white; border-color: $color-cobalt-bright; }
 }
+// FAQ topics (Figma: 136px chips, ink when active)
+.faq-filters { gap: 8px; margin-bottom: 1.5rem;
+  .filter-btn { min-width: 8.5rem; padding: 10px 18px; font-size: 1rem; line-height: 1.56; letter-spacing: -0.012em;
+    &.is-active { background: $color-ink; border-color: $color-ink; color: #F3F1EB; } }
+}
 
 .faq-chat-box {
+  display: flex; flex-direction: column; gap: 0.875rem;
   background: $color-white;
-  border-radius: 20px;
+  border-radius: 28px;
   padding: clamp(1.25rem, 3vw, 2rem);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
-  .timestamp { display: block; text-align: center; margin-bottom: 1.25rem; }
+  box-shadow: 0 12px 32px rgba(13, 15, 20, 0.1);
 }
-.faq-pair { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem; }
-.faq-chat-box .bubble { font-size: 0.88rem; max-width: min(80%, 32rem); }
-
+.faq-day { align-self: center; font-size: $type-caption; color: #6E6B63; }
+.faq-pair { display: flex; flex-direction: column; gap: 0.875rem; }
+.faq-pair[hidden] { display: none; }
+.faq-q { display: flex; justify-content: flex-end; }
+.faq-a { display: flex; align-items: flex-end; gap: 10px; }
+.faq-chat-box .bubble { font-size: 1.0625rem; line-height: 1.47; letter-spacing: -0.012em; margin: 0; }
+.faq-q .bubble { padding: 0.75rem 1.125rem; border-radius: 22px 22px 6px 22px; }
+.faq-a .bubble { padding: 0.875rem 1.125rem; border-radius: 22px 22px 22px 6px; max-width: min(100%, 34.75rem); }
+.faq-anything { padding-top: 0.5rem; .bubble { font-size: 1rem; } }
+.faq-typing { padding-left: 40px; font-size: $type-caption; color: #6E6B63; }
 .msg-ai { display: flex; align-items: flex-end; gap: 0.5rem; }
-.msg-avatar { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; }
-.helpful { display: flex; align-items: center; gap: 0.4rem; margin-left: 34px; font-size: 0.7rem; color: $neutral-500;
-  button { background: $color-white; border: 1px solid $color-border; border-radius: $radius-full; padding: 2px 10px; font: inherit; font-size: 0.7rem; cursor: pointer; }
+.msg-avatar { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; }
+.helpful { display: flex; align-items: center; gap: 8px; padding-left: 40px; font-size: $type-caption; color: #6E6B63;
+  button { background: none; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 4px 12px; font: inherit; font-size: $type-caption; color: $color-text-secondary; cursor: pointer;
+    &:hover { border-color: $color-cobalt-bright; color: $color-cobalt-bright; } }
 }
 
-.faq-suggested { border-top: 1px solid $color-border; margin-top: 1rem; padding-top: 1rem;
-  .suggest-label { color: $neutral-500; letter-spacing: 0.1em; font-size: $type-eyebrow; }
-  .chip { border-radius: $radius-lg; padding: 0.5rem 0.8rem; &::before { content: '↳'; color: $neutral-400; } }
-  .chip--soft { background: $color-cobalt-soft; }
+.faq-suggested { padding: 0.75rem 0 0 40px; }
+.faq-suggested-label { @extend %eyebrow; display: flex; align-items: center; gap: 12px; color: #6E6B63; margin-bottom: 1rem;
+  &::after { content: ''; flex: 1; height: 1px; background: $neutral-200; }
 }
+.faq-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+.faq-suggestion {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 10px 16px 10px 14px; border: 0; border-radius: $radius-full;
+  background: #F6F6F3; color: $neutral-950;
+  font: inherit; font-size: 1rem; line-height: 1.56; letter-spacing: -0.012em; cursor: pointer;
+  transition: background $transition-fast;
+  span { color: $neutral-500; }
+  &:hover, &.faq-ask + .faq-ask + & { background: rgba(0, 122, 255, 0.15); } // the first shown one is tinted (Figma)
+}
+// The two questions the visitor asks in the thread above; shown as suggestions only before
+// the scroll scene asks them (animations.js)
+.faq-ask { display: none; }
 
 /* =========================================
    Section 12: Final CTA (Every Screen)
