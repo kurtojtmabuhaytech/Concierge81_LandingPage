@@ -123,10 +123,11 @@
      timeline's labels. The page always moves the moment the visitor scrolls (nothing holds it).
      - Down, into steps not seen yet: they play in order at their own speed; scrolling fast makes
        them catch up quicker, so none is skipped and the scene never lags far behind.
-     - Back up: nothing rewinds. The first upward scroll into a scene the visitor has seen turns
+     - Back up: nothing rewinds, and nothing under way is cut short (a step that is playing
+       finishes first). Once a scene has played to its end, the first upward scroll into it turns
        it into a plain section for good (becomePlain): everything shown finished and in full, no
        pin, scrolling like the rest of the page, its hover loops ready. The story does the same
-       through its own `onBack`.
+       through its own `onBack`; until then it holds its frame.
      New steps only ever play on the way down, the first time. Each second of the timeline gets PACE of a screen of
      scrolling; `tail` keeps the scene pinned after its last step (the next section can slide up
      over it). `seen` starts the scene as already watched (the intro, after a refresh past it);
@@ -290,9 +291,14 @@
           show(want);
           return;
         }
-        if (self.direction < 0 && tl.time() > 0.001 && self.isActive && !measuring) {
-          (onBack || becomePlain)();
-          return;
+        if (self.direction < 0 && tl.time() > 0.001 && !measuring) {
+          // Back up: an animation under way is never cut short, it finishes first. A scene that
+          // has played to its end turns plain (the story through onBack); one that hasn't stays as
+          // it is, and what is left of it still plays on the way down. The story, every frame of
+          // it a full page, simply holds its frame (it never plays backwards).
+          if (playing) return;
+          if (tl.progress() > 0.999 && self.isActive) { (onBack || becomePlain)(); return; }
+          if (followBack) return;
         }
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001) {
@@ -340,14 +346,14 @@
         animation: exit,
         scrub: 0.6,
         onUpdate: (self) => {
-          // scrolling back up while the next section is sliding over it
-          if (!onBack && self.direction < 0 && self.isActive && !measuring) becomePlain();
+          // scrolling back up while the next section is sliding over it (once it has finished)
+          if (!onBack && self.direction < 0 && self.isActive && !measuring && !playing && tl.progress() > 0.999) becomePlain();
         },
         onEnter: () => {
-          // reaching the tail means every step has been seen (finish one still under way)
-          if (playing) { playing.progress(1); }
-          seen = Infinity;
-          noteView(tl.duration());
+          // reaching the tail: whatever is left plays on to the end at its own pace (never cut
+          // short) as the next section slides over
+          if (tl.progress() < 0.999) playOn(tl.duration());
+          else { seen = Infinity; noteView(tl.duration()); }
           exit.invalidate();
         },
         onRefresh: (self) => exit.progress(self.progress)
