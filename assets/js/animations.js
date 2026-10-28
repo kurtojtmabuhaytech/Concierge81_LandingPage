@@ -130,6 +130,10 @@
   const STEP_SPEED = 0.9; // new steps play a touch slower than the timeline, so they read calmly
   const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
   let jumping = false; // an in-page link is gliding past scenes: show them finished
+  // The page is re-measuring (a resize): scroll updates then are not the visitor's
+  let measuring = false;
+  ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
+  ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
   const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, onBack = null }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
@@ -271,7 +275,7 @@
           show(want);
           return;
         }
-        if (onBack && self.direction < 0 && tl.time() > 0.001) {
+        if (onBack && self.direction < 0 && tl.time() > 0.001 && self.isActive && !measuring) {
           onBack();
           return;
         }
@@ -719,7 +723,8 @@
     const becomePlain = () => {
       if (plain) return;
       const t = tl.time();
-      const anchor = next.getBoundingClientRect().top < innerHeight ? next
+      const inbox = next.getBoundingClientRect();
+      const anchor = inbox.top < innerHeight && inbox.bottom > 0 ? next
         : t < tl.labels.kiosk - 0.001 ? hero.surface : t < tl.labels.features - 0.001 ? introKiosk : featuresStage;
       const onScreen = anchor.getBoundingClientRect().top;
       scene.kill();
