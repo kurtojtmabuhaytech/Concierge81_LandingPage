@@ -137,23 +137,60 @@
      `onUpdate` gets the timeline's time as it changes. An optional `exit` follows the scroll over
      the tail. `onBack` replaces becomePlain for the way back (the story's own plain sections). */
   const PACE = 0.25; // screen heights of scrolling per second of animation
-  const STEP_SPEED = 0.9; // new steps play a touch slower than the timeline, so they read calmly
+  const STEP_SPEED = 1.15; // new steps play a little quicker than the timeline, still easy to read
   const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
   let jumping = false; // an in-page link is gliding past scenes: show them finished
   const plainOnStart = []; // scenes to show as plain sections once all are set up
   // A scene is turning plain: the page re-measures while the scroll is still where it was in the
   // old, longer page, so the scenes below must not take that as the visitor reaching them
   let settling = false;
-  let sampling = false; // a scene's timeline is being looked at, not played: its callbacks stay quiet
   const settle = (move) => {
     settling = true;
     try { move(); } finally { settling = false; }
   };
+  /* The scroll follows the animation (desktop): the visitor can scroll down as far as the end of
+     the step that is playing (or, once it has finished, of the next one, which starts as they
+     scroll into it), and no further, so a section is never left half built while the next one
+     slides in. Each scene says how far it allows (`limits`); the smallest applies. Wheel, trackpad
+     and keys stop there, a dragged scrollbar is held there; in-page links glide past freely. */
+  const limits = new Set();
+  const scrollLimit = () => Math.min(Infinity, ...[...limits].map(limit => limit()));
+  const downKeys = ['ArrowDown', 'PageDown', 'End', ' '];
+  const atLimit = () => !jumping && scrollY >= scrollLimit() - 1;
+  const onLimitWheel = (e) => { if (e.deltaY > 0 && atLimit()) e.preventDefault(); };
+  const onLimitKey = (e) => {
+    if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    if (downKeys.includes(e.key) && !(e.key === ' ' && e.shiftKey) && atLimit()) e.preventDefault();
+  };
+  // When the page puts itself back at the limit, that small move up is not the visitor scrolling
+  // back up (it must not turn a finished section plain, see scrollScene)
+  let clampedAt = -1e4;
+  const pulledBack = () => performance.now() - clampedAt < 400;
+  const onLimitScroll = () => {
+    if (measuring || settling || jumping) return;
+    const max = scrollLimit();
+    if (scrollY > max + 1) {
+      clampedAt = performance.now();
+      scrollToY(max, false);
+    }
+  };
+  const limitScroll = () => {
+    addEventListener('wheel', onLimitWheel, { capture: true, passive: false });
+    addEventListener('keydown', onLimitKey, { capture: true });
+    addEventListener('scroll', onLimitScroll, { passive: true });
+    return () => {
+      removeEventListener('wheel', onLimitWheel, { capture: true });
+      removeEventListener('keydown', onLimitKey, { capture: true });
+      removeEventListener('scroll', onLimitScroll);
+      limits.clear();
+    };
+  };
+
   // The page is re-measuring (a resize): scroll updates then are not the visitor's
   let measuring = false;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
   ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
-  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, onBack = null }) => {
+  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, onBack = null, hold = () => false, runs = () => [] }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
@@ -293,37 +330,42 @@
       end: () => pin.start + span(),
       onUpdate: (self) => {
         if (self.progress > 0) beforeMove();
-        const at = self.progress * tl.duration();
+        // (a jump past the scroll limit, e.g. a dragged scrollbar, counts as being at the limit:
+        // nothing ahead of it plays while the page is put back there; a scene below it waits)
+        if (!jumping && scrollLimit() < self.start + 1) return;
+        const allowed = jumping ? 1 : gsap.utils.clamp(0, 1, (scrollLimit() - self.start) / Math.max(1, self.end - self.start));
+        const at = Math.min(self.progress, allowed) * tl.duration();
         const want = Math.max(firstStep(), stepAfter(at)); // the step at this scroll position
         if (jumping) { // gliding past (a link): everything on the way counts as seen
           seen = Math.max(seen, want);
           show(want);
           return;
         }
-        if (self.direction < 0 && tl.time() > 0.001 && !measuring) {
-          // Back up: the page moves at once and nothing is cut short. A scene turns plain right
-          // away and what was still to play finishes in place (becomePlain). The story (its
-          // frames are layers of one screen) can only be scrolled back once it has been seen to
-          // the end (see its one-way lock), and turns plain then; a link back into it before that
-          // rewinds it step by step (followSeen below).
-          if (onBack) {
-            if (tl.progress() > 0.999 && !playing && (self.isActive || self.progress === 0)) { onBack(); return; }
-          } else if (self.isActive) {
-            becomePlain();
+        if (self.direction < 0 && tl.time() > 0.001 && !measuring && !pulledBack()) {
+          // Back up: a scene seen to its end turns plain (becomePlain; the story through onBack).
+          // One not finished yet stays as it is: its step carries on while it is in view and
+          // pauses once the visitor has scrolled away from it (watchView), and what is left still
+          // plays on the way down. The story can't be scrolled back before it has been seen to the
+          // end (its one-way lock); a link back into it rewinds it step by step (followSeen below).
+          if (tl.progress() > 0.999 && !playing && (self.isActive || (onBack && self.progress === 0))) {
+            (onBack || becomePlain)();
             return;
           }
+          if (followBack && !jumping) return;
         }
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001) {
           playOn(want);
           return;
         }
-        if (playing && self.direction > 0) return; // still catching up on the way down
+        if (playing) return; // a step under way plays on (never cut short)
         followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, watched)), self.direction);
       },
       onRefresh: (self) => {
         // Rewind with the old measurements (the exit first: it ran last), re-measure the starting
-        // state, then show (no replay) the finished step at the scroll position
+        // state, then show (no replay) the finished step at the scroll position. While another
+        // scene turns plain (settle), a step under way here carries on from where it was.
+        const resume = settling && playing ? { at: tl.time(), to: playingTo } : null;
         stopAll();
         builtAt = -1;
         views.length = 0;
@@ -341,11 +383,26 @@
         tl.time(Math.min(seen, want));
         noteView(tl.time());
         exit?.invalidate();
+        if (resume) {
+          tl.time(resume.at);
+          playingTo = resume.to;
+          trigger.classList.add('is-playing');
+          playing = tl.tweenTo(resume.to, {
+            duration: Math.max(0.05, (resume.to - resume.at) / STEP_SPEED),
+            ease: 'none',
+            onComplete: () => {
+              playing = null;
+              resting();
+              seen = Math.max(seen, resume.to);
+              noteView(resume.to);
+              builtAt = Math.min(seen, tl.duration());
+            }
+          });
+        }
       }
     });
     // .is-built: the scene has played to its end (e.g. the device list can be picked from)
     tl.eventCallback('onUpdate', () => {
-      if (sampling) return;
       onUpdate(tl.time());
       trigger.classList.toggle('is-built', tl.progress() > 0.999);
     });
@@ -361,9 +418,10 @@
         scrub: 0.6,
         onUpdate: (self) => {
           // scrolling back up while the next section is sliding over it
-          if (!onBack && self.direction < 0 && self.isActive && !measuring) becomePlain();
+          if (!onBack && self.direction < 0 && self.isActive && !measuring && !pulledBack() && !playing && tl.progress() > 0.999) becomePlain();
         },
-        onEnter: () => {
+        onEnter: (self) => {
+          if (!jumping && scrollY > scrollLimit() + 1) return; // a jump past the limit (it is put back)
           // reaching the tail: whatever is left plays on to the end at its own pace (never cut
           // short) as the next section slides over
           if (tl.progress() < 0.999) playOn(tl.duration());
@@ -376,77 +434,13 @@
     // Scroll position of a step (in-page links to a step)
     const toScroll = time => pin.start + (time / tl.duration()) * span(); // where a moment of the timeline is
     const labelToScroll = label => toScroll(tl.labels[label]);
-    /* Back up: the scene becomes a plain section for good. Everything in it is laid out in full
-       and it scrolls like the rest of the page; the view stays on what the visitor was looking
-       at (the section sliding over it, or the part of it nearest the top of the screen). With
-       `finish`, the step under way plays on to its end (never cut short), and whatever the
-       visitor hadn't reached yet stays hidden until they scroll down to it: then the rest plays
-       in place, in order. Nothing replays later, on the way up or down again. */
+    /* Back up, once the scene has been seen to its end: it becomes a plain section for good,
+       laid out in full and scrolling like the rest of the page; the view stays on what the
+       visitor was looking at (the section sliding over it, or the part of it nearest the top of
+       the screen). Nothing replays later, on the way up or down again. */
     let plain = false;
-    let waits = []; // the steps not reached yet ({ first, target }), each waiting for the visitor to scroll down to it
-    let waitY = 0;
-    // Only on the way down: a waiting step plays once its first part has come up into the screen
-    // (turning back up never shows anything new)
-    const onWaitScroll = () => {
-      const down = scrollY > waitY + 1;
-      waitY = scrollY;
-      if (!down) return;
-      while (waits.length && waits[0].first.getBoundingClientRect().top < innerHeight * 0.85) playTo(waits.shift().target);
-      if (!waits.length) removeEventListener('scroll', onWaitScroll);
-    };
-    let restTo = 0; // how far the rest has been let play
     const nextOver = () => $$('.slides-over').find(el => trigger.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
-    // Played at the pace new steps play at (a long stretch a little quicker, as when catching up)
-    const pace = (distance) => {
-      const natural = distance / STEP_SPEED;
-      return natural <= CATCH_UP ? natural : CATCH_UP + (natural - CATCH_UP) * 0.6;
-    };
-    const unseen = el => (el.checkVisibility ? !el.checkVisibility({ opacityProperty: true, visibilityProperty: true }) : +getComputedStyle(el).opacity < 0.1);
-    const hiddenParts = () => $$('[data-anim], [data-anim] *, .q-tag, .bar', trigger).filter(el => el.offsetWidth && el.offsetHeight && unseen(el));
-    // Plays on up to `time` (each step in order, once the ones before it have played)
-    let restPlay = null;
-    const playTo = (time) => {
-      if (time <= restTo + 0.001) return;
-      restTo = time;
-      trigger.classList.add('is-playing');
-      restPlay?.kill(); // a later step reached: it carries on from here, in order
-      restPlay = tl.tweenTo(restTo, { duration: pace(restTo - tl.time()), ease: 'none', onComplete: resting });
-    };
-    // Each step not reached yet waits for its own first part: it plays once that comes up into
-    // the screen on the way down (onWaitScroll). Which parts a step shows is found by looking at the timeline at its end (with
-    // the scene's own callbacks quiet), then putting it back.
-    const waitForRest = () => {
-      const from = tl.time();
-      restTo = from;
-      const ends = stops().filter(t => t > from + 0.001);
-      if (!ends.length) return;
-      let hidden = hiddenParts();
-      sampling = true;
-      const firsts = ends.map((end) => {
-        tl.time(end);
-        const shown = hidden.filter(el => !unseen(el));
-        hidden = hidden.filter(el => !shown.includes(el));
-        return shown.sort((x, y) => x.getBoundingClientRect().top - y.getBoundingClientRect().top)[0];
-      });
-      tl.time(from);
-      sampling = false;
-      // A step that shows something new starts a group that waits for that part; steps after it
-      // that show nothing new (finishing touches) play along with it. Steps before any of that
-      // (nothing new to wait for) play right away.
-      const groups = [];
-      ends.forEach((end, i) => {
-        if (firsts[i]) groups.push({ first: firsts[i], target: end });
-        else if (groups.length) groups.at(-1).target = end;
-        else playTo(end);
-      });
-      waits = groups;
-      waitY = scrollY;
-      if (waits.length) addEventListener('scroll', onWaitScroll, { passive: true });
-    };
-    const makePlain = (next = nextOver(), finish = false) => {
-      // the end of the step under way (only that one finishes; the visitor may have scrolled on
-      // further, but hasn't seen what comes after it yet)
-      const stepEnd = playing ? (stops().find(t => t > tl.time() + 0.001) ?? tl.duration()) : tl.time();
+    const makePlain = (next = nextOver()) => {
       plain = true;
       seen = Infinity;
       kill();
@@ -457,20 +451,30 @@
       }
       trigger.classList.add('is-plain');
       next?.classList.remove('slides-over');
-      if (!finish) {
-        resting();
-        tl.progress(1);
-        return;
-      }
-      const toEnd = Math.min(stepEnd, tl.duration()) - tl.time();
-      if (toEnd > 0.001) {
-        trigger.classList.add('is-playing');
-        restPlay = tl.tweenTo(stepEnd, { duration: pace(toEnd), ease: 'none', onComplete: () => { resting(); waitForRest(); } });
-      } else {
-        resting();
-        requestAnimationFrame(waitForRest); // once the plain layout is measured
-      }
+      resting();
+      tl.progress(1);
     };
+
+    // How far down the visitor may scroll (see `limits`): to the end of the step under way, or of
+    // the next one once it has finished; held at the current one while the scene's own animation
+    // runs (`hold`: the inbox's rain and demo); no limit once the scene has been seen to its end
+    limits.add(() => {
+      if (plain || !pin) return Infinity;
+      const done = Math.min(seen, tl.duration());
+      if (done >= tl.duration() - 0.001 && !playing && !hold()) return Infinity;
+      const next = playing ? playingTo : (hold() ? done : (stops().find(t => t > done + 0.001) ?? tl.duration()));
+      return toScroll(Math.max(next, firstStep()));
+    });
+    // What is playing pauses while the scene is out of view (the visitor has scrolled up away from
+    // it) and carries on when they come back, so they see all of it
+    const watchView = () => {
+      const r = trigger.getBoundingClientRect();
+      const away = r.bottom <= 0 || r.top >= innerHeight;
+      playing?.paused(away);
+      runs().forEach((run) => { if (run.progress() > 0 && run.progress() < 1) run.paused(away); });
+    };
+    addEventListener('scroll', watchView, { passive: true });
+    ScrollTrigger.addEventListener('refresh', watchView); // (positions change when the page re-measures)
     function becomePlain() {
       if (plain) return;
       const next = nextOver();
@@ -478,7 +482,7 @@
       const anchor = next && onScreen(next) ? next
         : $$('.chat-section-header, [data-anim], .bento-row', trigger).find(el => { const r = el.getBoundingClientRect(); return r.height && r.top >= 0 && r.top < innerHeight; }) || trigger;
       const at = anchor.getBoundingClientRect().top;
-      makePlain(next, true);
+      makePlain(next);
       session.set('plain', JSON.stringify([...new Set([...(JSON.parse(session.get('plain') || '[]')), `#${trigger.id}`])]));
       // (the smooth scrolling is paused for the move, so it doesn't ease on from where it was)
       settle(() => {
@@ -493,6 +497,8 @@
 
     // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
     function kill() {
+      removeEventListener('scroll', watchView);
+      ScrollTrigger.removeEventListener('refresh', watchView);
       stopAll();
       steps.kill();
       exitTrigger?.kill();
@@ -1158,7 +1164,9 @@
     // reached the card (they don't need the scroll, and the scroll never waits for them); then
     // the questions can be picked up. Built below; reset with the scene.
     let show = null;
+    let showKept = 0; // how far the show had got when the page re-measured while a scene turned plain
     const applyStart = () => {
+      showKept = settling && show ? show.progress() : 0;
       show?.pause(0);
       gsap.set(content, { y: 0 });
       gsap.set(askUser, { autoAlpha: 0, y: 12 });
@@ -1230,8 +1238,10 @@
     // it, a resize), or a link glides past, it is shown finished instead: it never replays.
     const startShow = (time) => {
       if (time < tl.labels.inbox - 0.001 || show.progress() > 0) return;
-      if (measuring || jumping) show.progress(1);
+      if (showKept > 0 && showKept < 1) show.progress(showKept).play(); // carries on from where it was
+      else if (measuring || jumping) show.progress(1);
       else show.play();
+      showKept = 0;
     };
 
     // Leaving, as the next section slides up over it: everything stays as the visitor left it
@@ -1247,7 +1257,10 @@
       exit,
       tail: () => section.offsetHeight, // the How section slides up over the inbox
       onUpdate: startShow,
-      onRefresh: applyStart
+      onRefresh: applyStart,
+      // the scroll waits for the rain and the demo, which pause while the visitor is away
+      hold: () => tl.time() >= tl.labels.inbox - 0.001 && show.progress() < 1,
+      runs: () => [show]
     });
 
     return () => {
@@ -2657,10 +2670,12 @@
         smoother = ScrollSmoother.create({ wrapper: '#smooth-wrapper', content: '#smooth-content', smooth: 0.6, smoothTouch: false });
       }
       measuring = true; // setting up: shown finished where seen, nothing plays
+      const unlimit = context.conditions.isDesktop ? limitScroll() : null; // the scroll follows the animation
       const cleanups = scenes.map(scene => scene(context.conditions)).filter(Boolean);
       plainOnStart.splice(0).forEach(plain => plain());
       requestAnimationFrame(() => { measuring = false; });
       return () => {
+        unlimit?.();
         cleanups.forEach(cleanup => cleanup());
         smoother?.kill();
         smoother = null;
