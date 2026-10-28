@@ -141,6 +141,13 @@
   const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
   let jumping = false; // an in-page link is gliding past scenes: show them finished
   const plainOnStart = []; // scenes to show as plain sections once all are set up
+  // A scene is turning plain: the page re-measures while the scroll is still where it was in the
+  // old, longer page, so the scenes below must not take that as the visitor reaching them
+  let settling = false;
+  const settle = (move) => {
+    settling = true;
+    try { move(); } finally { settling = false; }
+  };
   // The page is re-measuring (a resize): scroll updates then are not the visitor's
   let measuring = false;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
@@ -327,7 +334,7 @@
         tl.invalidate();
         if (self.progress > 0) beforeMove();
         const want = self.progress > 0 ? Math.max(firstStep(), stepAfter(self.progress * tl.duration())) : 0;
-        seen = Math.max(seen === Infinity ? Infinity : seen, want);
+        if (!settling) seen = Math.max(seen === Infinity ? Infinity : seen, want); // (see settle)
         // the views seen, re-measured at each step (going back over the seen part retraces them)
         stops().filter(t => t > 0 && t <= Math.min(seen, tl.duration()) + 0.001).forEach((t) => { tl.time(t); noteView(t); });
         tl.time(Math.min(seen, want));
@@ -403,12 +410,14 @@
       makePlain(next, true);
       session.set('plain', JSON.stringify([...new Set([...(JSON.parse(session.get('plain') || '[]')), `#${trigger.id}`])]));
       // (the smooth scrolling is paused for the move, so it doesn't ease on from where it was)
-      smoother?.paused(true);
-      ScrollTrigger.refresh();
-      const y = Math.max(0, topOf(anchor) - at);
-      smoother?.paused(false);
-      scrollToY(y, false);
-      ScrollTrigger.update();
+      settle(() => {
+        smoother?.paused(true);
+        ScrollTrigger.refresh();
+        const y = Math.max(0, topOf(anchor) - at);
+        smoother?.paused(false);
+        scrollToY(y, false);
+        ScrollTrigger.update();
+      });
     }
 
     // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
@@ -819,12 +828,14 @@
       unstage();
       plain = plainStory();
       // (the smooth scrolling is paused for the move, so it doesn't ease on from where it was)
-      smoother?.paused(true);
-      ScrollTrigger.refresh();
-      const y = Math.max(0, topOf(anchor) - onScreen);
-      smoother?.paused(false);
-      scrollToY(y, false);
-      ScrollTrigger.update();
+      settle(() => {
+        smoother?.paused(true);
+        ScrollTrigger.refresh();
+        const y = Math.max(0, topOf(anchor) - onScreen);
+        smoother?.paused(false);
+        scrollToY(y, false);
+        ScrollTrigger.update();
+      });
     };
 
     const scene = scrollScene({
