@@ -223,6 +223,11 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   .is-staged:not(.is-playing) .industry-card:hover .industry-photo { scale: 1.06; } // the card clips it
 }
 
+// Coming back to the page (a refresh): hidden until it is back where the visitor was, then it
+// fades in there (index.html, animations.js)
+html.is-restoring body { opacity: 0; }
+html body { transition: opacity 0.25s ease; }
+
 // The opening (first open in a session): no scrolling until it has played
 html.is-opening { overflow: hidden; }
 

@@ -5693,6 +5693,14 @@ main > .blog-section:last-child {
     scale: 1.06;
   }
 }
+html.is-restoring body {
+  opacity: 0;
+}
+
+html body {
+  transition: opacity 0.25s ease;
+}
+
 html.is-opening {
   overflow: hidden;
 }

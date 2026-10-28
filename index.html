@@ -9,10 +9,19 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="assets/css/landing.css">
-  <!-- Hides data-anim elements before first paint; dropped again if GSAP never loads -->
+  <!-- Hides data-anim elements before first paint; dropped again if GSAP never loads. Coming back
+       to the page this session (a refresh), it also stays hidden until animations.js has put it
+       back where the visitor was (.is-restoring; shown anyway after 2.5s) -->
   <script>
-    document.documentElement.classList.add('js-motion');
-    window.addEventListener('load', () => { if (!window.gsap) document.documentElement.classList.remove('js-motion'); });
+    (() => {
+      const root = document.documentElement;
+      root.classList.add('js-motion');
+      try {
+        if (!location.hash && sessionStorage.getItem('c81:introSeen') === '1' && sessionStorage.getItem('c81:place')) root.classList.add('is-restoring');
+      } catch (e) { /* storage blocked */ }
+      setTimeout(() => root.classList.remove('is-restoring'), 2500);
+      window.addEventListener('load', () => { if (!window.gsap) root.classList.remove('js-motion', 'is-restoring'); });
+    })();
   </script>
   <script src="assets/js/vendor/gsap/gsap.min.js" defer></script>
   <script src="assets/js/vendor/gsap/ScrollTrigger.min.js" defer></script>

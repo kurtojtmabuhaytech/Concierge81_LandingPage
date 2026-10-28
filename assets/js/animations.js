@@ -32,6 +32,16 @@
     if (!introSeen || location.hash) return null;
     try { return JSON.parse(session.get('place')); } catch (e) { return null; }
   })();
+  // The page's sections, top to bottom, as places to come back to
+  const places = ['.story', '#problem', '#how', '#interaction', '#industries', '#values', '#deployment', '#pricing', '#faq', '#cta', '#contact'];
+  // Scenes that load as plain sections, finished: those the visitor has already scrolled back up
+  // into this session, and on a return to a place further down every scene above it (they have
+  // been seen; nothing replays)
+  const plainSaved = (() => { try { return JSON.parse(session.get('plain')) || []; } catch (e) { return []; } })();
+  const startsPlain = (el) => {
+    const at = places.indexOf(`#${el.id}`);
+    return plainSaved.includes(`#${el.id}`) || (!!savedPlace && at >= 0 && at < places.indexOf(savedPlace.id));
+  };
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   ScrollTrigger.clearScrollMemory('manual');
   if (!location.hash) scrollTo(0, 0);
@@ -128,6 +138,7 @@
   const STEP_SPEED = 0.9; // new steps play a touch slower than the timeline, so they read calmly
   const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
   let jumping = false; // an in-page link is gliding past scenes: show them finished
+  const plainOnStart = []; // scenes to show as plain sections once all are set up
   // The page is re-measuring (a resize): scroll updates then are not the visitor's
   let measuring = false;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
@@ -349,14 +360,9 @@
        page, and the view stays on what the visitor was looking at: the section sliding over it,
        or the part of it nearest the top of the screen. */
     let plain = false;
-    function becomePlain() {
-      if (plain) return;
+    const nextOver = () => $$('.slides-over').find(el => trigger.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const makePlain = (next = nextOver()) => {
       plain = true;
-      const next = $$('.slides-over').find(el => trigger.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
-      const onScreen = el => { const r = el.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; };
-      const anchor = next && onScreen(next) ? next
-        : $$('.chat-section-header, [data-anim], .bento-row', trigger).find(el => { const r = el.getBoundingClientRect(); return r.height && r.top >= 0 && r.top < innerHeight; }) || trigger;
-      const at = anchor.getBoundingClientRect().top;
       seen = Infinity;
       kill();
       tl.progress(1);
@@ -364,6 +370,16 @@
       trigger.classList.add('is-plain');
       trigger.classList.remove('is-playing');
       next?.classList.remove('slides-over');
+    };
+    function becomePlain() {
+      if (plain) return;
+      const next = nextOver();
+      const onScreen = el => { const r = el.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; };
+      const anchor = next && onScreen(next) ? next
+        : $$('.chat-section-header, [data-anim], .bento-row', trigger).find(el => { const r = el.getBoundingClientRect(); return r.height && r.top >= 0 && r.top < innerHeight; }) || trigger;
+      const at = anchor.getBoundingClientRect().top;
+      makePlain(next);
+      session.set('plain', JSON.stringify([...new Set([...(JSON.parse(session.get('plain') || '[]')), `#${trigger.id}`])]));
       // (the smooth scrolling is paused for the move, so it doesn't ease on from where it was)
       smoother?.paused(true);
       ScrollTrigger.refresh();
@@ -382,6 +398,9 @@
       tl.pause();
       pin.kill(true);
     }
+    // Seen this session already: plain from the start (once every scene is set up, so the next
+    // section's slide-over can be dropped)
+    if (!onBack && startsPlain(trigger)) plainOnStart.push(() => makePlain());
     return { pin, scrub: { labelToScroll }, steps, kill };
   };
 
@@ -2464,9 +2483,8 @@
 
   runOpening();
 
-  // Where the visitor is, as a section and a distance into it (positions shift when the intro
-  // story is shown finished instead of pinned), saved as they scroll
-  const places = ['.story', '#problem', '#how', '#interaction', '#industries', '#values', '#deployment', '#pricing', '#faq', '#cta', '#contact'];
+  // Where the visitor is, as a section and a distance into it (positions shift when scenes are
+  // shown as plain sections instead of pinned), saved as they scroll
   const topOf = (target) => {
     const el = typeof target === 'string' ? $(target) : target;
     const box = el.parentElement.classList.contains('pin-spacer') ? el.parentElement : el;
@@ -2493,7 +2511,10 @@
         root.classList.add('is-smooth');
         smoother = ScrollSmoother.create({ wrapper: '#smooth-wrapper', content: '#smooth-content', smooth: 0.6, smoothTouch: false });
       }
+      measuring = true; // setting up: shown finished where seen, nothing plays
       const cleanups = scenes.map(scene => scene(context.conditions)).filter(Boolean);
+      plainOnStart.splice(0).forEach(plain => plain());
+      requestAnimationFrame(() => { measuring = false; });
       return () => {
         cleanups.forEach(cleanup => cleanup());
         smoother?.kill();
@@ -2526,13 +2547,24 @@
   ScrollTrigger.addEventListener('scrollEnd', savePlace);
   addEventListener('pagehide', savePlace);
 
-  // Recalculate trigger positions once images (avatar, photos) have their real size, then come
-  // back to where the visitor was before the refresh (straight there, its steps shown finished)
-  addEventListener('load', () => {
+  /* Back to where the visitor was (a refresh, or a return to the page this session): the page is
+     placed there before it is shown (index.html hides it with .is-restoring until then), the scene
+     there on its finished step and everything above it shown finished. It is shown once images
+     and fonts have their real size and it has been measured again there (or after 2.5s at most,
+     by index.html; then it is put back unless the visitor has moved meanwhile). */
+  const restore = () => {
+    if (!savedPlace || !$(savedPlace.id)) return;
     ScrollTrigger.refresh();
-    if (savedPlace && $(savedPlace.id)) {
-      scrollToY(topOf(savedPlace.id) + savedPlace.offset, false);
-      ScrollTrigger.refresh(); // the scenes jump to their finished step there, instead of playing up to it
-    }
+    scrollToY(topOf(savedPlace.id) + savedPlace.offset, false);
+    ScrollTrigger.refresh(); // the scenes jump to their finished step there, instead of playing up to it
+  };
+  restore();
+  let moved = false;
+  ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach(type => addEventListener(type, () => { moved = true; }, { once: true, passive: true }));
+  const loaded = new Promise(resolve => (document.readyState === 'complete' ? resolve() : addEventListener('load', resolve, { once: true })));
+  Promise.all([loaded, document.fonts?.ready]).then(() => {
+    if (moved) ScrollTrigger.refresh();
+    else restore();
+    requestAnimationFrame(() => root.classList.remove('is-restoring')); // shown there, at last
   });
 })();
