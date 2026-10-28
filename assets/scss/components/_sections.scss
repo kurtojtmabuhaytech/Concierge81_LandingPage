@@ -1188,7 +1188,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   &:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 3px; }
 }
 #deployment.is-built .platform-card { cursor: pointer;
-  @media (hover: hover) and (pointer: fine) { &:hover { translate: 0 -4px; border-color: $color-cobalt-bright; } }
+  @media (hover: hover) and (pointer: fine) { &:hover { translate: 0 -4px !important; border-color: $color-cobalt-bright; } } // (over GSAP's inline translate: none)
 }
 .platform-header { display: flex; align-items: center; gap: 12px; }
 .platform-icon { width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: $color-cobalt-soft; color: $color-cobalt-bright; display: grid; place-items: center; svg { width: 20px; height: 20px; } }
