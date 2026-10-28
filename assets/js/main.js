@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
      pops in, the concierge types (•••), then the answer pops in, one after another, and the
      conversation scrolls on its own inside the chat (the page keeps scrolling outside it). Asked
      questions leave the suggestions; the topics filter what is left. The conversation is kept for
-     the browser session. "What is Concierge81?" is asked by the scroll scene (animations.js). */
+     the browser session. "What is concierge81?" is asked by the scroll scene (animations.js). */
   const faqBox = document.querySelector('.faq-chat-box');
   if (faqBox) {
     const thread = faqBox.querySelector('.faq-thread');

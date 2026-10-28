@@ -535,7 +535,7 @@
       .set(dots, { autoAlpha: 0 }, 'greet')
       .set(bubble, full, 'greet')
       .set(text, { autoAlpha: 1 }, 'greet')
-      .call(() => { caption.textContent = 'concierge · 9:12 AM'; }, null, 'greet')
+      .call(() => { caption.textContent = 'concierge · 9:12 PM'; }, null, 'greet')
       .fromTo(bubble, { scale: 0.86 }, { scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', immediateRender: false }, 'greet')
       // hold, then hand the greeting to the hero while the card builds around it
       .addLabel('handoff', 'greet+=1.8')
@@ -2179,7 +2179,7 @@
 
   /* 15. I still have a few questions. (Figma recording 2:16–2:45). Desktop: a scroll scene that
      slides up over the pricing. The visitor asks and the concierge answers; the topics and the chat
-     rise in with the suggested questions; then, as a demo, "What is Concierge81?" is asked: its
+     rise in with the suggested questions; then, as a demo, "What is concierge81?" is asked: its
      suggestion leaves the list, the question pops in, the concierge types (•••) and the answer pops
      in, then "Anything else I can help you with?". From there the visitor asks by tapping the
      suggestions (main.js). On a further scroll "Can't find your answer?" arrives. */
@@ -2263,7 +2263,7 @@
       .to([filters, box], { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.15 }, 'ask+=0.3')
       .addLabel('thread', 'ask+=1.0')
 
-      // Step 3 (2:24–2:27): the demo. "What is Concierge81?" is tapped: it leaves the suggestions
+      // Step 3 (2:24–2:27): the demo. "What is concierge81?" is tapped: it leaves the suggestions
       // and pops into the chat, the concierge types, then the answer and "Anything else?" pop in
       .to(chip, { autoAlpha: 0, scale: 0.9, duration: 0.25 }, 'thread')
       .set(chip, { display: 'none' }, 'thread+=0.25');
