@@ -1895,7 +1895,7 @@
       gsap.set(parts(enterprise, '.tier-nodes circle'), { scale: 0, transformOrigin: '50% 50%' });
       gsap.set(parts(enterprise, '.tier-dot, .tier-disc'), { scale: 0, svgOrigin: '245 114' });
       gsap.set(parts(enterprise, '.tier-ring'), { opacity: 0 });
-      gsap.set(help, { autoAlpha: 0, y: 16 });
+      gsap.set(help, { autoAlpha: 0, scale: 0.85, transformOrigin: 'center bottom' });
     };
     applyStart();
 
@@ -1929,10 +1929,13 @@
       .to(spokes, { strokeDashoffset: 0, duration: 0.45, ease: 'power1.inOut', stagger: 0.07 }, 'tiers+=3.0')
       .to(parts(enterprise, '.tier-nodes circle'), { scale: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.07 }, 'tiers+=3.3')
 
-      // Step 6 (2:11–2:13): the view moves down to the tiers and the visitor's follow-up arrives
-      .to(content, { y: showInStage(section, content, cards[0], help), duration: MOTION.slow, ease: MOTION.easeInOut }, 'tiers+=3.7')
-      .to(help, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'tiers+=3.9')
-      .addLabel('built', 'tiers+=4.6');
+      .addLabel('help', 'tiers+=4.0') // after the last graphic has finished (a step never ends mid-pop)
+
+      // Step 6 (2:11–2:13), only on a further scroll down: the view moves down to the tiers and
+      // the visitor's follow-up pops in like a message
+      .to(content, { y: showInStage(section, content, cards[0], help), duration: MOTION.slow, ease: MOTION.easeInOut }, 'help')
+      .to(help, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, 'help+=0.45')
+      .addLabel('built', 'help+=0.9');
 
     // Leaving, as the FAQ section slides up over it: the content fades out
     const exit = gsap.timeline({ paused: true })
