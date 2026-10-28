@@ -136,7 +136,7 @@
      before the timeline first moves (the story finishes the opening there); `top` is where it pins;
      `onUpdate` gets the timeline's time as it changes. An optional `exit` follows the scroll over
      the tail. `onBack` replaces becomePlain for the way back (the story's own plain sections). */
-  const PACE = 0.65; // screen heights of scrolling per second of animation
+  const PACE = 0.25; // screen heights of scrolling per second of animation
   const STEP_SPEED = 0.9; // new steps play a touch slower than the timeline, so they read calmly
   const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
   let jumping = false; // an in-page link is gliding past scenes: show them finished
@@ -374,6 +374,7 @@
       });
     }
     // Scroll position of a step (in-page links to a step)
+    const toScroll = time => pin.start + (time / tl.duration()) * span(); // where a moment of the timeline is
     const labelToScroll = label => toScroll(tl.labels[label]);
     /* Back up: the scene becomes a plain section for good. Everything in it is laid out in full
        and it scrolls like the rest of the page; the view stays on what the visitor was looking
