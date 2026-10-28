@@ -309,7 +309,11 @@
         exit?.invalidate();
       }
     });
-    tl.eventCallback('onUpdate', () => onUpdate(tl.time()));
+    // .is-built: the scene has played to its end (its hover loops and card lifts come on)
+    tl.eventCallback('onUpdate', () => {
+      onUpdate(tl.time());
+      trigger.classList.toggle('is-built', tl.progress() > 0.999);
+    });
     // The exit runs over the tail. It starts from wherever things are when the visitor gets there
     // (questions may have been moved by hand), so it re-measures each time it is entered from above.
     let exitTrigger = null;
@@ -2134,6 +2138,205 @@
     values.cards.forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
     scrollReveal([...industries.cards, industries.controls], industries.gallery, { autoAlpha: 0, x: 40 }, { stagger: 0.1 });
     $$('#how .process-card, #interaction .mode-card').forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
+  });
+
+  /* Hover loops (desktop, with a mouse): once a scene has played to its end, hovering one of its
+     parts plays a short round of that part's animation, again and again while the pointer stays.
+     Moving away lets the round finish quickly; every round ends on the finished frame, so the page
+     is always left as the scene built it. `round()` builds one round (a fresh timeline each time). */
+  const hoverLoop = (el, round, { section = el.closest('section'), stopOn = [] } = {}) => {
+    let current = null;
+    let over = false;
+    const ready = () => section.classList.contains('is-built');
+    const next = () => {
+      current = round();
+      current.eventCallback('onComplete', () => {
+        if (over && ready()) next();
+        else current = null;
+      });
+    };
+    const enter = () => {
+      over = true;
+      if (current) current.timeScale(1);
+      else if (ready()) next();
+    };
+    const leave = () => {
+      over = false;
+      current?.timeScale(2.5); // finishes its round quickly
+    };
+    const stop = () => { // straight to the finished frame (a drag starts, the page re-measures)
+      over = false;
+      if (!current) return;
+      const finishing = current;
+      current = null;
+      finishing.progress(1).kill();
+    };
+    el.addEventListener('mouseenter', enter);
+    el.addEventListener('mouseleave', leave);
+    stopOn.forEach(type => el.addEventListener(type, stop));
+    const off = () => {
+      stop();
+      el.removeEventListener('mouseenter', enter);
+      el.removeEventListener('mouseleave', leave);
+      stopOn.forEach(type => el.removeEventListener(type, stop));
+    };
+    off.stop = stop;
+    return off;
+  };
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const offs = [];
+    const loop = (el, round, options) => el && offs.push(hoverLoop(el, round, options));
+    const pause = s => ({ duration: s }); // a still moment at the end of a round
+
+    // Inbox: a question wobbles on its tilt (a drag stops it at once)
+    inbox.tags.forEach(tag => loop(tag, () => {
+      const r = gsap.getProperty(tag, 'rotation');
+      return gsap.timeline()
+        .to(tag, { rotation: r + 4, duration: 0.12, ease: 'sine.out' })
+        .to(tag, { rotation: r - 4, duration: 0.24, ease: 'sine.inOut' })
+        .to(tag, { rotation: r + 2, duration: 0.18, ease: 'sine.inOut' })
+        .to(tag, { rotation: r, duration: 0.14, ease: 'sine.in' })
+        .to({}, pause(0.5));
+    }, { stopOn: ['pointerdown'] }));
+
+    // How: the dial turns a full circle; the reply goes back to "typing" and to the check
+    const dial = $('.process-glyph--round', how.cards[1]);
+    loop(how.cards[1], () => {
+      const from = parseFloat(gsap.getProperty(dial, '--dial')) || 0;
+      return gsap.timeline()
+        .fromTo(dial, { '--dial': `${from}deg` }, { '--dial': `${from + 360}deg`, duration: 2.4, ease: 'power1.inOut' })
+        .set(dial, { '--dial': `${from}deg` });
+    });
+    loop(how.cards[2], () => gsap.timeline()
+      .to(how.answer, { morphSVG: how.bubble, duration: 0.45, ease: MOTION.easeInOut })
+      .to({}, pause(0.6))
+      .to(how.answer, { morphSVG: how.check, duration: 0.45, ease: MOTION.easeInOut })
+      .to({}, pause(0.9)));
+    const askIcon = $('.how-art', how.cards[0]);
+    loop(how.cards[0], () => gsap.timeline()
+      .to(askIcon, { y: -6, duration: 0.35, ease: 'sine.out' })
+      .to(askIcon, { y: 0, duration: 0.45, ease: 'bounce.out' })
+      .to({}, pause(0.7)));
+
+    // Type or talk: the mini chat plays again, message by message; the voice orb glows
+    const mini = $('.mini-chat', modes.chat);
+    const messages = $$('.msg-row, .chip', mini);
+    loop(modes.chat, () => gsap.timeline()
+      .to(messages, { autoAlpha: 0, duration: 0.2 })
+      .fromTo(messages, { autoAlpha: 0, y: 10, scale: 0.92, transformOrigin: i => (messages[i].matches('.msg-row--user') ? 'right bottom' : 'left bottom') },
+        { autoAlpha: 1, y: 0, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', stagger: 0.35 }, '+=0.2')
+      .to({}, pause(1.4)));
+    const orb = $('.voice-orb', modes.voice);
+    loop(modes.voice, () => gsap.timeline()
+      .fromTo(orb, { filter: 'drop-shadow(0 0 0px rgba(39, 111, 248, 0))' },
+        { scale: 1.1, filter: 'drop-shadow(0 0 18px rgba(39, 111, 248, 0.75))', duration: 0.55, ease: 'sine.out' })
+      .to(orb, { scale: 1, filter: 'drop-shadow(0 0 0px rgba(39, 111, 248, 0))', duration: 0.65, ease: 'sine.inOut' })
+      .set(orb, { clearProps: 'filter' })
+      .to({}, pause(0.3)));
+
+    // Why concierge81?
+    const [availability, handoff, accuracy, languages, scale, insights] = values.cards;
+    const timeline = $('.timeline', availability);
+    const fill = $('.timeline-fill', availability);
+    loop(availability, () => gsap.timeline() // the dot runs the day again
+      .fromTo(timeline, { '--at': '0%' }, { '--at': '100%', duration: 2, ease: 'power1.inOut' })
+      .fromTo(fill, { scaleX: 0 }, { scaleX: 1, duration: 2, ease: 'power1.inOut' }, '<')
+      .to({}, pause(0.6)));
+    const lines = $$('.handoff-line', handoff);
+    const handoffPill = $('.handoff-pill', handoff);
+    loop(handoff, () => gsap.timeline() // the hand-off draws again
+      .to([...lines, handoffPill], { autoAlpha: 0, duration: 0.2 })
+      .set(lines, { scaleX: 0, autoAlpha: 1 })
+      .to(lines[0], { scaleX: 1, duration: 0.45, ease: 'power1.inOut' })
+      .fromTo(handoffPill, { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)' }, '-=0.1')
+      .to(lines[1], { scaleX: 1, duration: 0.45, ease: 'power1.inOut' }, '-=0.15')
+      .to({}, pause(1)));
+    const branches = $$('.info-branches path', accuracy);
+    const nodes = $$('.info-nodes > div', accuracy);
+    loop(accuracy, () => gsap.timeline() // the info branches out again
+      .to(nodes, { autoAlpha: 0, scale: 0.7, duration: 0.2 })
+      .set(branches, { strokeDashoffset: 1 })
+      .to(branches, { strokeDashoffset: 0, duration: 0.6, ease: 'power1.inOut', stagger: 0.1 })
+      .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, '-=0.3')
+      .to({}, pause(1)));
+    const langPill = $('.lang-pill', languages);
+    const tabs = $$('.lang-tabs span', languages);
+    const hello = $('.hello-en', languages);
+    const konnichiwa = $('.hello-jp', languages);
+    loop(languages, () => gsap.timeline() // Hello. ↔ こんにちは。
+      .to(langPill, { x: () => tabs[1].offsetLeft - tabs[0].offsetLeft, duration: 0.45, ease: MOTION.easeInOut })
+      .to(tabs[0], { color: '#A8A49A', duration: 0.3 }, '<0.05')
+      .to(tabs[1], { color: '#FFFFFF', duration: 0.3 }, '<0.1')
+      .to(hello, { autoAlpha: 0, y: -12, duration: 0.3, ease: 'power2.in' }, '<')
+      .to(konnichiwa, { autoAlpha: 1, y: 0, duration: 0.4 }, '>-0.05')
+      .to({}, pause(0.9))
+      .to(langPill, { x: 0, duration: 0.45, ease: MOTION.easeInOut })
+      .to(tabs[1], { color: '#A8A49A', duration: 0.3 }, '<0.05')
+      .to(tabs[0], { color: '#FFFFFF', duration: 0.3 }, '<0.1')
+      .to(konnichiwa, { autoAlpha: 0, y: 12, duration: 0.3, ease: 'power2.in' }, '<')
+      .to(hello, { autoAlpha: 1, y: 0, duration: 0.4 }, '>-0.05')
+      .to({}, pause(0.9)));
+    const glow = $('.network-glow', scale);
+    const placesOut = $$('.network-node', scale);
+    loop(scale, () => gsap.timeline() // the network pulses out from the hub
+      .to(glow, { scale: 1.5, opacity: 0.35, transformOrigin: '50% 50%', duration: 0.5, ease: 'sine.out' })
+      .to(placesOut, { scale: 1.35, transformOrigin: '50% 50%', duration: 0.25, ease: 'sine.out', stagger: 0.08 }, '-=0.2')
+      .to(placesOut, { scale: 1, duration: 0.35, ease: 'sine.inOut', stagger: 0.08 }, '-=0.15')
+      .to(glow, { scale: 1, opacity: 1, duration: 0.6, ease: 'sine.inOut' }, '<')
+      .to({}, pause(0.5)));
+    const bars = $$('.bar', insights);
+    loop(insights, () => gsap.timeline() // the week's bars grow again
+      .to(bars, { '--grow': 0, duration: 0.25, ease: 'power2.in' })
+      .to(bars, { '--grow': 1, duration: 0.5, ease: 'power2.out', stagger: 0.1 })
+      .to({}, pause(1)));
+
+    // Industries: the chat on a card pops in again (its photo zooms, in the CSS)
+    industries.cards.forEach((card) => {
+      const bubbles = $$('.industry-chat .bubble', card);
+      if (!bubbles.length) return;
+      loop(card, () => gsap.timeline()
+        .to(bubbles, { autoAlpha: 0, duration: 0.2 })
+        .fromTo(bubbles, { autoAlpha: 0, scale: 0.9, transformOrigin: i => (i ? 'left bottom' : 'right bottom') },
+          { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', stagger: 0.5 }, '+=0.1')
+        .to({}, pause(1.6)));
+    });
+
+    // Pricing: each tier's graphic builds again
+    const [basic, capacity, business, enterprise] = pricing.cards;
+    const art = (card, selector) => $$(selector, card);
+    loop(basic, () => gsap.timeline()
+      .to(art(basic, '.tier-ring'), { scale: 0.5, opacity: 0, svgOrigin: '245 114', duration: 0.25 })
+      .to(art(basic, '.tier-ring'), { scale: 1, opacity: 1, duration: 0.7, stagger: 0.15 })
+      .to({}, pause(0.6)));
+    loop(capacity, () => gsap.timeline()
+      .to(art(capacity, '.tier-overlap'), { opacity: 0, duration: 0.2 })
+      .to(art(capacity, '.tier-left'), { x: -40, duration: 0.45, ease: MOTION.easeInOut }, '<')
+      .to(art(capacity, '.tier-right'), { x: 40, duration: 0.45, ease: MOTION.easeInOut }, '<')
+      .to(art(capacity, '.tier-left, .tier-right'), { x: 0, duration: 0.7, ease: MOTION.easeInOut })
+      .to(art(capacity, '.tier-overlap'), { opacity: 1, duration: 0.4 }, '-=0.2')
+      .to({}, pause(0.6)));
+    loop(business, () => gsap.timeline()
+      .fromTo(art(business, '.tier-dot'), { rotation: 0 }, { rotation: 360, svgOrigin: '275.36 59', duration: 1.6, ease: MOTION.easeInOut })
+      .set(art(business, '.tier-dot'), { rotation: 0 })
+      .to({}, pause(0.5)));
+    const spokes = art(enterprise, '.tier-spokes path');
+    const entNodes = art(enterprise, '.tier-nodes circle');
+    loop(enterprise, () => gsap.timeline()
+      .to(entNodes, { scale: 0, duration: 0.2 })
+      .set(spokes, { strokeDashoffset: 1 })
+      .to(spokes, { strokeDashoffset: 0, duration: 0.45, ease: 'power1.inOut', stagger: 0.07 })
+      .to(entNodes, { scale: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.07 }, '-=0.3')
+      .to({}, pause(0.8)));
+
+    // The page re-measures (a refresh resets the scenes): every loop stops on its finished frame
+    const stopAll = () => offs.forEach(off => off.stop?.());
+    ScrollTrigger.addEventListener('refreshInit', stopAll);
+    return () => {
+      ScrollTrigger.removeEventListener('refreshInit', stopAll);
+      offs.forEach(off => off());
+    };
   });
 
   setupPile();
