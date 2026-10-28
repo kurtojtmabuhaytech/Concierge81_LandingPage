@@ -149,7 +149,18 @@
   const scrollLimit = () => Math.min(Infinity, ...[...limits].map(limit => limit()));
   const downKeys = ['ArrowDown', 'PageDown', 'End', ' '];
   const atLimit = () => !jumping && scrollY >= scrollLimit() - 1;
-  const onLimitWheel = (e) => { if (e.deltaY > 0 && atLimit()) e.preventDefault(); };
+  // Through a section already seen to its end the wheel goes faster, both ways, so going back
+  // over it never feels stuck (it only shows what was built)
+  const finishedRanges = new Set();
+  const SEEN_SPEED = 2.5;
+  const inFinished = () => [...finishedRanges].some((range) => { const r = range(); return r && scrollY >= r[0] - 1 && scrollY <= r[1] + 1; });
+  const onLimitWheel = (e) => {
+    if (e.deltaY > 0 && atLimit()) { e.preventDefault(); return; }
+    if (jumping || e.ctrlKey || !e.deltaY || !inFinished()) return;
+    e.preventDefault();
+    const step = e.deltaY * (e.deltaMode === 1 ? 40 : 1) * SEEN_SPEED;
+    scrollTo(0, Math.max(0, Math.min(scrollY + step, scrollLimit())));
+  };
   const onLimitKey = (e) => {
     if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
     if (downKeys.includes(e.key) && !(e.key === ' ' && e.shiftKey) && atLimit()) e.preventDefault();
@@ -175,6 +186,7 @@
       removeEventListener('keydown', onLimitKey, { capture: true });
       removeEventListener('scroll', onLimitScroll);
       limits.clear();
+      finishedRanges.clear();
     };
   };
 
@@ -436,6 +448,18 @@
       const next = playing ? playingTo : (hold() ? done : (stops().find(t => t > done + 0.001) ?? tl.duration()));
       return toScroll(Math.max(next, firstStep()));
     });
+    if (!followBack) finishedRanges.add(() => (pin && !playing && tl.progress() > 0.999 ? [pin.start, pin.end] : null));
+    // The first step (the visitor's question and the answer) starts as the section slides up
+    // into view, so it never arrives as an empty panel
+    const early = startShown ? null : ScrollTrigger.create({
+      trigger,
+      start: 'top 75%',
+      onEnter: () => {
+        if (jumping || measuring || playing || seen >= firstStep() - 0.001) return;
+        playOn(firstStep());
+      }
+    });
+
     // What is playing pauses while the scene is out of view (the visitor has scrolled up away from
     // it) and carries on when they come back, so they see all of it
     const watchView = () => {
@@ -448,6 +472,7 @@
     ScrollTrigger.addEventListener('refresh', watchView); // (positions change when the page re-measures)
     // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
     function kill() {
+      early?.kill();
       removeEventListener('scroll', watchView);
       ScrollTrigger.removeEventListener('refresh', watchView);
       stopAll();
@@ -2630,6 +2655,29 @@
       };
     }
   );
+
+  /* After the opening the site header stays out of the way while the visitor reads down, and
+     comes back as soon as they scroll up (to move around or ask for a demo), with its bar so it
+     reads over any section; it goes again on the way down. (Desktop; in the opening the story
+     itself moves the header.) */
+  let headerY = scrollY;
+  let peeking = false;
+  const peek = (show) => {
+    if (show === peeking) return;
+    peeking = show;
+    siteHeader.classList.toggle('is-peek', show);
+    gsap.to(siteHeader, { yPercent: show ? 0 : -100, duration: 0.35, ease: MOTION.easeInOut, overwrite: 'auto' });
+  };
+  addEventListener('scroll', () => {
+    if (!smoother || measuring || root.classList.contains('is-opening')) return;
+    const y = scrollY;
+    const moved = y - headerY;
+    headerY = y;
+    const past = y > topOf('#problem') + innerHeight * 0.5; // the opening is behind
+    if (!past) { if (peeking) { peeking = false; siteHeader.classList.remove('is-peek'); } return; }
+    if (moved < -6 && !pulledBack()) peek(true);
+    else if (moved > 6) peek(false);
+  }, { passive: true });
 
   // In-page links glide there with the smooth scrolling (the story's step links are handled first)
   document.addEventListener('click', (e) => {
