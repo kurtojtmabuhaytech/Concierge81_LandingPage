@@ -3258,6 +3258,35 @@ code, kbd, samp, pre {
   line-height: 1.56;
 }
 
+#deployment.is-staged .platform-card {
+  transition: border-color 0.2s ease-in-out, box-shadow 0.35s ease, translate 0.35s ease;
+}
+#deployment.is-staged .platform-card .platform-icon {
+  transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+#deployment.is-staged .platform-card.is-active {
+  border-color: #276FF8;
+  box-shadow: 0 12px 30px rgba(39, 111, 248, 0.16);
+}
+#deployment.is-staged .platform-card.is-active .platform-icon {
+  background: #276FF8;
+  color: #FFFFFF;
+}
+#deployment.is-staged .platform-card:focus-visible {
+  outline: 2px solid #276FF8;
+  outline-offset: 3px;
+}
+
+#deployment.is-built .platform-card {
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  #deployment.is-built .platform-card:hover {
+    translate: 0 -4px;
+    border-color: #276FF8;
+  }
+}
+
 .platform-header {
   display: flex;
   align-items: center;

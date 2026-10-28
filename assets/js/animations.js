@@ -1705,6 +1705,8 @@
     const ui = Object.fromEntries(['logo', 'toggle', 'lang', 'avatar', 'greet', 'question', 'composer']
       .map(key => [key, $(`.ds-${key}`, screen)]));
     $('img', ui.avatar).removeAttribute('loading'); // shown before the scene starts
+    const MORPH = 1.6; // seconds of timeline for the device to turn into the next one
+    const PLACE = 2.2; // seconds of timeline per place (its card, then the morph)
     section.classList.add('is-staged');
     stage.classList.add('is-shaping');
 
@@ -1776,7 +1778,7 @@
       }
     };
     const layoutTo = (name, at) => Object.entries(layouts[name]).forEach(([key, props]) =>
-      tl.to(key === 'screen' ? screen : ui[key], { ...props, duration: 0.8, ease: MOTION.easeInOut }, at));
+      tl.to(key === 'screen' ? screen : ui[key], { ...props, duration: MORPH, ease: MOTION.easeInOut }, at));
     const setLayout = name => Object.entries(layouts[name]).forEach(([key, props]) =>
       gsap.set(key === 'screen' ? screen : ui[key], props));
 
@@ -1809,18 +1811,66 @@
       .to(device, { scale: 1, duration: MOTION.base }, 'ask+=0.4')
       .addLabel('places', 'ask+=1.1');
 
-    // Steps 3–6 (1:43–2:00): each place joins the list and the device turns into it (on short
-    // screens the view moves down just enough to keep the new card in sight)
+    // Steps 3–6 (1:43–2:00), one per place: it joins the list and the device turns into it, slowly
+    // enough to watch the whole change (on short screens the view moves down just enough to keep
+    // the new card in sight)
+    const at = i => `places+=${i * PLACE}`;
     cards.forEach((card, i) => {
-      const at = `places+=${i * 1.4}`;
       const name = card.dataset.device;
       const keepInView = () => Math.min(showInStage(section, content, split)(), showInStage(section, content, card)());
-      tl.to(content, { y: keepInView, duration: 0.5, ease: MOTION.easeInOut }, at)
-        .to(card, { autoAlpha: 1, x: 0, duration: MOTION.base }, at)
-        .to(device, { ...shapeTo(name), duration: 0.8, ease: MOTION.easeInOut }, `${at}+=0.2`);
-      layoutTo(name, `${at}+=0.2`);
+      if (i) tl.addLabel(`place${i}`, at(i));
+      tl.to(content, { y: keepInView, duration: 0.5, ease: MOTION.easeInOut }, at(i))
+        .to(card, { autoAlpha: 1, x: 0, duration: MOTION.base }, at(i))
+        .to(device, { ...shapeTo(name), duration: MORPH, ease: MOTION.easeInOut }, `${at(i)}+=0.2`);
+      layoutTo(name, `${at(i)}+=0.2`);
     });
-    tl.addLabel('built', `places+=${cards.length * 1.4}`);
+    tl.addLabel('built', `${at(cards.length - 1)}+=${MORPH + 0.4}`);
+
+    // The device on show at a moment of the scene: the last place that has joined the list
+    const showing = t => cards.filter((card, i) => t >= tl.labels.places + i * PLACE + 0.2 - 0.001).at(-1)?.dataset.device;
+    // Once the list is built the visitor can pick a place: the screen turns into that device. The
+    // choice stays (scrolling back, or the page re-measuring, keeps it).
+    let chosen = null;
+    const mark = name => cards.forEach((card) => {
+      card.classList.toggle('is-active', card.dataset.device === name);
+      card.setAttribute('aria-pressed', card.dataset.device === name);
+    });
+    let morphs = []; // the visitor's own morph (a new pick takes over from it, never from the scene)
+    const morphTo = (name, duration = 1.2) => {
+      morphs.forEach(tween => tween.kill());
+      morphs = [
+        gsap.to(device, { ...shape(name), duration, ease: MOTION.easeInOut }),
+        ...Object.entries(layouts[name]).map(([key, props]) =>
+          gsap.to(key === 'screen' ? screen : ui[key], { ...props, duration, ease: MOTION.easeInOut }))
+      ];
+    };
+    const choose = (card) => {
+      if (!section.classList.contains('is-built')) return;
+      chosen = card.dataset.device;
+      mark(chosen);
+      morphTo(chosen);
+    };
+    const onClick = e => { const card = e.target.closest('.platform-card'); if (card) choose(card); };
+    const onKey = (e) => {
+      const card = e.target.closest('.platform-card');
+      if (!card || (e.key !== 'Enter' && e.key !== ' ')) return;
+      e.preventDefault();
+      choose(card);
+    };
+    const list = cards[0].parentElement;
+    list.addEventListener('click', onClick);
+    list.addEventListener('keydown', onKey);
+    cards.forEach((card) => {
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+      card.setAttribute('aria-label', `Show concierge81 on a ${card.dataset.device}`);
+    });
+    // When the scene shows its finished frame again (the page re-measuring), the choice comes back
+    const keepChoice = (t) => {
+      if (!chosen || t < tl.labels.built - 0.001 || morphs.some(tween => tween.isActive())) return;
+      gsap.set(device, shape(chosen));
+      setLayout(chosen);
+    };
 
     // Leaving, as the pricing section slides up over it: the content fades out
     const next = $('#pricing');
@@ -1829,9 +1879,21 @@
       .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
       .set({}, {}, 1);
 
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({
+      trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart,
+      onUpdate: (t) => {
+        mark(chosen || showing(t));
+        keepChoice(t);
+      }
+    });
 
     return () => {
+      list.removeEventListener('click', onClick);
+      list.removeEventListener('keydown', onKey);
+      cards.forEach((card) => {
+        card.classList.remove('is-active');
+        ['role', 'tabindex', 'aria-label', 'aria-pressed'].forEach(attr => card.removeAttribute(attr));
+      });
       next.classList.remove('slides-over');
       section.classList.remove('is-staged');
       stage.classList.remove('is-shaping');
