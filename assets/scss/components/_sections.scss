@@ -1242,6 +1242,17 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   padding: clamp(1.25rem, 3vw, 2rem);
   box-shadow: 0 12px 32px rgba(13, 15, 20, 0.1);
 }
+// The conversation scrolls on its own inside the chat (it never moves the page while it can
+// scroll); the suggestions stay below it
+.faq-thread {
+  display: flex; flex-direction: column; gap: 0.875rem;
+  max-height: clamp(16rem, 44vh, 28rem);
+  overflow-y: auto; overscroll-behavior: contain;
+  margin: -0.5rem; padding: 0.5rem; // room for the bubbles' spring
+  scrollbar-width: thin; scrollbar-color: $neutral-300 transparent;
+  &:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 2px; border-radius: 12px; }
+}
+.faq-chat-box [hidden] { display: none !important; }
 .faq-day { align-self: center; font-size: $type-caption; color: #6E6B63; }
 .faq-pair { display: flex; flex-direction: column; gap: 0.875rem; }
 .faq-pair[hidden] { display: none; }
@@ -1251,12 +1262,33 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 .faq-q .bubble { padding: 0.75rem 1.125rem; border-radius: 22px 22px 6px 22px; }
 .faq-a .bubble { padding: 0.875rem 1.125rem; border-radius: 22px 22px 22px 6px; max-width: min(100%, 34.75rem); }
 .faq-anything { padding-top: 0.5rem; .bubble { font-size: 1rem; } }
-.faq-typing { padding-left: 40px; font-size: $type-caption; color: #6E6B63; }
+// "•••" while the concierge types: the demo's own (desktop scene) and the one main.js adds
+.faq-pair > .faq-typing { display: none; }
+.is-staged .faq-pair > .faq-typing, .faq-typing.is-live { display: flex; }
+.faq-dots { display: inline-flex; gap: 5px; padding: 1.05rem 1.125rem;
+  i { width: 7px; height: 7px; border-radius: 50%; background: #8C887E; animation: faq-dot 1s ease-in-out infinite; }
+  i:nth-child(2) { animation-delay: 0.15s; }
+  i:nth-child(3) { animation-delay: 0.3s; }
+}
+@keyframes faq-dot { 0%, 60%, 100% { transform: none; opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+// A message the visitor asked for pops in like a messaging app: it springs up from its tail corner
+.faq-chat-box .is-popping { animation: faq-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.faq-q.is-popping { transform-origin: right bottom; }
+.faq-a.is-popping, .helpful.is-popping { transform-origin: left bottom; }
+@keyframes faq-pop { from { opacity: 0; transform: translateY(8px) scale(0.6); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .faq-chat-box .is-popping { animation: none; }
+  .faq-dots i { animation: none; }
+}
+// Until the scroll has asked the demo question, the suggestions wait (desktop scene)
+.faq-chat-box.is-waiting .faq-suggestion { pointer-events: none; }
+.faq-suggestions-done { margin: 0; font-size: $type-caption; color: #6E6B63; }
 .msg-ai { display: flex; align-items: flex-end; gap: 0.5rem; }
 .msg-avatar { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; }
 .helpful { display: flex; align-items: center; gap: 8px; padding-left: 40px; font-size: $type-caption; color: #6E6B63;
   button { background: none; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 4px 12px; font: inherit; font-size: $type-caption; color: $color-text-secondary; cursor: pointer;
-    &:hover { border-color: $color-cobalt-bright; color: $color-cobalt-bright; } }
+    &:hover, &.is-active { border-color: $color-cobalt-bright; color: $color-cobalt-bright; } }
+  > span { display: inline-flex; gap: 8px; }
 }
 
 .faq-suggested { padding: 0.75rem 0 0 40px; }
@@ -1271,10 +1303,10 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   font: inherit; font-size: 1rem; line-height: 1.56; letter-spacing: -0.012em; cursor: pointer;
   transition: background $transition-fast;
   span { color: $neutral-500; }
-  &:hover, &.faq-ask + .faq-ask + & { background: rgba(0, 122, 255, 0.15); } // the first shown one is tinted (Figma)
+  &:hover, &.is-first { background: rgba(0, 122, 255, 0.15); } // the first one shown is tinted (Figma; main.js)
 }
-// The two questions the visitor asks in the thread above; shown as suggestions only before
-// the scroll scene asks them (animations.js)
+// The demo question, asked in the thread above; shown as a suggestion only before the scroll
+// scene asks it (animations.js)
 .faq-ask { display: none; }
 
 /* =========================================

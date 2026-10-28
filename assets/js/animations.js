@@ -1952,11 +1952,11 @@
   });
 
   /* 15. I still have a few questions. (Figma recording 2:16–2:45). Desktop: a scroll scene that
-     slides up over the pricing. The visitor asks and the concierge answers; the topics and an
-     empty thread appear with the suggested questions; then the visitor asks two of them in turn:
-     each question opens into the thread (its suggestion leaves the list), the concierge types and
-     answers, pushing the suggestions down; then "Was this helpful?", "Anything else I can help you
-     with?" and "Can't find your answer?". All with the scroll. */
+     slides up over the pricing. The visitor asks and the concierge answers; the topics and the chat
+     rise in with the suggested questions; then, as a demo, "What is Concierge81?" is asked: its
+     suggestion leaves the list, the question pops in, the concierge types (•••) and the answer pops
+     in, then "Anything else I can help you with?". From there the visitor asks by tapping the
+     suggestions (main.js). On a further scroll "Can't find your answer?" arrives. */
   const faq = {
     section: $('#faq'),
     content: $('#faq > .container'),
@@ -1974,26 +1974,30 @@
     const reply = $('.header-pill--ai', header);
     const sub = $('.sub-pill-text', header);
     const pillColor = getComputedStyle(pill).backgroundColor;
-    const [first, second] = $$('.faq-pair:not([hidden])', box);
-    const asks = $$('.faq-ask', box);
+    const chip = $('.faq-ask', box);
+    const demo = $(`.faq-pair[data-q="${chip.dataset.q}"]`, box);
     const thread = {
-      q1: $('.faq-q', first), a1: $('.faq-a', first),
-      q2: $('.faq-q', second), typing: $('.faq-typing', second), a2: $('.faq-a', second),
-      helpful: $('.helpful', second), anything: $('.faq-anything', box)
+      question: $('.faq-q', demo), typing: $('.faq-typing', demo), answer: $('.faq-a:not(.faq-typing)', demo),
+      anything: $('.faq-anything', box)
     };
-    const gap = () => parseFloat(getComputedStyle(box).rowGap) || 0;
-    // A message opens into the thread: from no height (its gap taken back) to its own
-    const closed = () => ({ height: 0, marginTop: -gap(), autoAlpha: 0, overflow: 'hidden' });
-    const open = { height: 'auto', marginTop: 0, autoAlpha: 1, duration: 0.45, ease: MOTION.easeInOut };
-    // The view follows the thread like a chat: the topics stay at the top while everything fits,
-    // and scroll off when the newest message (or `el`) would fall below the screen
+    const origin = el => (el === thread.question ? 'right bottom' : 'left bottom');
+    const gap = () => parseFloat(getComputedStyle(demo).rowGap) || 0;
+    // A message pops into the thread: it makes its room, then springs up from its tail corner
+    const closed = el => ({ height: 0, marginTop: -gap(), autoAlpha: 0, scale: 0.6, transformOrigin: origin(el), overflow: 'hidden' });
+    const popIn = (el, at) => tl
+      .to(el, { height: 'auto', marginTop: 0, duration: 0.3, ease: MOTION.easeInOut }, at)
+      .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.pop + 0.08, ease: 'back.out(1.8)' }, `${at}+=0.05`)
+      .set(el, { overflow: 'visible' }, `${at}+=0.3`);
+    // The view follows the chat: the topics stay at the top while everything fits, and scroll off
+    // when the chat (or `el`) would fall below the screen
     const follow = (el = box) => () => {
       const top = content.getBoundingClientRect().top;
       const from = filters.getBoundingClientRect().top - top - 16;
       const to = el.getBoundingClientRect().bottom - top + 24 - innerHeight;
       return -Math.max(0, from, to);
     };
-    const followTo = (at, el) => tl.to(content, { y: follow(el), duration: 0.5, ease: MOTION.easeInOut }, at);
+    // Already chatting this session: the demo is shown as asked (it never replays above it)
+    const chatting = () => !!$('.faq-pair.is-asked', box) || (() => { try { return JSON.parse(session.get('faq')).length > 0; } catch (e) { return false; } })();
     const next = $('#cta');
     section.classList.add('is-staged');
     next.classList.add('slides-over');
@@ -2005,19 +2009,18 @@
       gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
       gsap.set(sub, { autoAlpha: 0, y: 16 });
       gsap.set([filters, box], { autoAlpha: 0, y: 24 });
-      gsap.set([first, second], { marginTop: -gap() }); // the empty pairs take no room
-      gsap.set(Object.values(thread), closed());
-      gsap.set(asks, { display: 'inline-flex', autoAlpha: 1 });
-      gsap.set(help, { autoAlpha: 0, y: 16 });
+      gsap.set(help, { autoAlpha: 0, scale: 0.85, transformOrigin: 'center bottom' });
+      if (chatting()) {
+        gsap.set(Object.values(thread), { clearProps: 'height,marginTop,opacity,visibility,transform,overflow' });
+        gsap.set(thread.typing, closed(thread.typing));
+        gsap.set(chip, { display: 'none' });
+        return;
+      }
+      Object.values(thread).forEach(el => gsap.set(el, closed(el)));
+      gsap.set(chip, { display: 'inline-flex', autoAlpha: 1 });
     };
     applyStart();
-
-    // The visitor taps a suggestion: it leaves the list and the question opens in the thread
-    const ask = (chip, pair, question, at) => tl
-      .to(chip, { autoAlpha: 0, duration: 0.25 }, at)
-      .set(chip, { display: 'none' }, `${at}+=0.25`)
-      .to(pair, { marginTop: 0, duration: 0.45, ease: MOTION.easeInOut }, `${at}+=0.2`)
-      .to(question, open, `${at}+=0.2`);
+    box.classList.toggle('is-waiting', !chatting());
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     tl.addLabel('enter', 0)
@@ -2029,43 +2032,44 @@
       .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
       .addLabel('ask')
 
-      // Step 2 (2:18–2:24): the view moves to the topics; they and the empty thread with its
-      // suggestions rise in
+      // Step 2 (2:18–2:24): the view moves to the topics; they and the chat with its suggestions rise in
       .to(content, { y: follow(), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
       .to([filters, box], { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.15 }, 'ask+=0.3')
-      .addLabel('thread', 'ask+=1.0');
+      .addLabel('thread', 'ask+=1.0')
 
-    // Step 3 (2:24–2:27): "What is Concierge81?", then its answer
-    ask(asks[0], first, thread.q1, 'thread');
-    tl.to(thread.a1, open, 'thread+=0.8');
-    followTo('thread+=1.3');
-    tl.addLabel('second', 'thread+=1.9');
+      // Step 3 (2:24–2:27): the demo. "What is Concierge81?" is tapped: it leaves the suggestions
+      // and pops into the chat, the concierge types, then the answer and "Anything else?" pop in
+      .to(chip, { autoAlpha: 0, scale: 0.9, duration: 0.25 }, 'thread')
+      .set(chip, { display: 'none' }, 'thread+=0.25');
+    popIn(thread.question, 'thread+=0.2');
+    popIn(thread.typing, 'thread+=0.75');
+    tl.to(thread.typing, { autoAlpha: 0, duration: 0.15 }, 'thread+=1.85')
+      .to(thread.typing, { height: 0, marginTop: () => -gap(), duration: 0.2, ease: MOTION.easeInOut }, 'thread+=1.9');
+    popIn(thread.answer, 'thread+=1.9');
+    popIn(thread.anything, 'thread+=2.6');
+    tl.addLabel('demo', 'thread+=3.1')
 
-    // Step 4 (2:27–2:34): "Will it replace my staff?", the concierge types, then answers
-    ask(asks[1], second, thread.q2, 'second');
-    tl.to(thread.typing, open, 'second+=0.6')
-      .to(thread.typing, closed(), 'second+=1.3')
-      .to(thread.a2, open, 'second+=1.3')
-      .to(thread.helpful, open, 'second+=1.9')
-      .to(thread.anything, open, 'second+=2.3');
-    followTo('second+=2.8');
-
-    // Step 5 (2:34–2:38): the view moves on to the thread's end and "Can't find your answer?" arrives
-    followTo('second+=3.4', help);
-    tl.to(help, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'second+=3.6')
-      .addLabel('built', 'second+=4.3');
+      // Step 4, on a further scroll: the view moves on and "Can't find your answer?" pops in
+      .to(content, { y: follow(help), duration: 0.6, ease: MOTION.easeInOut }, 'demo')
+      .to(help, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, 'demo+=0.4')
+      .addLabel('built', 'demo+=0.9');
 
     // Leaving, as the final call to action slides up over it: the content fades out
     const exit = gsap.timeline({ paused: true })
       .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
       .set({}, {}, 1);
 
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({
+      trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart,
+      // the suggestions can be tapped once the demo has been asked
+      onUpdate: t => box.classList.toggle('is-waiting', t < tl.labels.demo - 0.001 && !chatting())
+    });
 
     return () => {
       next.classList.remove('slides-over');
       section.classList.remove('is-staged');
-      gsap.set([first, second, ...Object.values(thread), ...asks], { clearProps: 'all' });
+      box.classList.remove('is-waiting');
+      gsap.set([...Object.values(thread), chip], { clearProps: 'all' });
     };
   });
 

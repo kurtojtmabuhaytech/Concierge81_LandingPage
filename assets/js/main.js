@@ -144,10 +144,116 @@ document.addEventListener('DOMContentLoaded', () => {
     render();
   };
 
-  setupListing({
-    list: document.querySelector('.faq-chat-box'), item: '.faq-pair',
-    filters: document.getElementById('faqFilters')
-  });
+  /* FAQ chat ("Ask me anything"): tapping a suggestion asks it. Like a messaging app, the question
+     pops in, the concierge types (•••), then the answer pops in, one after another, and the
+     conversation scrolls on its own inside the chat (the page keeps scrolling outside it). Asked
+     questions leave the suggestions; the topics filter what is left. The conversation is kept for
+     the browser session. "What is Concierge81?" is asked by the scroll scene (animations.js). */
+  const faqBox = document.querySelector('.faq-chat-box');
+  if (faqBox) {
+    const thread = faqBox.querySelector('.faq-thread');
+    const anything = thread.querySelector('.faq-anything');
+    const chips = [...faqBox.querySelectorAll('.faq-suggestion')];
+    const done = faqBox.querySelector('.faq-suggestions-done');
+    const suggested = faqBox.querySelector('.faq-suggested-label');
+    const avatar = anything.querySelector('.msg-avatar');
+    const SAVED = 'c81:faq';
+    const saved = (() => { try { return JSON.parse(sessionStorage.getItem(SAVED)) || []; } catch (e) { return []; } })();
+    const save = () => {
+      const asked = [...thread.querySelectorAll('.faq-pair.is-asked')].map(pair => pair.dataset.q);
+      try { sessionStorage.setItem(SAVED, JSON.stringify(asked)); } catch (e) { /* storage blocked */ }
+    };
+    const wait = ms => new Promise(resolve => setTimeout(resolve, motionOK ? ms : 0));
+    // A message pops in (springs up from its tail corner); the chat follows the newest one
+    const pop = (el) => {
+      el.hidden = false;
+      el.classList.remove('is-popping');
+      void el.offsetWidth; // restart the animation
+      el.classList.add('is-popping');
+      thread.scrollTo({ top: thread.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
+    };
+    const helpful = () => {
+      const row = document.createElement('div');
+      row.className = 'helpful';
+      row.innerHTML = 'Was this helpful? <span><button type="button">Yes</button><button type="button">No</button></span>';
+      singleSelect(row.querySelector('span'));
+      return row;
+    };
+
+    // Topics filter the suggestions still to ask
+    let topic = 'all';
+    const showChips = () => {
+      const left = chips.filter(chip => chip.isConnected && !chip.classList.contains('faq-ask'));
+      left.forEach(chip => { chip.hidden = topic !== 'all' && !chip.dataset.cat.split(' ').includes(topic); });
+      left.forEach(chip => chip.classList.toggle('is-first', chip === left.find(c => !c.hidden)));
+      done.hidden = left.length > 0;
+      suggested.hidden = left.length === 0;
+    };
+    const filters = document.getElementById('faqFilters');
+    singleSelect(filters);
+    filters?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-filter]');
+      if (!btn) return;
+      topic = btn.dataset.filter;
+      showChips();
+    });
+
+    // A question already in the thread: moved to the end of the conversation, shown at once
+    const place = (pair) => {
+      thread.insertBefore(pair, anything);
+      pair.hidden = false;
+      pair.classList.add('is-asked');
+      if (!pair.querySelector('.helpful')) pair.append(helpful());
+      faqBox.querySelector(`.faq-suggestion[data-q="${pair.dataset.q}"]`)?.remove();
+    };
+    saved.forEach((q) => {
+      const pair = thread.querySelector(`.faq-pair[data-q="${q}"]`);
+      if (faqBox.querySelector(`.faq-ask[data-q="${q}"]`)) return; // the scroll scene asks that one
+      if (pair) place(pair);
+    });
+    if (saved.length) thread.scrollTop = thread.scrollHeight;
+    showChips();
+
+    // Asking: one question at a time, each waits for the one before it
+    let queue = Promise.resolve();
+    const ask = async (chip) => {
+      const pair = thread.querySelector(`.faq-pair[data-q="${chip.dataset.q}"]`);
+      if (!pair) return;
+      chip.remove();
+      showChips();
+      const [question, answer] = pair.querySelectorAll(':scope > .faq-q, :scope > .faq-a');
+      anything.hidden = true;
+      thread.insertBefore(pair, anything);
+      [question, answer].forEach(el => { el.hidden = true; });
+      pair.hidden = false;
+      pair.classList.add('is-asked');
+      save();
+      pop(question);
+      await wait(550);
+      const typing = document.createElement('div');
+      typing.className = 'faq-a faq-typing is-live';
+      typing.setAttribute('aria-hidden', 'true');
+      typing.innerHTML = `${avatar.outerHTML}<p class="bubble bubble--sand faq-dots"><i></i><i></i><i></i></p>`;
+      pair.insertBefore(typing, answer);
+      pop(typing);
+      await wait(1100);
+      typing.remove();
+      pop(answer);
+      await wait(450);
+      const row = helpful();
+      row.hidden = true;
+      pair.append(row);
+      pop(row);
+      await wait(700);
+      pop(anything);
+    };
+    faqBox.querySelector('.faq-suggestions').addEventListener('click', (e) => {
+      const chip = e.target.closest('.faq-suggestion');
+      if (!chip || chip.classList.contains('faq-ask')) return;
+      chip.disabled = true;
+      queue = queue.then(() => ask(chip));
+    });
+  }
   setupListing({
     list: document.getElementById('postGrid'), item: '.post-card',
     filters: document.getElementById('postFilters'), button: document.getElementById('loadMore'),
