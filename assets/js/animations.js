@@ -295,8 +295,9 @@
         if (self.direction < 0 && tl.time() > 0.001 && !measuring) {
           // Back up: the page moves at once and nothing is cut short. A scene turns plain right
           // away and what was still to play finishes in place (becomePlain). The story (its
-          // frames are layers of one screen) turns plain once it has been seen to the end; until
-          // then it rewinds smoothly, step by step, with the scroll (followSeen below).
+          // frames are layers of one screen) can only be scrolled back once it has been seen to
+          // the end (see its one-way lock), and turns plain then; a link back into it before that
+          // rewinds it step by step (followSeen below).
           if (onBack) {
             if (tl.progress() > 0.999 && !playing && (self.isActive || self.progress === 0)) { onBack(); return; }
           } else if (self.isActive) {
@@ -841,6 +842,40 @@
       }
     });
 
+    /* One way through the opening: until the visitor reaches the team inbox, the page doesn't
+       scroll back up (wheel, trackpad, keys; a dragged scrollbar is held at the furthest point
+       reached), so the story is always watched through, never rewound or cut. Scrolling down
+       and in-page links work as usual. Once the inbox has slid half way up over it, it unlocks
+       for good (the session remembers), and the story is plain sections on the way back. */
+    let furthest = scrollY;
+    const remeasured = () => { furthest = scrollY; }; // positions change when the page re-measures
+    const upKeys = ['ArrowUp', 'PageUp', 'Home'];
+    const onWheel = (e) => { if (e.deltaY < 0 && !jumping) e.preventDefault(); };
+    const onKey = (e) => {
+      if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+      if (upKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) e.preventDefault();
+    };
+    const onScroll = () => {
+      if (measuring) return;
+      if (scrollY >= topOf(next) - innerHeight * 0.5) { // the inbox has slid half way up: free from now on
+        session.set('introDone', '1');
+        unlock();
+        return;
+      }
+      if (jumping || scrollY >= furthest) furthest = scrollY;
+      else if (scrollY < furthest - 1) scrollToY(furthest, false);
+    };
+    const unlock = () => {
+      removeEventListener('wheel', onWheel, { capture: true });
+      removeEventListener('keydown', onKey, { capture: true });
+      removeEventListener('scroll', onScroll);
+      ScrollTrigger.removeEventListener('refresh', remeasured);
+    };
+    addEventListener('wheel', onWheel, { capture: true, passive: false });
+    addEventListener('keydown', onKey, { capture: true });
+    addEventListener('scroll', onScroll, { passive: true });
+    ScrollTrigger.addEventListener('refresh', remeasured);
+
     // In-page links to the intro and features land on their step inside the pinned story
     const stepLinks = { '#intro': 'intro', '#features': 'fan' };
     const onStepLink = (e) => {
@@ -867,6 +902,7 @@
 
     return () => {
       document.removeEventListener('click', onStepLink, true);
+      unlock();
       if (plain) plain();
       else unstage();
     };
