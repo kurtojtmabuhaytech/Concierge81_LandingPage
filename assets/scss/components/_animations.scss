@@ -139,16 +139,6 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   .inbox-card { margin-bottom: 2rem; }
 }
 
-// A scene the visitor has scrolled back up into is a plain section again: everything shown, in
-// full, and it scrolls like the rest of the page (animations.js adds .is-plain)
-:is(#problem, #how, #interaction, #industries, #values, #deployment, #pricing, #faq, #cta).is-staged.is-plain {
-  height: auto;
-  overflow: visible;
-  padding: $space-section 0;
-  > .container { padding-block: 0; will-change: auto; }
-}
-#cta.is-staged.is-plain { padding-bottom: 0; overflow: hidden; }
-
 // Desktop Why concierge81?: Hello. and こんにちは。 share one spot and swap with the language tab
 #values.is-staged .hello { display: grid; place-items: center;
   > span { grid-area: 1 / 1; }
