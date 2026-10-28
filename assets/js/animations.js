@@ -123,11 +123,12 @@
      timeline's labels. The page always moves the moment the visitor scrolls (nothing holds it).
      - Down, into steps not seen yet: they play in order at their own speed; scrolling fast makes
        them catch up quicker, so none is skipped and the scene never lags far behind.
-     - Back up: nothing rewinds, and nothing under way is cut short (a step that is playing
-       finishes first). Once a scene has played to its end, the first upward scroll into it turns
-       it into a plain section for good (becomePlain): everything shown finished and in full, no
-       pin, scrolling like the rest of the page, its hover loops ready. The story does the same
-       through its own `onBack`; until then it holds its frame.
+     - Back up: nothing rewinds and nothing is cut short. The first upward scroll into a scene
+       turns it into a plain section for good (becomePlain): laid out in full, no pin, scrolling
+       like the rest of the page, while whatever was still to play finishes in place. The story
+       (its frames are layers of one screen) is the one exception: until it has been seen to the
+       end it rewinds smoothly, step by step (`followBack`); after that it turns plain through
+       its own `onBack`.
      New steps only ever play on the way down, the first time. Each second of the timeline gets PACE of a screen of
      scrolling; `tail` keeps the scene pinned after its last step (the next section can slide up
      over it). `seen` starts the scene as already watched (the intro, after a refresh past it);
@@ -292,13 +293,16 @@
           return;
         }
         if (self.direction < 0 && tl.time() > 0.001 && !measuring) {
-          // Back up: an animation under way is never cut short, it finishes first. A scene that
-          // has played to its end turns plain (the story through onBack); one that hasn't stays as
-          // it is, and what is left of it still plays on the way down. The story, every frame of
-          // it a full page, simply holds its frame (it never plays backwards).
-          if (playing) return;
-          if (tl.progress() > 0.999 && self.isActive) { (onBack || becomePlain)(); return; }
-          if (followBack) return;
+          // Back up: the page moves at once and nothing is cut short. A scene turns plain right
+          // away and what was still to play finishes in place (becomePlain). The story (its
+          // frames are layers of one screen) turns plain once it has been seen to the end; until
+          // then it rewinds smoothly, step by step, with the scroll (followSeen below).
+          if (onBack) {
+            if (tl.progress() > 0.999 && !playing && (self.isActive || self.progress === 0)) { onBack(); return; }
+          } else if (self.isActive) {
+            becomePlain();
+            return;
+          }
         }
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001) {
@@ -346,8 +350,8 @@
         animation: exit,
         scrub: 0.6,
         onUpdate: (self) => {
-          // scrolling back up while the next section is sliding over it (once it has finished)
-          if (!onBack && self.direction < 0 && self.isActive && !measuring && !playing && tl.progress() > 0.999) becomePlain();
+          // scrolling back up while the next section is sliding over it
+          if (!onBack && self.direction < 0 && self.isActive && !measuring) becomePlain();
         },
         onEnter: () => {
           // reaching the tail: whatever is left plays on to the end at its own pace (never cut
@@ -361,21 +365,32 @@
     }
     // Scroll position of a step (in-page links to a step)
     const labelToScroll = label => toScroll(tl.labels[label]);
-    /* Back up: the scene becomes a plain section for good. Everything in it is shown finished
-       and in full (nothing replays, on the way up or down again), it scrolls like the rest of the
-       page, and the view stays on what the visitor was looking at: the section sliding over it,
-       or the part of it nearest the top of the screen. */
+    /* Back up: the scene becomes a plain section for good. Everything in it is laid out in full
+       and it scrolls like the rest of the page; the view stays on what the visitor was looking
+       at (the section sliding over it, or the part of it nearest the top of the screen). What
+       was still to play (`finish`) plays on in place to the end at its own pace: nothing is cut
+       short, and nothing replays later, on the way up or down again. */
     let plain = false;
     const nextOver = () => $$('.slides-over').find(el => trigger.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
-    const makePlain = (next = nextOver()) => {
+    const makePlain = (next = nextOver(), finish = false) => {
       plain = true;
       seen = Infinity;
       kill();
-      tl.progress(1);
-      if (content) gsap.set(content, { y: 0 });
+      // the view moves belonged to the pinned screen; a plain section scrolls by itself
+      if (content) {
+        tl.getTweensOf(content).forEach(tween => tween.kill());
+        gsap.set(content, { y: 0 });
+      }
       trigger.classList.add('is-plain');
-      trigger.classList.remove('is-playing');
       next?.classList.remove('slides-over');
+      const rest = tl.duration() - tl.time();
+      if (finish && rest > 0.001) {
+        trigger.classList.add('is-playing');
+        tl.tweenTo(tl.duration(), { duration: Math.min(rest / STEP_SPEED, 2.5 + rest * 0.25), ease: 'none', onComplete: resting });
+      } else {
+        resting();
+        tl.progress(1);
+      }
     };
     function becomePlain() {
       if (plain) return;
@@ -384,7 +399,7 @@
       const anchor = next && onScreen(next) ? next
         : $$('.chat-section-header, [data-anim], .bento-row', trigger).find(el => { const r = el.getBoundingClientRect(); return r.height && r.top >= 0 && r.top < innerHeight; }) || trigger;
       const at = anchor.getBoundingClientRect().top;
-      makePlain(next);
+      makePlain(next, true);
       session.set('plain', JSON.stringify([...new Set([...(JSON.parse(session.get('plain') || '[]')), `#${trigger.id}`])]));
       // (the smooth scrolling is paused for the move, so it doesn't ease on from where it was)
       smoother?.paused(true);
@@ -534,8 +549,13 @@
   const STORY_PROPS = 'transform,opacity,visibility,color,backgroundColor,boxShadow,--avatar-clip-bottom,--avatar-glow';
   const plainStory = () => {
     const story = $('.story');
+    const hidden = $$('[data-anim], .hero-card-top, .chat-composer', story).filter(el => +getComputedStyle(el).opacity < 0.5);
     gsap.set([story, ...$$('*', story)], { clearProps: STORY_PROPS });
     gsap.set($$('[data-anim]', story), { autoAlpha: 1 });
+    // what was hidden at that moment (the hero card's top bar and composer after the first step)
+    // fades back in rather than snapping
+    // (it ends set visible: clearing it would hand data-anim parts back to the CSS that hides them)
+    gsap.fromTo(hidden, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, ease: 'power1.out' });
     gsap.set(hero.surface, { '--hero-surface': 1 });
     gsap.set(siteHeader, { clearProps: 'transform' });
     root.classList.add('story-plain');
@@ -782,9 +802,10 @@
 
     // The site header stays away for the rest of the page; it comes back only when the visitor
     // scrolls back up to the intro step (the header tween above runs back)
-    // Scrolling back up never rewinds the story: it turns into plain sections, the view staying
-    // on what the visitor was looking at (the inbox where it had slid over, otherwise the step's
-    // main part: the hero card, the intro kiosk, or the features with their kiosk)
+    // Once the story has been seen to the end, scrolling back up turns it into plain sections
+    // (before that it rewinds step by step), the view staying on what the visitor was looking at
+    // (the inbox where it had slid over, otherwise the step's main part: the hero card, the intro
+    // kiosk, or the features with their kiosk)
     let plain = null;
     const becomePlain = () => {
       if (plain) return;
@@ -809,7 +830,7 @@
       trigger: story,
       tl,
       startShown: true, // its start is the hero, a full page
-      followBack: true,
+      followBack: true, // until seen to the end, it rewinds smoothly with the scroll
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
