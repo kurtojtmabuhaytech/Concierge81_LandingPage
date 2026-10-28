@@ -124,12 +124,13 @@
      `startShown` says its first frame is already a full page (the story's hero). `beforeMove` runs
      before the timeline first moves (the story finishes the opening there); `top` is where it pins;
      `onUpdate` gets the timeline's time as it changes. An optional `exit` follows the scroll over
-     the tail. */
+     the tail. `onBack` replaces the way back: it runs when the visitor scrolls up through the
+     scene once it has moved (the story turns into plain sections there instead of rewinding). */
   const PACE = 0.65; // screen heights of scrolling per second of animation
   const STEP_SPEED = 0.9; // new steps play a touch slower than the timeline, so they read calmly
   const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
   let jumping = false; // an in-page link is gliding past scenes: show them finished
-  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {} }) => {
+  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, onBack = null }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
@@ -270,6 +271,10 @@
           show(want);
           return;
         }
+        if (onBack && self.direction < 0 && tl.time() > 0.001) {
+          onBack();
+          return;
+        }
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001) {
           playOn(want);
@@ -293,6 +298,8 @@
         if (self.progress > 0) beforeMove();
         const want = self.progress > 0 ? Math.max(firstStep(), stepAfter(self.progress * tl.duration())) : 0;
         seen = Math.max(seen === Infinity ? Infinity : seen, want);
+        // the views seen, re-measured at each step (going back over the seen part retraces them)
+        stops().filter(t => t > 0 && t <= Math.min(seen, tl.duration()) + 0.001).forEach((t) => { tl.time(t); noteView(t); });
         tl.time(Math.min(seen, want));
         noteView(tl.time());
         exit?.invalidate();
@@ -301,8 +308,9 @@
     tl.eventCallback('onUpdate', () => onUpdate(tl.time()));
     // The exit runs over the tail. It starts from wherever things are when the visitor gets there
     // (questions may have been moved by hand), so it re-measures each time it is entered from above.
+    let exitTrigger = null;
     if (exit) {
-      ScrollTrigger.create({
+      exitTrigger = ScrollTrigger.create({
         trigger,
         start: () => pin.start + span(),
         end: () => pin.start + span() + tail(),
@@ -320,7 +328,16 @@
     }
     // Scroll position of a step (in-page links to a step)
     const labelToScroll = label => toScroll(tl.labels[label]);
-    return { pin, scrub: { labelToScroll }, steps };
+    // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
+    const kill = () => {
+      stopAll();
+      steps.kill();
+      exitTrigger?.kill();
+      exit?.kill();
+      tl.pause();
+      pin.kill(true);
+    };
+    return { pin, scrub: { labelToScroll }, steps, kill };
   };
 
   const hero = {
@@ -424,7 +441,13 @@
     // Start once everything has loaded, so nothing pops in half-drawn (a slow network still
     // starts it after a few seconds)
     let started = false;
-    const start = () => { if (!started) { started = true; tl.play(); } };
+    const start = () => {
+      if (started) return;
+      started = true;
+      tl.play();
+      // never leaves the page locked: if the browser stalls its frames, the opening ends anyway
+      setTimeout(finish, (tl.duration() + 4) * 1000);
+    };
     if (document.readyState === 'complete') start();
     else {
       addEventListener('load', start, { once: true });
@@ -435,12 +458,38 @@
   /* ---- Scenes: each is ({ isDesktop, isMobile }) => cleanup?, rebuilt when the breakpoint changes ---- */
   const scenes = [];
 
+  // The intro story as plain sections (hero, intro, features stacked, everything shown, nothing
+  // pinned): once the visitor scrolls back up into it, and on later loads in the session. The
+  // site header slides away as the inbox comes in (as it does in the story) and back above it.
+  const STORY_PROPS = 'transform,opacity,visibility,color,backgroundColor,boxShadow,--avatar-clip-bottom,--avatar-glow';
+  const plainStory = () => {
+    const story = $('.story');
+    gsap.set([story, ...$$('*', story)], { clearProps: STORY_PROPS });
+    gsap.set($$('[data-anim]', story), { autoAlpha: 1 });
+    gsap.set(hero.surface, { '--hero-surface': 1 });
+    gsap.set(siteHeader, { clearProps: 'transform' });
+    root.classList.add('story-plain');
+    const header = ScrollTrigger.create({
+      trigger: '#problem',
+      start: 'top 60%',
+      onEnter: () => gsap.to(siteHeader, { yPercent: -100, duration: 0.4, ease: MOTION.easeInOut }),
+      onLeaveBack: () => gsap.to(siteHeader, { yPercent: 0, duration: 0.4, ease: MOTION.easeInOut }),
+      onRefresh: self => gsap.set(siteHeader, { yPercent: self.progress > 0 || scrollY > self.start ? -100 : 0 })
+    });
+    return () => {
+      header.kill();
+      root.classList.remove('story-plain');
+      gsap.set(siteHeader, { clearProps: 'transform' });
+    };
+  };
+
   /* 3–5. Desktop story (Figma recording 11–25s): hero, intro and features share one pinned screen.
      The kiosk stays still while the chat changes around it, and only moves at set steps.
      The timeline moves with the scroll (scrollScene) and stops when the scroll stops.
      Only transforms and opacity animate. */
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
+    if (introDone) return plainStory(); // already watched this session: never replayed
     const story = $('.story');
     const introKiosk = $('#intro .kiosk-device');
     const featuresKiosk = $('#features .kiosk-device');
@@ -663,15 +712,37 @@
 
     // The site header stays away for the rest of the page; it comes back only when the visitor
     // scrolls back up to the intro step (the header tween above runs back)
+    // Scrolling back up never rewinds the story: it turns into plain sections, the view staying
+    // on what the visitor was looking at (the inbox where it had slid over, otherwise the step's
+    // main part: the hero card, the intro kiosk, or the features with their kiosk)
+    let plain = null;
+    const becomePlain = () => {
+      if (plain) return;
+      const t = tl.time();
+      const anchor = next.getBoundingClientRect().top < innerHeight ? next
+        : t < tl.labels.kiosk - 0.001 ? hero.surface : t < tl.labels.features - 0.001 ? introKiosk : featuresStage;
+      const onScreen = anchor.getBoundingClientRect().top;
+      scene.kill();
+      unstage();
+      plain = plainStory();
+      // (the smooth scrolling is paused for the move, so it doesn't ease on from where it was)
+      smoother?.paused(true);
+      ScrollTrigger.refresh();
+      const y = Math.max(0, topOf(anchor) - onScreen);
+      smoother?.paused(false);
+      scrollToY(y, false);
+      ScrollTrigger.update();
+    };
+
     const scene = scrollScene({
       trigger: story,
       tl,
-      seen: introDone, // already watched this session: shown finished, never replayed
       startShown: true, // its start is the hero, a full page
-      followBack: true, // every frame is a full page: on the way back it follows the scroll
+      followBack: true,
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
+      onBack: becomePlain,
       onRefresh: () => {
         fitTraveller();
         applyStart();
@@ -681,6 +752,7 @@
     // In-page links to the intro and features land on their step inside the pinned story
     const stepLinks = { '#intro': 'intro', '#features': 'fan' };
     const onStepLink = (e) => {
+      if (plain) return; // plain sections: the link goes to the section itself
       const link = e.target.closest('a[href^="#"]');
       const label = link ? stepLinks[link.getAttribute('href')] : undefined;
       if (label === undefined) return; // not one of the story's links: leave the click alone
@@ -692,14 +764,19 @@
     document.addEventListener('click', onStepLink, true);
     if (location.hash in stepLinks) requestAnimationFrame(() => scrollToY(scene.scrub.labelToScroll(stepLinks[location.hash]), false));
 
-    return () => {
-      document.removeEventListener('click', onStepLink, true);
+    function unstage() {
       gsap.set(siteHeader, { clearProps: 'transform' });
       traveller.remove();
       morph.remove();
       morphEdge.remove();
       story.classList.remove('is-staged');
       next.classList.remove('slides-over');
+    }
+
+    return () => {
+      document.removeEventListener('click', onStepLink, true);
+      if (plain) plain();
+      else unstage();
     };
   });
 
