@@ -113,19 +113,17 @@
      timeline's labels. The page always moves the moment the visitor scrolls (nothing holds it).
      - Down, into steps not seen yet: they play in order at their own speed; scrolling fast makes
        them catch up quicker, so none is skipped and the scene never lags far behind.
-     - Over what the visitor has seen (up, or down again): the scene follows the scroll directly.
-       The story (`followBack`, every frame of it a full page) moves back and forth with it, e.g. the
-       kiosk turning back into the hero card. The other scenes stay built (questions, cards, answers
-       remain and can be used); only their view goes back through the positions the visitor saw at
-       each step, so e.g. the whole inbox card shows again exactly as it did.
-     New steps only ever play on the way down. Each second of the timeline gets PACE of a screen of
+     - Back up: nothing rewinds. The first upward scroll into a scene the visitor has seen turns
+       it into a plain section for good (becomePlain): everything shown finished and in full, no
+       pin, scrolling like the rest of the page, its hover loops ready. The story does the same
+       through its own `onBack`.
+     New steps only ever play on the way down, the first time. Each second of the timeline gets PACE of a screen of
      scrolling; `tail` keeps the scene pinned after its last step (the next section can slide up
      over it). `seen` starts the scene as already watched (the intro, after a refresh past it);
      `startShown` says its first frame is already a full page (the story's hero). `beforeMove` runs
      before the timeline first moves (the story finishes the opening there); `top` is where it pins;
      `onUpdate` gets the timeline's time as it changes. An optional `exit` follows the scroll over
-     the tail. `onBack` replaces the way back: it runs when the visitor scrolls up through the
-     scene once it has moved (the story turns into plain sections there instead of rewinding). */
+     the tail. `onBack` replaces becomePlain for the way back (the story's own plain sections). */
   const PACE = 0.65; // screen heights of scrolling per second of animation
   const STEP_SPEED = 0.9; // new steps play a touch slower than the timeline, so they read calmly
   const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
@@ -169,9 +167,12 @@
       return y0 + (y1 - y0) * ((time - t0) / Math.max(0.001, t1 - t0));
     };
 
+    // .is-playing: new steps are under way (hover loops and card lifts wait for the step to finish)
+    const resting = () => trigger.classList.remove('is-playing');
     const stopAll = () => {
       playing?.kill();
       playing = null;
+      resting();
       follow?.kill();
       follow = null;
       viewMove?.kill();
@@ -196,6 +197,7 @@
     const followSeen = (time, direction = 1) => {
       playing?.kill();
       playing = null;
+      resting();
       if (followBack) {
         // Only ever rests on a finished step: moves to the step at this scroll position with a
         // short, smooth transition (never stops on a half-faded frame in between)
@@ -230,7 +232,8 @@
       playing?.kill();
       playingTo = target;
       const distance = target - tl.time();
-      if (distance <= 0) return;
+      if (distance <= 0) { playing = null; resting(); return; }
+      trigger.classList.add('is-playing');
       const natural = distance / STEP_SPEED;
       const duration = natural <= CATCH_UP ? natural : CATCH_UP + (natural - CATCH_UP) * 0.35;
       const passed = stops().filter(t => t > tl.time() + 0.001 && t <= target + 0.001);
@@ -246,6 +249,7 @@
         },
         onComplete: () => {
           playing = null;
+          resting();
           seen = Math.max(seen, target);
           noteView(target);
           builtAt = Math.min(seen, tl.duration());
@@ -275,8 +279,8 @@
           show(want);
           return;
         }
-        if (onBack && self.direction < 0 && tl.time() > 0.001 && self.isActive && !measuring) {
-          onBack();
+        if (self.direction < 0 && tl.time() > 0.001 && self.isActive && !measuring) {
+          (onBack || becomePlain)();
           return;
         }
         const watched = Math.min(seen, tl.duration());
@@ -309,7 +313,7 @@
         exit?.invalidate();
       }
     });
-    // .is-built: the scene has played to its end (its hover loops and card lifts come on)
+    // .is-built: the scene has played to its end (e.g. the device list can be picked from)
     tl.eventCallback('onUpdate', () => {
       onUpdate(tl.time());
       trigger.classList.toggle('is-built', tl.progress() > 0.999);
@@ -324,6 +328,10 @@
         end: () => pin.start + span() + tail(),
         animation: exit,
         scrub: 0.6,
+        onUpdate: (self) => {
+          // scrolling back up while the next section is sliding over it
+          if (!onBack && self.direction < 0 && self.isActive && !measuring) becomePlain();
+        },
         onEnter: () => {
           // reaching the tail means every step has been seen (finish one still under way)
           if (playing) { playing.progress(1); }
@@ -336,15 +344,44 @@
     }
     // Scroll position of a step (in-page links to a step)
     const labelToScroll = label => toScroll(tl.labels[label]);
+    /* Back up: the scene becomes a plain section for good. Everything in it is shown finished
+       and in full (nothing replays, on the way up or down again), it scrolls like the rest of the
+       page, and the view stays on what the visitor was looking at: the section sliding over it,
+       or the part of it nearest the top of the screen. */
+    let plain = false;
+    function becomePlain() {
+      if (plain) return;
+      plain = true;
+      const next = $$('.slides-over').find(el => trigger.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+      const onScreen = el => { const r = el.getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0; };
+      const anchor = next && onScreen(next) ? next
+        : $$('.chat-section-header, [data-anim], .bento-row', trigger).find(el => { const r = el.getBoundingClientRect(); return r.height && r.top >= 0 && r.top < innerHeight; }) || trigger;
+      const at = anchor.getBoundingClientRect().top;
+      seen = Infinity;
+      kill();
+      tl.progress(1);
+      if (content) gsap.set(content, { y: 0 });
+      trigger.classList.add('is-plain');
+      trigger.classList.remove('is-playing');
+      next?.classList.remove('slides-over');
+      // (the smooth scrolling is paused for the move, so it doesn't ease on from where it was)
+      smoother?.paused(true);
+      ScrollTrigger.refresh();
+      const y = Math.max(0, topOf(anchor) - at);
+      smoother?.paused(false);
+      scrollToY(y, false);
+      ScrollTrigger.update();
+    }
+
     // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
-    const kill = () => {
+    function kill() {
       stopAll();
       steps.kill();
       exitTrigger?.kill();
       exit?.kill();
       tl.pause();
       pin.kill(true);
-    };
+    }
     return { pin, scrub: { labelToScroll }, steps, kill };
   };
 
@@ -799,9 +836,10 @@
   });
 
   /* 6–8. Team inbox (Figma recording 24–37s). Desktop: a scroll scene that slides up over the hero
-     story. The visitor asks, the concierge answers; the inbox card darkens in and the questions
-     rain into a pile; two are lifted out and dropped back (drag demo); then the view moves down
-     and "Let me handle the repeats." answers. The questions move by GSAP transforms (smoother
+     story. The visitor asks, the concierge answers; the inbox card darkens in, then on their own
+     the questions rain into a pile and two are lifted out and dropped back (drag demo), after
+     which the questions can be picked up; the next scroll moves the view down and "Let me handle
+     the repeats." answers. The questions move by GSAP transforms (smoother
      than CSS variables) and can be picked up and dropped (setupPile). */
   const inbox = {
     section: $('#problem'),
@@ -952,7 +990,12 @@
     const showCard = () => -gsap.utils.clamp(0, offsetIn(card) - 16, offsetIn(card) + card.offsetHeight + 24 - innerHeight);
     const showClosing = () => -Math.max(0, content.offsetHeight - innerHeight); // down to the section's end
 
+    // The rain and the drag demo play on their own, at their own pace, once the visitor has
+    // reached the card (they don't need the scroll, and the scroll never waits for them); then
+    // the questions can be picked up. Built below; reset with the scene.
+    let show = null;
     const applyStart = () => {
+      show?.pause(0);
       gsap.set(content, { y: 0 });
       gsap.set(askUser, { autoAlpha: 0, y: 12 });
       gsap.set(askPill, { backgroundColor: '#A8A49A' });
@@ -965,20 +1008,34 @@
       inbox.moved.clear();
       tags.forEach((tag, i) => gsap.set(tag, { autoAlpha: 0, zIndex: '', x: 0, y: dropFrom(i), rotation: spinFrom(i), scale: 1 }));
       gsap.set(floatCursor, { opacity: 0 });
+      show?.invalidate();
+      pile.classList.add('is-busy');
     };
     applyStart();
 
-    // The rain: once the whole card is in view, the questions fall into the pile from the bottom
-    // up as the visitor scrolls, and the glow rises under it (nested in the scene's timeline below)
-    const rain = gsap.timeline()
+    // The rain (recording 28–30s): the questions fall into the pile from the bottom up and the
+    // glow rises under it. Then the drag demo (30.5–34s): "Where is the restroom?" is lifted out
+    // with the cursor, hovers, and drops back; then "What time do you open?" does the same.
+    show = gsap.timeline({ paused: true, onComplete: () => pile.classList.remove('is-busy') })
       .to(pile, { '--pile-glow': 1, duration: 1.8, ease: 'none' }, 0);
     tags.forEach((tag, i) => {
       const at = fallDelay(i) * 2;
       const rest = inbox.rest(tag);
-      rain.to(tag, { autoAlpha: 1, duration: 0.2, ease: 'none' }, at)
+      show.to(tag, { autoAlpha: 1, duration: 0.2, ease: 'none' }, at)
         .to(tag, { y: rest.y, duration: 1.4, ease: 'bounce.out' }, at)
         .to(tag, { rotation: rest.rotation, duration: 1.4, ease: 'back.out(1.7)' }, at);
     });
+    show.addLabel('demo', '+=0.3')
+      .set(float, { zIndex: 20 }, 'demo')
+      .fromTo(float, { y: floatInPile, rotation: -6 }, { y: 0, rotation: 4, duration: 0.6, ease: MOTION.easeInOut, immediateRender: false }, 'demo')
+      .to(floatCursor, { opacity: 1, duration: 0.2 }, 'demo')
+      .to(float, { y: -10, rotation: 2, duration: 0.4, ease: 'sine.inOut' }, 'demo+=0.6')
+      .to(float, { y: floatInPile, rotation: -6, duration: 0.9, ease: 'bounce.out' }, 'demo+=1.0')
+      .to(floatCursor, { opacity: 0, duration: 0.2 }, 'demo+=1.0')
+      .set(open, { zIndex: 20 }, 'demo+=1.6')
+      .fromTo(open, { x: 0, y: openRest.y, rotation: openRest.rotation }, { x: 40, y: -120, rotation: -14, duration: 0.5, ease: MOTION.easeInOut, immediateRender: false }, 'demo+=1.6')
+      .to(open, { y: -132, rotation: -11, duration: 0.4, ease: 'sine.inOut' }, 'demo+=2.1')
+      .to(open, { x: 0, y: openRest.y, rotation: openRest.rotation, duration: 0.9, ease: 'bounce.out' }, 'demo+=2.5');
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     tl.addLabel('enter', 0)
@@ -991,34 +1048,27 @@
       .addLabel('ask')
 
       // Step 2 (28–30s): the view moves to the inbox and the card darkens in; once the whole card
-      // is in view the questions rain into the pile
+      // is in view the rain and the demo play on their own (show)
       .to(content, { y: showCard, duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
       .to(card, { autoAlpha: 1, duration: 0.3, ease: 'none' }, 'ask+=0.1')
       .to(card, { backgroundColor: '#0E1013', duration: 0.6, ease: 'none' }, 'ask+=0.25')
       .to(head, { autoAlpha: 1, duration: 0.4 }, 'ask+=0.55')
-      .addLabel('rain', 'ask+=0.95')
-      .add(rain, 'rain')
-      .addLabel('inbox')
+      .addLabel('inbox', 'ask+=0.95')
 
-      // Step 3 (30.5–34s): drag demo. "Where is the restroom?" is lifted out with the cursor,
-      // hovers, and drops back; then "What time do you open?" does the same.
-      .set(float, { zIndex: 20 }, 'inbox')
-      .fromTo(float, { y: floatInPile, rotation: -6 }, { y: 0, rotation: 4, duration: 0.6, ease: MOTION.easeInOut, immediateRender: false }, 'inbox')
-      .to(floatCursor, { opacity: 1, duration: 0.2 }, 'inbox')
-      .to(float, { y: -10, rotation: 2, duration: 0.4, ease: 'sine.inOut' }, 'inbox+=0.6')
-      .to(float, { y: floatInPile, rotation: -6, duration: 0.9, ease: 'bounce.out' }, 'inbox+=1.0')
-      .to(floatCursor, { opacity: 0, duration: 0.2 }, 'inbox+=1.0')
-      .set(open, { zIndex: 20 }, 'inbox+=1.6')
-      .fromTo(open, { x: 0, y: openRest.y, rotation: openRest.rotation }, { x: 40, y: -120, rotation: -14, duration: 0.5, ease: MOTION.easeInOut, immediateRender: false }, 'inbox+=1.6')
-      .to(open, { y: -132, rotation: -11, duration: 0.4, ease: 'sine.inOut' }, 'inbox+=2.1')
-      .to(open, { x: 0, y: openRest.y, rotation: openRest.rotation, duration: 0.9, ease: 'bounce.out' }, 'inbox+=2.5')
-      .addLabel('demo')
-
-      // Step 4 (34.5–36s): the view moves down; "Let me handle the repeats." grows, then the sub-bubble
-      .to(content, { y: showClosing, duration: MOTION.slow, ease: MOTION.easeInOut }, 'demo');
-    bubbleIn(tl, closingReply, 'demo+=0.6')
+      // Step 3 (34.5–36s), on the next scroll: the view moves down; "Let me handle the repeats."
+      // grows, then the sub-bubble
+      .to(content, { y: showClosing, duration: MOTION.slow, ease: MOTION.easeInOut }, 'inbox');
+    bubbleIn(tl, closingReply, 'inbox+=0.6')
       .to(closingSub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
       .addLabel('repeats');
+
+    // The card in full view starts the show. When the page is only re-measuring (a refresh past
+    // it, a resize), or a link glides past, it is shown finished instead: it never replays.
+    const startShow = (time) => {
+      if (time < tl.labels.inbox - 0.001 || show.progress() > 0) return;
+      if (measuring || jumping) show.progress(1);
+      else show.play();
+    };
 
     // Leaving, as the next section slides up over it: everything stays as the visitor left it
     // (the questions stay in the pile); the content only drifts up a little as it is covered
@@ -1027,23 +1077,12 @@
     const next = $('#how');
     next.classList.add('slides-over');
 
-    // The questions can be picked up once the demo is over, until the exit starts. Scrolling back
-    // into the demo or the rain puts moved questions back in their places first (the demo
-    // animates its two, the rain all of them), so the scroll and a drop never fight over one.
-    const updatePile = () => {
-      const time = tl.time();
-      pile.classList.toggle('is-busy', time < tl.labels.demo); // draggable once they have landed, also while the next section covers them
-      if (time < tl.labels.inbox) inbox.putBack();
-      else if (time < tl.labels.demo) inbox.putBack([float, open]);
-    };
-    exit.eventCallback('onUpdate', updatePile);
-
     scrollScene({
       trigger: section,
       tl,
       exit,
       tail: () => section.offsetHeight, // the How section slides up over the inbox
-      onUpdate: updatePile,
+      onUpdate: startShow,
       onRefresh: applyStart
     });
 
@@ -2209,14 +2248,14 @@
     $$('#how .process-card, #interaction .mode-card').forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
   });
 
-  /* Hover loops (desktop, with a mouse): once a scene has played to its end, hovering one of its
-     parts plays a short round of that part's animation, again and again while the pointer stays.
+  /* Hover loops (desktop, with a mouse): once a part has been shown (its scene resting on a
+     finished step, not mid-step), hovering it plays a short round of that part's animation, again and again while the pointer stays.
      Moving away lets the round finish quickly; every round ends on the finished frame, so the page
      is always left as the scene built it. `round()` builds one round (a fresh timeline each time). */
-  const hoverLoop = (el, round, { section = el.closest('section'), stopOn = [] } = {}) => {
+  const shownWhole = el => +getComputedStyle(el).opacity > 0.99 && getComputedStyle(el).visibility !== 'hidden';
+  const hoverLoop = (el, round, { section = el.closest('section'), stopOn = [], ready = () => !section.classList.contains('is-playing') && shownWhole(el) } = {}) => {
     let current = null;
     let over = false;
-    const ready = () => section.classList.contains('is-built');
     const next = () => {
       current = round();
       current.eventCallback('onComplete', () => {
@@ -2268,7 +2307,7 @@
         .to(tag, { rotation: r + 2, duration: 0.18, ease: 'sine.inOut' })
         .to(tag, { rotation: r, duration: 0.14, ease: 'sine.in' })
         .to({}, pause(0.5));
-    }, { stopOn: ['pointerdown'] }));
+    }, { stopOn: ['pointerdown'], ready: () => !inbox.pile.classList.contains('is-busy') })); // once the questions have landed
 
     // How: the dial turns a full circle; the reply goes back to "typing" and to the check
     const dial = $('.process-glyph--round', how.cards[1]);
@@ -2297,12 +2336,25 @@
       .fromTo(messages, { autoAlpha: 0, y: 10, scale: 0.92, transformOrigin: i => (messages[i].matches('.msg-row--user') ? 'right bottom' : 'left bottom') },
         { autoAlpha: 1, y: 0, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', stagger: 0.35 }, '+=0.2')
       .to({}, pause(1.4)));
+    // The voice card answers: the mic swells, sound waves ripple out across the card, the glow
+    // brightens and "Listening…" turns to "Answering…" for a moment
     const orb = $('.voice-orb', modes.voice);
+    const voiceStage = $('.voice-stage', modes.voice);
+    const listening = $('.listening', modes.voice);
+    const listeningText = listening.textContent;
+    const waves = [0, 1, 2].map(() => voiceStage.appendChild(Object.assign(document.createElement('span'), { className: 'voice-wave' })));
+    offs.push(() => waves.forEach(wave => wave.remove()));
     loop(modes.voice, () => gsap.timeline()
-      .fromTo(orb, { filter: 'drop-shadow(0 0 0px rgba(39, 111, 248, 0))' },
-        { scale: 1.1, filter: 'drop-shadow(0 0 18px rgba(39, 111, 248, 0.75))', duration: 0.55, ease: 'sine.out' })
-      .to(orb, { scale: 1, filter: 'drop-shadow(0 0 0px rgba(39, 111, 248, 0))', duration: 0.65, ease: 'sine.inOut' })
-      .set(orb, { clearProps: 'filter' })
+      .to(orb, { scale: 1.18, duration: 0.35, ease: 'sine.out' }, 0)
+      .to(voiceStage, { filter: 'brightness(1.4)', duration: 0.4, ease: 'sine.out' }, 0)
+      .fromTo(waves, { scale: 1, opacity: 0.75 }, { scale: 3.4, opacity: 0, duration: 1.5, ease: 'power2.out', stagger: 0.3 }, 0.1)
+      .call(() => { listening.textContent = 'Answering…'; }, null, 0.2)
+      .to(orb, { scale: 0.96, duration: 0.25, ease: 'sine.inOut' }, 0.55)
+      .to(orb, { scale: 1.12, duration: 0.25, ease: 'sine.inOut' }, 0.8)
+      .to(orb, { scale: 1, duration: 0.5, ease: 'sine.inOut' }, 1.05)
+      .to(voiceStage, { filter: 'brightness(1)', duration: 0.7, ease: 'sine.inOut' }, 1.1)
+      .call(() => { listening.textContent = listeningText; }, null, 1.9)
+      .set(voiceStage, { clearProps: 'filter' }, 2.1)
       .to({}, pause(0.3)));
 
     // Why concierge81?

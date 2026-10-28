@@ -484,6 +484,8 @@
   opacity: var(--pile-glow, 1); // raised by the inbox rain on desktop
 }
 
+// Dragging questions never selects the card's text
+.inbox-card { -webkit-user-select: none; user-select: none; }
 .q-tag {
   position: absolute;
   left: var(--x);
@@ -713,6 +715,13 @@ $q-pile: (
   background: radial-gradient(circle at 35% 30%, $cobalt-300, $cobalt-600 70%);
   box-shadow: 0 0 60px rgba($color-cobalt-bright, 0.8);
   color: $color-white;
+}
+// Sound waves the voice card sends out when hovered (animations.js)
+.voice-wave {
+  position: absolute; top: 50%; left: 50%;
+  width: 84px; height: 84px; margin: -42px 0 0 -42px;
+  border-radius: 50%; border: 2px solid rgba(125, 167, 249, 0.8);
+  opacity: 0; pointer-events: none;
 }
 .listening { position: absolute; bottom: 1.25rem; left: 0; right: 0; font-size: 0.7rem; color: $neutral-400;
   &::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: $color-cobalt-bright; margin-right: 6px; }
@@ -1254,12 +1263,12 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   padding: clamp(1.25rem, 3vw, 2rem);
   box-shadow: 0 12px 32px rgba(13, 15, 20, 0.1);
 }
-// The conversation scrolls on its own inside the chat (it never moves the page while it can
-// scroll); the suggestions stay below it
+// The conversation scrolls on its own inside the chat (the page moves on once it has reached
+// its end); the suggestions stay below it
 .faq-thread {
   display: flex; flex-direction: column; gap: 0.875rem;
   max-height: clamp(16rem, 44vh, 28rem);
-  overflow-y: auto; overscroll-behavior: contain;
+  overflow-y: auto; // at its ends the wheel carries on to the page
   margin: -0.5rem; padding: 0.5rem; // room for the bubbles' spring
   scrollbar-width: thin; scrollbar-color: $neutral-300 transparent;
   &:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 2px; border-radius: 12px; }

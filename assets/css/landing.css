@@ -1172,6 +1172,11 @@ code, kbd, samp, pre {
   opacity: var(--pile-glow, 1);
 }
 
+.inbox-card {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .q-tag {
   position: absolute;
   left: var(--x);
@@ -1862,6 +1867,19 @@ code, kbd, samp, pre {
   background: radial-gradient(circle at 35% 30%, #7DA7F9, #1F59C6 70%);
   box-shadow: 0 0 60px rgba(39, 111, 248, 0.8);
   color: #FFFFFF;
+}
+
+.voice-wave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+  border-radius: 50%;
+  border: 2px solid rgba(125, 167, 249, 0.8);
+  opacity: 0;
+  pointer-events: none;
 }
 
 .listening {
@@ -3476,7 +3494,6 @@ code, kbd, samp, pre {
   gap: 0.875rem;
   max-height: clamp(16rem, 44vh, 28rem);
   overflow-y: auto;
-  overscroll-behavior: contain;
   margin: -0.5rem;
   padding: 0.5rem;
   scrollbar-width: thin;
@@ -5572,6 +5589,21 @@ main > .blog-section:last-child {
   margin-bottom: 2rem;
 }
 
+:is(#problem, #how, #interaction, #industries, #values, #deployment, #pricing, #faq, #cta).is-staged.is-plain {
+  height: auto;
+  overflow: visible;
+  padding: clamp(4rem, 6.614vw, 6.25rem) 0;
+}
+:is(#problem, #how, #interaction, #industries, #values, #deployment, #pricing, #faq, #cta).is-staged.is-plain > .container {
+  padding-block: 0;
+  will-change: auto;
+}
+
+#cta.is-staged.is-plain {
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
 #values.is-staged .hello {
   display: grid;
   place-items: center;
@@ -5647,17 +5679,17 @@ main > .blog-section:last-child {
   }
 }
 @media (min-width: 901px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .is-built :is(.process-card, .mode-card, .bento-card, .tier-card) {
+  .is-staged :is(.process-card, .mode-card, .bento-card, .tier-card) {
     transition: translate 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s ease;
   }
-  .is-built :is(.process-card, .mode-card, .bento-card, .tier-card):hover {
+  .is-staged:not(.is-playing) :is(.process-card, .mode-card, .bento-card, .tier-card):hover {
     translate: 0 -6px;
     box-shadow: 0 18px 40px rgba(13, 15, 20, 0.18);
   }
-  .is-built .industry-photo {
+  .is-staged .industry-photo {
     transition: scale 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
-  .is-built .industry-card:hover .industry-photo {
+  .is-staged:not(.is-playing) .industry-card:hover .industry-photo {
     scale: 1.06;
   }
 }
