@@ -144,6 +144,7 @@
   // A scene is turning plain: the page re-measures while the scroll is still where it was in the
   // old, longer page, so the scenes below must not take that as the visitor reaching them
   let settling = false;
+  let sampling = false; // a scene's timeline is being looked at, not played: its callbacks stay quiet
   const settle = (move) => {
     settling = true;
     try { move(); } finally { settling = false; }
@@ -344,6 +345,7 @@
     });
     // .is-built: the scene has played to its end (e.g. the device list can be picked from)
     tl.eventCallback('onUpdate', () => {
+      if (sampling) return;
       onUpdate(tl.time());
       trigger.classList.toggle('is-built', tl.progress() > 0.999);
     });
@@ -375,12 +377,75 @@
     const labelToScroll = label => toScroll(tl.labels[label]);
     /* Back up: the scene becomes a plain section for good. Everything in it is laid out in full
        and it scrolls like the rest of the page; the view stays on what the visitor was looking
-       at (the section sliding over it, or the part of it nearest the top of the screen). What
-       was still to play (`finish`) plays on in place to the end at its own pace: nothing is cut
-       short, and nothing replays later, on the way up or down again. */
+       at (the section sliding over it, or the part of it nearest the top of the screen). With
+       `finish`, the step under way plays on to its end (never cut short), and whatever the
+       visitor hadn't reached yet stays hidden until they scroll down to it: then the rest plays
+       in place, in order. Nothing replays later, on the way up or down again. */
     let plain = false;
+    let waits = []; // the steps not reached yet ({ first, target }), each waiting for the visitor to scroll down to it
+    let waitY = 0;
+    // Only on the way down: a waiting step plays once its first part has come up into the screen
+    // (turning back up never shows anything new)
+    const onWaitScroll = () => {
+      const down = scrollY > waitY + 1;
+      waitY = scrollY;
+      if (!down) return;
+      while (waits.length && waits[0].first.getBoundingClientRect().top < innerHeight * 0.85) playTo(waits.shift().target);
+      if (!waits.length) removeEventListener('scroll', onWaitScroll);
+    };
+    let restTo = 0; // how far the rest has been let play
     const nextOver = () => $$('.slides-over').find(el => trigger.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+    // Played at the pace new steps play at (a long stretch a little quicker, as when catching up)
+    const pace = (distance) => {
+      const natural = distance / STEP_SPEED;
+      return natural <= CATCH_UP ? natural : CATCH_UP + (natural - CATCH_UP) * 0.6;
+    };
+    const unseen = el => (el.checkVisibility ? !el.checkVisibility({ opacityProperty: true, visibilityProperty: true }) : +getComputedStyle(el).opacity < 0.1);
+    const hiddenParts = () => $$('[data-anim], [data-anim] *, .q-tag, .bar', trigger).filter(el => el.offsetWidth && el.offsetHeight && unseen(el));
+    // Plays on up to `time` (each step in order, once the ones before it have played)
+    let restPlay = null;
+    const playTo = (time) => {
+      if (time <= restTo + 0.001) return;
+      restTo = time;
+      trigger.classList.add('is-playing');
+      restPlay?.kill(); // a later step reached: it carries on from here, in order
+      restPlay = tl.tweenTo(restTo, { duration: pace(restTo - tl.time()), ease: 'none', onComplete: resting });
+    };
+    // Each step not reached yet waits for its own first part: it plays once that comes up into
+    // the screen on the way down (onWaitScroll). Which parts a step shows is found by looking at the timeline at its end (with
+    // the scene's own callbacks quiet), then putting it back.
+    const waitForRest = () => {
+      const from = tl.time();
+      restTo = from;
+      const ends = stops().filter(t => t > from + 0.001);
+      if (!ends.length) return;
+      let hidden = hiddenParts();
+      sampling = true;
+      const firsts = ends.map((end) => {
+        tl.time(end);
+        const shown = hidden.filter(el => !unseen(el));
+        hidden = hidden.filter(el => !shown.includes(el));
+        return shown.sort((x, y) => x.getBoundingClientRect().top - y.getBoundingClientRect().top)[0];
+      });
+      tl.time(from);
+      sampling = false;
+      // A step that shows something new starts a group that waits for that part; steps after it
+      // that show nothing new (finishing touches) play along with it. Steps before any of that
+      // (nothing new to wait for) play right away.
+      const groups = [];
+      ends.forEach((end, i) => {
+        if (firsts[i]) groups.push({ first: firsts[i], target: end });
+        else if (groups.length) groups.at(-1).target = end;
+        else playTo(end);
+      });
+      waits = groups;
+      waitY = scrollY;
+      if (waits.length) addEventListener('scroll', onWaitScroll, { passive: true });
+    };
     const makePlain = (next = nextOver(), finish = false) => {
+      // the end of the step under way (only that one finishes; the visitor may have scrolled on
+      // further, but hasn't seen what comes after it yet)
+      const stepEnd = playing ? (stops().find(t => t > tl.time() + 0.001) ?? tl.duration()) : tl.time();
       plain = true;
       seen = Infinity;
       kill();
@@ -391,13 +456,18 @@
       }
       trigger.classList.add('is-plain');
       next?.classList.remove('slides-over');
-      const rest = tl.duration() - tl.time();
-      if (finish && rest > 0.001) {
-        trigger.classList.add('is-playing');
-        tl.tweenTo(tl.duration(), { duration: Math.min(rest / STEP_SPEED, 2.5 + rest * 0.25), ease: 'none', onComplete: resting });
-      } else {
+      if (!finish) {
         resting();
         tl.progress(1);
+        return;
+      }
+      const toEnd = Math.min(stepEnd, tl.duration()) - tl.time();
+      if (toEnd > 0.001) {
+        trigger.classList.add('is-playing');
+        restPlay = tl.tweenTo(stepEnd, { duration: pace(toEnd), ease: 'none', onComplete: () => { resting(); waitForRest(); } });
+      } else {
+        resting();
+        requestAnimationFrame(waitForRest); // once the plain layout is measured
       }
     };
     function becomePlain() {
