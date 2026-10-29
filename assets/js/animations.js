@@ -184,8 +184,8 @@
      section can slide up over it). `seen` starts the scene as already watched; `startShown` says
      its first frame is already a full page (the story's hero). `beforeMove` runs before the
      timeline first moves (the story finishes the opening there); `top` is where it pins;
-     `onUpdate` gets the timeline's time as it changes. An optional `exit` follows the scroll over
-     the tail. `hold` keeps the scroll at the current step while the scene's own animation runs,
+     `onUpdate` gets the timeline's time as it changes. With `drift`, the view drifts up a little
+     over the tail as the next section covers it. `hold` keeps the scroll at the current step while the scene's own animation runs,
      and `runs` are such animations, paused with the step while the visitor is away. */
   const PACE = 0.25; // screen heights of scrolling per second of animation
   const STEP_SPEED = 1.15; // new steps play a little quicker than the timeline, still easy to read
@@ -212,7 +212,16 @@
   const finishedRanges = new Set();
   const SEEN_SPEED = 2.5;
   const inFinished = () => [...finishedRanges].some((range) => { const r = range(); return r && scrollY >= r[0] - 1 && scrollY <= r[1] + 1; });
+  // A wheel over something that scrolls by itself (the FAQ chat) scrolls it, not the page
+  const scrollsItself = (e) => {
+    for (let el = e.target; el && el !== document.body; el = el.parentElement) {
+      if (el.scrollHeight <= el.clientHeight + 1 || !/(auto|scroll)/.test(getComputedStyle(el).overflowY)) continue;
+      if (e.deltaY < 0 ? el.scrollTop > 0 : el.scrollTop + el.clientHeight < el.scrollHeight - 1) return true;
+    }
+    return false;
+  };
   const onLimitWheel = (e) => {
+    if (scrollsItself(e)) return;
     if (e.deltaY > 0 && atLimit()) { e.preventDefault(); return; }
     if (jumping || e.ctrlKey || !e.deltaY || !inFinished()) return;
     e.preventDefault();
@@ -252,7 +261,7 @@
   let measuring = false;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
   ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
-  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, canGoBack = () => true, hold = () => false, runs = () => [] }) => {
+  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, canGoBack = () => true, hold = () => false, runs = () => [] }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
@@ -420,7 +429,7 @@
         followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, watched)), self.direction);
       },
       onRefresh: (self) => {
-        // Rewind with the old measurements (the exit first: it ran last), re-measure the starting
+        // Rewind with the old measurements, re-measure the starting
         // state, then show (no replay) the finished step at the scroll position. While another
         // scene turns plain (settle), a step under way here carries on from where it was.
         const resume = settling && playing ? { at: tl.time(), to: playingTo } : null;
@@ -428,7 +437,6 @@
         builtAt = -1;
         views.length = 0;
         views.push([0, 0]);
-        exit?.progress(0);
         tl.progress(0);
         setHeaderHeight();
         onRefresh();
@@ -443,7 +451,6 @@
         tl.time(Math.min(seen, tl.duration()));
         noteView(tl.time());
         if (content && seen > want + 0.001) gsap.set(content, { y: viewAt(Math.max(firstStep(), want)) });
-        exit?.invalidate();
         if (resume) {
           tl.time(resume.at);
           playingTo = resume.to;
@@ -467,25 +474,33 @@
       onUpdate(tl.time());
       trigger.classList.toggle('is-built', tl.progress() > 0.999);
     });
-    // The exit runs over the tail. It starts from wherever things are when the visitor gets there
-    // (questions may have been moved by hand), so it re-measures each time it is entered from above.
-    let exitTrigger = null;
-    if (exit) {
-      exitTrigger = ScrollTrigger.create({
+    // Over the tail, as the next section slides up over it, the view rests on the finished one
+    // (the last step's) and only drifts up a little as it is covered (`drift`). It always eases
+    // there from wherever the view is, so a quick pass back down never leaves an earlier part of
+    // the section on screen under the next one.
+    const DRIFT = 40;
+    let tailTrigger = null;
+    if (drift) {
+      const settleView = (progress, ease = true) => {
+        if (!content || playing) return;
+        viewMove?.kill();
+        const y = viewAt(tl.duration()) - DRIFT * progress;
+        viewMove = ease ? gsap.to(content, { y, duration: 0.35, ease: 'power2.out', overwrite: false }) : gsap.set(content, { y });
+      };
+      tailTrigger = ScrollTrigger.create({
         trigger,
         start: () => pin.start + span(),
         end: () => pin.start + span() + tail(),
-        animation: exit,
-        scrub: 0.6,
         onEnter: (self) => {
           if (!jumping && scrollY > scrollLimit() + 1) return; // a jump past the limit (it is put back)
           // reaching the tail: whatever is left plays on to the end at its own pace (never cut
           // short) as the next section slides over
           if (tl.progress() < 0.999) playOn(tl.duration());
-          else { seen = Infinity; noteView(tl.duration()); }
-          exit.invalidate();
+          else seen = Infinity;
+          settleView(self.progress);
         },
-        onRefresh: (self) => exit.progress(self.progress)
+        onUpdate: self => settleView(self.progress),
+        onRefresh: (self) => { if (self.progress > 0) settleView(self.progress, false); }
       });
     }
     // Scroll position of a step (in-page links to a step)
@@ -530,8 +545,7 @@
       ScrollTrigger.removeEventListener('refresh', watchView);
       stopAll();
       steps.kill();
-      exitTrigger?.kill();
-      exit?.kill();
+      tailTrigger?.kill();
       tl.pause();
       pin.kill(true);
     }
@@ -1237,17 +1251,13 @@
       showKept = 0;
     };
 
-    // Leaving, as the next section slides up over it: everything stays as the visitor left it
-    // (the questions stay in the pile); the content only drifts up a little as it is covered
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0);
     const next = $('#how');
     next.classList.add('slides-over');
 
     scrollScene({
       trigger: section,
       tl,
-      exit,
+      drift: true, // the content drifts up a little as the next section covers it
       tail: () => section.offsetHeight, // the How section slides up over the inbox
       onUpdate: startShow,
       onRefresh: applyStart,
@@ -1380,12 +1390,7 @@
       .to(answer, { morphSVG: how.check, duration: 0.5, ease: MOTION.easeInOut }, 'step3+=1.9');
     tl.add(steps, 'steps').addLabel('built');
 
-    // Leaving, as the next section slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       next.classList.remove('slides-over');
@@ -1503,12 +1508,7 @@
     const next = $('#industries');
     next.classList.add('slides-over');
 
-    // Leaving, as the industries section slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       next.classList.remove('slides-over');
@@ -1540,8 +1540,8 @@
     section.classList.add('is-staged');
 
     // Desktop carousel: the cards sit on a track that moves one card per step until "Built for
-    // yours, too." reaches the right edge (the last step may be shorter), so the row always stays
-    // full. There is one dot per position (the extra dots hide), and the arrows dim at the ends.
+    // yours, too." is whole on screen. Every stop is a whole card, so the row never ends with a
+    // card cut off on the left. There is one dot per position (the extra dots hide), and the arrows dim at the ends.
     // Arrows, dots, horizontal swipes and drags step it.
     const dots = $$('.gallery-dots span', controls);
     const [prevBtn, nextBtn] = $$('[data-gallery]', controls);
@@ -1560,7 +1560,8 @@
       const end = cards[cards.length - 1].offsetLeft + cards[cards.length - 1].offsetWidth;
       return Math.max(0, end - (gallery.clientWidth - parseFloat(getComputedStyle(gallery).paddingRight)));
     };
-    const shiftAt = i => Math.min(i * step(), maxShift());
+    const lastAt = () => Math.max(0, Math.ceil(maxShift() / step() - 0.05)); // the last whole-card stop
+    const shiftAt = i => Math.min(i, lastAt()) * step();
     const showDot = () => {
       dots.forEach((dot, i) => {
         dot.hidden = i > last;
@@ -1570,7 +1571,7 @@
       nextBtn.disabled = index === last;
     };
     const measure = () => {
-      last = Math.min(dots.length - 1, Math.ceil(maxShift() / step() - 0.05));
+      last = Math.min(dots.length - 1, lastAt());
       index = Math.min(index, last);
       showDot();
     };
@@ -1638,7 +1639,7 @@
     // The dots and arrows follow the row as the scroll moves it
     const syncDots = () => {
       const pos = -gsap.getProperty(track, 'x');
-      index = pos >= maxShift() - 2 && pos > 0 ? last : gsap.utils.clamp(0, last, Math.round(pos / step()));
+      index = gsap.utils.clamp(0, last, Math.round(pos / step()));
       showDot();
     };
 
@@ -1685,16 +1686,14 @@
     });
     tl.addLabel('shown')
 
-      // Step 3 (1:07–1:14): the row moves along until "Built for yours, too." reaches the right edge
-      .to(track, { x: () => -maxShift(), duration: 2.4, ease: 'none', onUpdate: syncDots }, 'shown+=0.3')
+      // Step 3 (1:07–1:14): the row moves along until "Built for yours, too." is whole on screen
+      .to(track, { x: () => -shiftAt(lastAt()), duration: 2.4, ease: 'none', onUpdate: syncDots }, 'shown+=0.3')
       .addLabel('moved');
 
-    // Leaving: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => innerHeight * 0.5, onRefresh: applyStart });
+    // Why concierge81? slides up over it, as every section does over the one before
+    const next = $('#values');
+    next.classList.add('slides-over');
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       slide?.kill();
@@ -1709,6 +1708,7 @@
       track.remove();
       gsap.set(cards, { clearProps: 'transform' });
       showDotFirst();
+      next.classList.remove('slides-over');
       section.classList.remove('is-staged');
     };
   });
@@ -1857,12 +1857,7 @@
       .to(demo, { autoAlpha: 1, y: 0, duration: 0.6 }, 'row3+=0.6')
       .addLabel('built', 'row3+=1.6');
 
-    // Leaving, as the deployment section slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       next.classList.remove('slides-over');
@@ -2058,12 +2053,9 @@
     // Leaving, as the pricing section slides up over it: the content fades out
     const next = $('#pricing');
     next.classList.add('slides-over');
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
-      .set({}, {}, 1);
 
     scrollScene({
-      trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart,
+      trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart,
       onUpdate: (t) => {
         mark(chosen || showing(t));
         keepChoice(t);
@@ -2176,12 +2168,7 @@
       .to(help, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, 'help+=0.45')
       .addLabel('built', 'help+=0.9');
 
-    // Leaving, as the FAQ section slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       next.classList.remove('slides-over');
@@ -2284,13 +2271,8 @@
       .to(help, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, 'demo+=0.4')
       .addLabel('built', 'demo+=0.9');
 
-    // Leaving, as the final call to action slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { y: '-=40', duration: 1, ease: 'none' }, 0) // stays shown; only drifts as it is covered
-      .set({}, {}, 1);
-
     scrollScene({
-      trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart,
+      trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart,
       // the suggestions can be tapped once the demo has been asked
       onUpdate: t => box.classList.toggle('is-waiting', t < tl.labels.demo - 0.001 && !chatting())
     });
@@ -2381,12 +2363,13 @@
     $$('#how .process-card, #interaction .mode-card').forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
   });
 
-  /* Hover loops (desktop, with a mouse): once a part has been shown (its scene resting on a
-     finished step, not mid-step), hovering it plays a short round of that part's animation, again and again while the pointer stays.
+  /* Hover loops (desktop, with a mouse): once the whole section has played (its scene built, and
+     not replaying a step), hovering a part plays a short round of that part's animation, again and again while the pointer stays.
      Moving away lets the round finish quickly; every round ends on the finished frame, so the page
      is always left as the scene built it. `round()` builds one round (a fresh timeline each time). */
+  const finished = section => section.classList.contains('is-built') && !section.classList.contains('is-playing');
   const shownWhole = el => +getComputedStyle(el).opacity > 0.99 && getComputedStyle(el).visibility !== 'hidden';
-  const hoverLoop = (el, round, { section = el.closest('section'), stopOn = [], ready = () => !section.classList.contains('is-playing') && shownWhole(el) } = {}) => {
+  const hoverLoop = (el, round, { section = el.closest('section'), stopOn = [], ready = () => finished(section) && shownWhole(el) } = {}) => {
     let current = null;
     let over = false;
     const next = () => {
@@ -2440,7 +2423,7 @@
         .to(tag, { rotation: r + 2, duration: 0.18, ease: 'sine.inOut' })
         .to(tag, { rotation: r, duration: 0.14, ease: 'sine.in' })
         .to({}, pause(0.5));
-    }, { stopOn: ['pointerdown'], ready: () => !inbox.pile.classList.contains('is-busy') })); // once the questions have landed
+    }, { stopOn: ['pointerdown'], ready: () => finished(inbox.section) && !inbox.pile.classList.contains('is-busy') })); // once the section has played and the questions have landed
 
     // How: the dial turns a full circle; the reply goes back to "typing" and to the check
     const dial = $('.process-glyph--round', how.cards[1]);
