@@ -3104,12 +3104,23 @@ button.chip, a.chip {
   color: rgba(255, 255, 255, 0.9);
   margin-bottom: 1.4rem;
 }
+.bento-card--cta .demo-face {
+  position: relative;
+  display: block;
+}
+.bento-card--cta .demo-face .cta-rings {
+  top: 50%;
+}
 .bento-card--cta .avatar-circle {
   position: relative;
   width: 86px;
   height: 86px;
   border: 0;
   box-shadow: none;
+}
+.bento-card--cta .avatar-circle img {
+  top: -2%;
+  width: 104%;
 }
 .bento-card--cta .btn {
   position: relative;

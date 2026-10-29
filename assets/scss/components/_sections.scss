@@ -1118,7 +1118,12 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   align-items: center; justify-content: center; text-align: center;
   h3 { font-size: $type-title; margin: 1.6rem 0 0.9rem; }
   p { color: rgba($color-white, 0.9); margin-bottom: 1.4rem; }
+  // The rings are centred on the avatar (they share .demo-face), and the avatar here is a closer
+  // crop: her face in the middle of the circle
+  .demo-face { position: relative; display: block; }
+  .demo-face .cta-rings { top: 50%; }
   .avatar-circle { position: relative; width: 86px; height: 86px; border: 0; box-shadow: none; }
+  .avatar-circle img { top: -2%; width: 104%; }
   .btn { position: relative; padding: 0.9rem 1.4rem; font-size: 1rem; }
 }
 .cta-rings { position: absolute; left: 50%; top: 32%; width: 0; height: 0; pointer-events: none;
