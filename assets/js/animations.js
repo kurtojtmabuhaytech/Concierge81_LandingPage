@@ -2552,23 +2552,7 @@
       .to(askIcon, { y: 0, duration: 0.45, ease: 'bounce.out' })
       .to({}, pause(0.7)));
 
-    // Type or talk: the mini chat plays again like a messaging app (question, "•••", answers,
-    // chips); the voice orb glows
-    const mini = $('.mini-chat', modes.chat);
-    const rows = $$('.msg-row', mini);
-    const miniChips = $$('.chip', mini);
-    const miniDots = typingDots(rows[1], 'is-sm');
-    loop(modes.chat, () => {
-      const round = gsap.timeline()
-        .to([...rows, ...miniChips], { autoAlpha: 0, duration: 0.2 })
-        .set([...rows, ...miniChips], { y: 0, scale: 0.6, transformOrigin: i => (i === 0 ? 'right bottom' : 'left bottom') });
-      popIn(round, rows[0], 0.4);
-      typeIn(round, miniDots, 0.75, 0.45);
-      popIn(round, rows[1], 1.25);
-      popIn(round, rows[2], 1.6);
-      round.to(miniChips, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)', stagger: 0.1 }, 1.95);
-      return round.to({}, pause(1.4));
-    });
+    // Type or talk: the chat card lifts (in the CSS); the voice orb glows
     // The voice card answers: the mic swells, sound waves ripple out across the card, the glow
     // brightens and "Listening…" turns to "Answering…" for a moment
     const orb = $('.voice-orb', modes.voice);
@@ -2646,21 +2630,7 @@
       .to(bars, { '--grow': 1, duration: 0.5, ease: 'power2.out', stagger: 0.1 })
       .to({}, pause(1)));
 
-    // Industries: the chat on a card pops in again (its photo zooms, in the CSS)
-    industries.cards.forEach((card) => {
-      const [question, answer] = $$('.industry-chat .bubble:not(.typing-dots)', card);
-      if (!answer) return;
-      const dots = typingDots(answer, 'is-sm');
-      loop(card, () => {
-        const round = gsap.timeline()
-          .to([question, answer], { autoAlpha: 0, duration: 0.2 })
-          .set([question, answer], { scale: 0.6 });
-        popIn(round, question, 0.3);
-        typeIn(round, dots, 0.65, 0.45);
-        popIn(round, answer, 1.15);
-        return round.to({}, pause(1.6));
-      });
-    });
+    // Industries: the card lifts and its photo zooms (in the CSS); the chat on it stays as it is
 
     // Pricing: each tier's graphic builds again
     const [basic, capacity, business, enterprise] = pricing.cards;
@@ -2688,30 +2658,6 @@
       .to(spokes, { strokeDashoffset: 0, duration: 0.45, ease: 'power1.inOut', stagger: 0.07 })
       .to(entNodes, { scale: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.07 }, '-=0.3')
       .to({}, pause(0.8)));
-
-    // Every section's chat (not the opening's, which the story moves): the conversation plays
-    // again, the question pops up, "•••" types, then the answer and the sub-bubble pop in
-    $$('section .chat-section-header').filter(header => !header.closest('.story')).forEach((header) => {
-      const user = $('.chat-header-row.right', header);
-      const reply = $('.header-pill--ai', header);
-      const sub = $('.sub-pill-text', header);
-      if (!reply) return;
-      const dots = typingDots(reply);
-      const parts = [user, reply, sub].filter(Boolean);
-      const staged = header.closest('section').classList.contains('is-staged');
-      loop(header, () => {
-        placeDots(dots, reply);
-        const round = gsap.timeline()
-          .to(parts, { autoAlpha: 0, duration: 0.15 })
-          .set(parts, { scale: 0.6, transformOrigin: i => (parts[i] === user ? 'right bottom' : 'left bottom') });
-        let at = 0.2;
-        if (user) { popIn(round, user, at); at += 0.35; }
-        typeIn(round, dots, at, 0.5);
-        popIn(round, reply, at + 0.55);
-        if (sub) popIn(round, sub, at + 0.8);
-        return round.to({}, pause(1.2));
-      }, staged ? undefined : { ready: () => shownWhole(reply) }); // (the contact section isn't a scene)
-    });
 
     // The opening's features: the icon pops and the row nudges toward the kiosk
     const storyDone = () => root.classList.contains('story-plain') || $('.story').classList.contains('is-built');
