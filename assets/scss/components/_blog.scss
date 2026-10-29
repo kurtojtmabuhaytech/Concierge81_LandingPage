@@ -25,6 +25,15 @@ main > .blog-section:last-child { padding-bottom: clamp(4rem, 7.9vw, 7.5rem); }
 
 .post-eyebrow { @extend %eyebrow; display: block; color: $cobalt-600; }
 
+// Whole-card link: the title link's ::after covers its card, so each card is one tab stop.
+// The focus ring is drawn on that overlay, i.e. around the whole card.
+.featured-card, .news-featured { position: relative; }
+.stretched-link {
+  &::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
+  &:focus-visible { outline: none; }
+  &:focus-visible::after { outline: 2px solid $color-cobalt-bright; outline-offset: -3px; border-radius: $radius-card; }
+}
+
 /* =========================================
    Story Media (hero image + chat overlay)
    ========================================= */
@@ -128,7 +137,9 @@ main > .blog-section:last-child { padding-bottom: clamp(4rem, 7.9vw, 7.5rem); }
   overflow: hidden;
   color: $color-ink;
   transition: transform $transition-fast, box-shadow $transition-fast;
-  &:hover { transform: translateY(-3px); box-shadow: $shadow-soft; color: $color-ink; }
+  &:hover, &:focus-visible { transform: translateY(-3px); box-shadow: $shadow-soft; color: $color-ink; }
+  &:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 3px; }
+  &:active { transform: translateY(-1px); box-shadow: none; } // pressed
 }
 .post-card-media { height: 16.25rem; flex-shrink: 0; overflow: hidden; background: $neutral-200;
   &.placeholder-box { border: none; border-radius: 0; }
@@ -263,6 +274,41 @@ main > .blog-section:last-child { padding-bottom: clamp(4rem, 7.9vw, 7.5rem); }
   button { background: $color-white; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 10px 18px; font: inherit; font-size: 0.9375rem; color: $color-ink; cursor: pointer;
     &.is-active { border-color: $color-cobalt-bright; color: $color-cobalt-bright; background: $cobalt-50; }
   }
+}
+
+// Previous / next article
+.post-pager { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem; padding-top: 1rem; border-top: 1px solid $neutral-200; }
+.post-pager-link { background: $color-white; border-radius: 20px; padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 6px; color: $color-ink;
+  transition: transform $transition-fast, box-shadow $transition-fast;
+  &:hover, &:focus-visible { transform: translateY(-2px); box-shadow: $shadow-soft; color: $color-ink; .post-pager-title { color: $color-cobalt-bright; } }
+  &:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 3px; }
+  &:active { transform: none; box-shadow: none; }
+}
+.post-pager-link--next { text-align: right; }
+.post-pager-label { font-size: $type-caption; font-weight: $font-weight-medium; color: $cobalt-600; }
+.post-pager-title { font-size: 1.0625rem; line-height: 1.41; font-weight: $font-weight-semibold; letter-spacing: -0.011em; transition: color $transition-fast; }
+
+// Reading progress: a thin bar across the top of the window (main.js sets the scale)
+.read-progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 102; pointer-events: none;
+  span { display: block; height: 100%; background: $color-cobalt-bright; transform: scaleX(0); transform-origin: left center; }
+}
+
+// Back to top (main.js shows it after about one screen)
+.to-top {
+  position: fixed; right: clamp(1rem, 2.5vw, 2rem); bottom: clamp(1rem, 2.5vw, 2rem); z-index: 98;
+  width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer;
+  display: grid; place-items: center;
+  background: $color-night; color: $color-white; box-shadow: 0 6px 20px rgba(14, 16, 19, 0.2);
+  opacity: 0; visibility: hidden; transform: translateY(8px);
+  transition: opacity $transition-fast, transform $transition-fast, visibility $transition-fast, background $transition-fast;
+  svg { width: 20px; height: 20px; }
+  &.is-shown { opacity: 1; visibility: visible; transform: none; }
+  &:hover, &:focus-visible { background: $color-cobalt-bright; }
+  &:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 3px; }
+  &:active { transform: scale(0.94); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .to-top, .post-card, .post-pager-link { transition: none; }
 }
 
 // "Keep reading" (Figma: its own band, a line above, 88/104px padding)

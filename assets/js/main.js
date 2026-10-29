@@ -106,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Filterable lists (FAQ, blog grid, news list) with optional "Load more"
   // Items marked data-more stay hidden until "Load more" reveals the next page of them.
   // data-cat can hold several space-separated categories; data-filter-only items are left out of "All".
+  // The active filter is kept in the address (?topic=…), so a shared or reloaded link opens on it.
   const setupListing = ({ list, item, filters, button, count, empty, pageSize = 6, noun = 'items' }) => {
     if (!list) return;
     const items = [...list.querySelectorAll(item)];
@@ -123,22 +124,39 @@ document.addEventListener('DOMContentLoaded', () => {
       if (empty) empty.hidden = matching.length > 0;
     };
 
+    // "Load more": the count is announced (aria-live in the HTML), focus moves to the first new item
     if (button) {
       button.addEventListener('click', () => {
-        items.filter(el => el.hasAttribute('data-more') && inFilter(el))
-          .slice(0, pageSize)
-          .forEach(el => el.removeAttribute('data-more'));
+        const added = items.filter(el => el.hasAttribute('data-more') && inFilter(el)).slice(0, pageSize);
+        added.forEach(el => el.removeAttribute('data-more'));
         render();
+        if (added[0]) {
+          if (added[0].tabIndex < 0) added[0].setAttribute('tabindex', '-1');
+          added[0].focus();
+        }
       });
     }
 
     if (filters) {
+      const setFilter = (value) => {
+        filter = value;
+        const url = new URL(location.href);
+        if (value === 'all') url.searchParams.delete('topic'); else url.searchParams.set('topic', value);
+        history.replaceState(history.state, '', url);
+        render();
+      };
+      // A topic in the address picks its filter before the buttons are set up
+      const fromUrl = new URLSearchParams(location.search).get('topic');
+      const start = fromUrl && [...filters.querySelectorAll('[data-filter]')].find(b => b.dataset.filter === fromUrl);
+      if (start) {
+        filters.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('is-active', b === start));
+        filter = fromUrl;
+      }
       singleSelect(filters);
       filters.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-filter]');
         if (!btn) return;
-        filter = btn.dataset.filter;
-        render();
+        setFilter(btn.dataset.filter);
       });
     }
     render();
@@ -263,8 +281,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupListing({
     list: document.getElementById('newsList'), item: '.news-row',
     filters: document.getElementById('newsFilters'), button: document.getElementById('newsLoadMore'),
-    empty: document.getElementById('newsEmpty'), // Figma shows no count on the newsroom
-    pageSize: 8
+    count: document.getElementById('newsLoadCount'), empty: document.getElementById('newsEmpty'),
+    pageSize: 8, noun: 'stories'
   });
 
   // Industry gallery arrows + dots
@@ -353,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Scroll reveal (pages with <body class="reveal-page">): text fades in as it enters the
-  // viewport and out as it leaves. Chat headers / highlighted text get the stronger "emphasis" variant.
+  // viewport and out as it leaves (blog and news: in once, then it stays). Chat headers / highlighted text get the stronger "emphasis" variant.
   // Sections marked data-motion are animated by animations.js (GSAP) instead.
   const revealGroups = [
     {
@@ -385,9 +403,40 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
   const motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (document.body.classList.contains('reveal-page') && motionOK && 'IntersectionObserver' in window) {
+    // Blog and news (<body class="reveal-once">): shown once, stays shown, so focus never lands on hidden content
+    const once = document.body.classList.contains('reveal-once');
+    // Once in, the reveal classes come off so the element's own hover/focus lift works again
+    const settle = (el, instant) => {
+      observer.unobserve(el);
+      let timer;
+      const done = () => {
+        clearTimeout(timer);
+        el.removeEventListener('transitionend', onEnd);
+        el.classList.remove('reveal', 'reveal--soft', 'reveal--emphasis', 'is-visible');
+        el.style.removeProperty('--reveal-delay');
+      };
+      const onEnd = (e) => { if (e.target === el && e.propertyName === 'opacity') done(); };
+      if (instant) {
+        done();
+        el.getAnimations?.().forEach(a => { if (a.transitionProperty) a.cancel(); }); // stop a fade already under way
+        return;
+      }
+      el.classList.add('is-visible');
+      el.addEventListener('transitionend', onEnd);
+      timer = setTimeout(done, 2000); // in case it never transitions (e.g. filtered out mid-fade)
+    };
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => entry.target.classList.toggle('is-visible', entry.isIntersecting));
+      entries.forEach(entry => {
+        if (!once) entry.target.classList.toggle('is-visible', entry.isIntersecting);
+        else if (entry.isIntersecting) settle(entry.target);
+      });
     }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+
+    // Keyboard focus inside something not yet revealed, or still fading in (e.g. tabbing ahead of
+    // the scroll): show it at once
+    if (once) document.addEventListener('focusin', (e) => {
+      document.querySelectorAll('.reveal').forEach(el => { if (el.contains(e.target)) settle(el, true); });
+    });
 
     revealGroups.forEach(({ variant, selector, stagger }) => {
       document.querySelectorAll(selector).forEach(el => {
@@ -411,5 +460,33 @@ document.addEventListener('DOMContentLoaded', () => {
       entries.forEach(entry => { if (entry.isIntersecting) setActive(entry.target.id); });
     }, { rootMargin: '-20% 0px -70% 0px' });
     sections.forEach(section => observer.observe(section));
+  }
+
+  // Blog post: reading progress bar (through the article) and "Back to top" after about one screen
+  const progress = document.getElementById('readProgress');
+  const toTop = document.getElementById('toTop');
+  if (progress || toTop) {
+    const article = document.querySelector('main article');
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      if (progress && article) {
+        const rect = article.getBoundingClientRect();
+        const total = rect.height - window.innerHeight;
+        const done = total > 0 ? Math.min(Math.max(-rect.top / total, 0), 1) : 1;
+        progress.style.transform = `scaleX(${done})`;
+      }
+      if (toTop) toTop.classList.toggle('is-shown', window.scrollY > window.innerHeight);
+    };
+    const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+
+    // Back at the top, focus goes to the title so keyboard users continue from there
+    toTop?.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: motionOK ? 'smooth' : 'auto' });
+      document.querySelector('.post-title')?.focus({ preventScroll: true });
+    });
   }
 });

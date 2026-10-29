@@ -2,6 +2,8 @@
    Scroll Reveal
    main.js tags elements with .reveal (+ a variant) on pages whose <body> has .reveal-page,
    then toggles .is-visible as they enter and leave the viewport (fade in, fade out).
+   With <body class="reveal-once"> (blog and news) they fade in once, then the classes come off;
+   anything focused before it is revealed shows at once.
    Without JS nothing is tagged, so content stays visible.
    ========================================= */
 $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -14,8 +16,7 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
     transform 0.7s $reveal-ease;
   transition-delay: var(--reveal-delay, 0s);
 
-  &.is-visible { opacity: 1; transform: none; }
-}
+  &.is-visible { opacity: 1; transform: none; }}
 
 // Chat headers and highlighted text: messages "arrive" — rise further and grow from their tail corner
 .reveal--emphasis {

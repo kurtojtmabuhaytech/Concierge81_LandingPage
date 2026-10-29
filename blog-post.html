@@ -13,7 +13,9 @@
   <link rel="stylesheet" href="assets/css/landing.css">
   <script src="assets/js/main.js" defer></script>
 </head>
-<body class="page-cream reveal-page">
+<body class="page-cream reveal-page reveal-once">
+  <!-- Reading progress through the article (main.js) -->
+  <div class="read-progress" aria-hidden="true"><span id="readProgress"></span></div>
 
   <!-- Navigation / Header -->
   <header class="site-header">
@@ -49,7 +51,7 @@
           <header class="post-header">
             <a href="blog.html" class="back-link">‹ All articles</a>
             <span class="post-eyebrow">Guide · Hospitality</span>
-            <h1 class="post-title">How AI concierges cut front-desk wait times by half.</h1>
+            <h1 class="post-title" tabindex="-1">How AI concierges cut front-desk wait times by half.</h1>
             <p class="post-lead">A practical look at what hotel guests actually ask — and how a chat-and-voice concierge takes the repetitive 80% off the desk.</p>
             <div class="post-byline">
               <div class="author-row">
@@ -189,6 +191,18 @@
                   <button type="button">Not really</button>
                 </div>
               </div>
+
+              <!-- Previous / next article: static template; WordPress will fill these from the post order -->
+              <nav class="post-pager" aria-label="More articles">
+                <a href="blog-post.html" class="post-pager-link">
+                  <span class="post-pager-label">‹ Previous article</span>
+                  <span class="post-pager-title">12,000 guest questions. One season. No extra staff.</span>
+                </a>
+                <a href="blog-post.html" class="post-pager-link post-pager-link--next">
+                  <span class="post-pager-label">Next article ›</span>
+                  <span class="post-pager-title">Set up your first FAQ topics in 15 minutes.</span>
+                </a>
+              </nav>
             </div>
           </div>
         </div>
@@ -234,6 +248,11 @@
       </div>
     </section>
   </main>
+
+  <!-- Back to top: appears after about one screen of scrolling (main.js) -->
+  <button type="button" class="to-top" id="toTop" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  </button>
 
 <!-- Contact -->
   <section id="contact" class="section theme-dark">
@@ -317,10 +336,10 @@
           </button>
         </div>
         <nav class="footer-nav" aria-label="Footer">
-          <a href="#how">How it works</a>
-          <a href="#industries">Industries</a>
-          <a href="#pricing">Plans</a>
-          <a href="#faq">FAQ</a>
+          <a href="index.html#how">How it works</a>
+          <a href="index.html#industries">Industries</a>
+          <a href="index.html#pricing">Plans</a>
+          <a href="index.html#faq">FAQ</a>
           <a href="#contact">Contact</a>
         </nav>
       </div>

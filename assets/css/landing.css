@@ -4249,6 +4249,26 @@ main > .blog-section:last-child {
   color: #1F59C6;
 }
 
+.featured-card, .news-featured {
+  position: relative;
+}
+
+.stretched-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+.stretched-link:focus-visible {
+  outline: none;
+}
+.stretched-link:focus-visible::after {
+  outline: 2px solid #276FF8;
+  outline-offset: -3px;
+  border-radius: 28px;
+}
+
 /* =========================================
    Story Media (hero image + chat overlay)
    ========================================= */
@@ -4541,10 +4561,18 @@ main > .blog-section:last-child {
   color: #0E1013;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
-.post-card:hover {
+.post-card:hover, .post-card:focus-visible {
   transform: translateY(-3px);
   box-shadow: 0 4px 24px rgba(14, 16, 19, 0.06);
   color: #0E1013;
+}
+.post-card:focus-visible {
+  outline: 2px solid #276FF8;
+  outline-offset: 3px;
+}
+.post-card:active {
+  transform: translateY(-1px);
+  box-shadow: none;
 }
 
 .post-card-media {
@@ -5081,6 +5109,121 @@ main > .blog-section:last-child {
   background: #EDF3FE;
 }
 
+.post-pager {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E2D9;
+}
+
+.post-pager-link {
+  background: #FFFFFF;
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #0E1013;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.post-pager-link:hover, .post-pager-link:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 24px rgba(14, 16, 19, 0.06);
+  color: #0E1013;
+}
+.post-pager-link:hover .post-pager-title, .post-pager-link:focus-visible .post-pager-title {
+  color: #276FF8;
+}
+.post-pager-link:focus-visible {
+  outline: 2px solid #276FF8;
+  outline-offset: 3px;
+}
+.post-pager-link:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.post-pager-link--next {
+  text-align: right;
+}
+
+.post-pager-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #1F59C6;
+}
+
+.post-pager-title {
+  font-size: 1.0625rem;
+  line-height: 1.41;
+  font-weight: 600;
+  letter-spacing: -0.011em;
+  transition: color 0.2s ease-in-out;
+}
+
+.read-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 102;
+  pointer-events: none;
+}
+.read-progress span {
+  display: block;
+  height: 100%;
+  background: #276FF8;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.to-top {
+  position: fixed;
+  right: clamp(1rem, 2.5vw, 2rem);
+  bottom: clamp(1rem, 2.5vw, 2rem);
+  z-index: 98;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  background: #0E1013;
+  color: #FFFFFF;
+  box-shadow: 0 6px 20px rgba(14, 16, 19, 0.2);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out, visibility 0.2s ease-in-out, background 0.2s ease-in-out;
+}
+.to-top svg {
+  width: 20px;
+  height: 20px;
+}
+.to-top.is-shown {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+.to-top:hover, .to-top:focus-visible {
+  background: #276FF8;
+}
+.to-top:focus-visible {
+  outline: 2px solid #276FF8;
+  outline-offset: 3px;
+}
+.to-top:active {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .to-top, .post-card, .post-pager-link {
+    transition: none;
+  }
+}
 .keep-reading {
   border-top: 1px solid #E5E2D9;
   padding-top: clamp(3rem, 5.8vw, 5.5rem);
@@ -5199,14 +5342,25 @@ main > .blog-section:last-child {
   border-top: 1px solid #E5E2D9;
   color: #0E1013;
 }
-.news-row:hover {
+.news-row:hover, .news-row:focus-visible {
   color: #0E1013;
 }
-.news-row:hover .news-row-title {
+.news-row:hover .news-row-title, .news-row:focus-visible .news-row-title {
   color: #276FF8;
 }
-.news-row:hover .news-row-arrow {
+.news-row:hover .news-row-arrow, .news-row:focus-visible .news-row-arrow {
   transform: translateX(3px);
+}
+.news-row:focus-visible {
+  outline: 2px solid #276FF8;
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+.news-row:active .news-row-title {
+  color: #1F59C6;
+}
+.news-row:active .news-row-arrow {
+  transform: translateX(6px);
 }
 
 .news-row-date {
@@ -5427,6 +5581,8 @@ main > .blog-section:last-child {
    Scroll Reveal
    main.js tags elements with .reveal (+ a variant) on pages whose <body> has .reveal-page,
    then toggles .is-visible as they enter and leave the viewport (fade in, fade out).
+   With <body class="reveal-once"> (blog and news) they fade in once, then the classes come off;
+   anything focused before it is revealed shows at once.
    Without JS nothing is tagged, so content stays visible.
    ========================================= */
 .reveal {

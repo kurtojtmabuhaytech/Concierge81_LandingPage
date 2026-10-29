@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="assets/css/landing.css">
   <script src="assets/js/main.js" defer></script>
 </head>
-<body class="page-cream reveal-page">
+<body class="page-cream reveal-page reveal-once">
 
   <!-- Navigation / Header -->
   <header class="site-header">
@@ -58,12 +58,13 @@
     <section class="section theme-cream blog-section">
       <div class="container">
         <h2 class="blog-section-title">Featured story</h2>
+        <!-- The whole card opens the announcement through the title link (one tab stop) -->
         <article class="news-featured">
           <div class="news-featured-copy">
             <span class="post-eyebrow">Product release · Sep 22, 2026</span>
-            <h3><a href="news-article.html">concierge81 launches Voice Mode for lobby kiosks.</a></h3>
+            <h3><a href="news-article.html" class="stretched-link">concierge81 launches Voice Mode for lobby kiosks.</a></h3>
             <p>Guests can now simply ask out loud. Voice Mode listens, answers in natural speech, and shows the reply on screen — in English, Japanese, Chinese, and Korean.</p>
-            <a href="news-article.html" class="btn btn-primary">Read the announcement</a>
+            <a href="news-article.html" class="btn btn-primary" tabindex="-1" aria-hidden="true">Read the announcement</a>
           </div>
           <img class="news-featured-photo" src="assets/images/news/voice-mode-lobby-kiosk.webp" alt="A concierge81 kiosk greeting a couple in a hotel lobby" width="1944" height="1083">
         </article>
@@ -105,6 +106,7 @@
         <p class="empty-state" id="newsEmpty" hidden>No news in this category yet.</p>
 
         <div class="load-more">
+          <span class="load-count" id="newsLoadCount" aria-live="polite">Showing 8 of 12 stories</span>
           <button type="button" class="btn btn-outline-accent" id="newsLoadMore">Load more news</button>
         </div>
       </div>
@@ -193,10 +195,10 @@
           </button>
         </div>
         <nav class="footer-nav" aria-label="Footer">
-          <a href="#how">How it works</a>
-          <a href="#industries">Industries</a>
-          <a href="#pricing">Plans</a>
-          <a href="#faq">FAQ</a>
+          <a href="index.html#how">How it works</a>
+          <a href="index.html#industries">Industries</a>
+          <a href="index.html#pricing">Plans</a>
+          <a href="index.html#faq">FAQ</a>
           <a href="#contact">Contact</a>
         </nav>
       </div>
