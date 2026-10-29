@@ -1615,9 +1615,9 @@
 
   /* 11. Industries (Figma recording 1:02–1:15). Desktop: a scroll scene that slides up over Type
      or talk. The visitor asks and the concierge answers with the scroll; once the view reaches the
-     gallery the cards come in (the first fades in, the rest slide in from the right), then the
-     row moves along until "Built for yours, too." reaches the right edge. All with the scroll; the
-     arrows, dots, sideways swipes and drags move it one card at a time too. */
+     gallery the cards come in (the first fades in, the rest slide in from the right). The row is
+     the visitor's to move, one card at a time: arrows, dots, sideways swipes and drags (scrolling
+     down doesn't move it). */
   const industries = {
     section: $('#industries'),
     content: $('#industries > .container'),
@@ -1733,12 +1733,6 @@
     gallery.addEventListener('pointermove', onMove);
     gallery.addEventListener('pointerup', onUp);
     gallery.addEventListener('pointercancel', onUp);
-    // The dots and arrows follow the row as the scroll moves it
-    const syncDots = () => {
-      const pos = -gsap.getProperty(track, 'x');
-      index = gsap.utils.clamp(0, last, Math.round(pos / step()));
-      showDot();
-    };
 
     const applyStart = () => {
       slide?.kill();
@@ -1781,11 +1775,9 @@
       typeIn(tl, dots, asked + 0.35, 0.45);
       popIn(tl, answer, asked + 0.85);
     });
-    tl.addLabel('shown')
-
-      // Step 3 (1:07–1:14): the row moves along until "Built for yours, too." is whole on screen
-      .to(track, { x: () => -shiftAt(lastAt()), duration: 2.4, ease: 'none', onUpdate: syncDots }, 'shown+=0.3')
-      .addLabel('moved');
+    tl.addLabel('shown');
+    // (the row itself is the visitor's to move: arrows, dots, swipes and drags; scrolling down
+    // doesn't move it, and the page goes on without waiting for the last card)
 
     // Why concierge81? slides up over it, as every section does over the one before
     const next = $('#values');
