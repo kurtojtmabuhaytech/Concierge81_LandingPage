@@ -315,7 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* FAQ chat ("Ask me anything"): tapping a suggestion asks it. Like a messaging app, the question
      pops in, the concierge types (•••), then the answer pops in, one after another, and the
-     conversation scrolls on its own inside the chat (the page keeps scrolling outside it). Asked
+     conversation scrolls on its own inside the chat (the page keeps scrolling outside it). Nothing
+     already said disappears: after each answer the concierge asks "Anything else…" again. Asked
      questions leave the suggestions; the topics filter what is left. The conversation is kept for
      the browser session. "What is concierge81?" is asked by the scroll scene (animations.js). */
   const faqBox = document.querySelector('.faq-chat-box');
@@ -391,8 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chip.remove();
       showChips();
       const [question, answer] = pair.querySelectorAll(':scope > .faq-q, :scope > .faq-a');
-      anything.hidden = true;
-      thread.insertBefore(pair, anything);
+      thread.append(pair); // (after everything said so far, the last "Anything else…" included)
       [question, answer].forEach(el => { el.hidden = true; });
       pair.hidden = false;
       pair.classList.add('is-asked');
@@ -414,7 +414,13 @@ document.addEventListener('DOMContentLoaded', () => {
       pair.append(row);
       pop(row);
       await wait(700);
-      pop(anything);
+      // the concierge offers more help again, below the answer (the earlier offer stays in the chat)
+      const again = anything.cloneNode(true);
+      again.hidden = true;
+      again.removeAttribute('style'); // (no leftover inline styles from the scroll scene)
+      again.classList.add('is-again');
+      thread.append(again);
+      pop(again);
     };
     faqBox.querySelector('.faq-suggestions').addEventListener('click', (e) => {
       const chip = e.target.closest('.faq-suggestion');
