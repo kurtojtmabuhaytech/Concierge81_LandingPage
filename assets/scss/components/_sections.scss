@@ -1437,7 +1437,8 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   font: inherit; font-size: 1.0625rem; line-height: 1.47; color: $color-ink;
   &::placeholder { color: #75726A; } // lighter than the labels, still 4.4:1 on the card
   transition: border-color $transition-fast, box-shadow $transition-fast;
-  &:focus { outline: none; border-color: $color-cobalt-bright; box-shadow: 0 0 0 3px rgba($color-cobalt-bright, 0.15); }
+  &:focus { border-color: $color-cobalt-bright; box-shadow: 0 0 0 3px rgba($color-cobalt-bright, 0.15); }
+  &:focus:not(:focus-visible) { outline: none; } // (keyboard focus keeps its ring)
   &[aria-invalid="true"] { border-color: $color-critical-text;
     &:focus { box-shadow: 0 0 0 3px rgba($color-critical-text, 0.15); } }
 }

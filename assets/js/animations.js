@@ -2622,18 +2622,21 @@
     // (with smooth scrolling the content trails the scrollbar, so ask the smoother)
     return smoother ? smoother.offset(box, 'top top') : box.getBoundingClientRect().top + scrollY;
   };
-  const mm = gsap.matchMedia();
-  mm.add(
+  // Keyboard mode (this visit): the calm layout of reduced motion, see below
+  let keyboardMode = session.get('keyboard') === '1';
+  let mm = gsap.matchMedia();
+  const setUpMotion = () => mm.add(
     {
       isDesktop: '(min-width: 901px) and (prefers-reduced-motion: no-preference)',
       isMobile: '(max-width: 900px) and (prefers-reduced-motion: no-preference)',
       reduceMotion: '(prefers-reduced-motion: reduce)'
     },
     (context) => {
-      if (context.conditions.reduceMotion) {
+      if (context.conditions.reduceMotion || keyboardMode) {
         // No movement: everything visible in its final state
+        root.classList.toggle('is-keyboard', keyboardMode);
         gsap.set('[data-anim]', { autoAlpha: 1 });
-        return;
+        return () => root.classList.remove('is-keyboard');
       }
       // Desktop: the page glides with a little momentum, so a quick flick or a slow wheel never
       // feels rough (phones keep their native touch scrolling)
@@ -2655,6 +2658,40 @@
       };
     }
   );
+  if (keyboardMode) finishOpening();
+  setUpMotion();
+
+  /* Keyboard mode. The landing reveals its sections as the visitor scrolls, so a control in a
+     section that hasn't played yet is hidden, and Tab (or a screen reader) can't reach it. The
+     first time Tab would move on past the header and the hero, the page switches, for this visit,
+     to the calm layout reduced motion uses: every section shown and finished, normal scrolling, no
+     pinning. The visitor stays at the same place and focus moves on to that next control. Mouse,
+     trackpad and touch visitors never see it. */
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const enterKeyboardMode = (next) => {
+    const y = scrollY;
+    const place = [...places].reverse().find(sel => topOf(sel) <= y + 1) || places[0];
+    keyboardMode = true;
+    session.set('keyboard', '1');
+    finishOpening();
+    mm.revert(); // every scene, pin and the smooth scrolling put back as the page was
+    mm = gsap.matchMedia();
+    setUpMotion();
+    ScrollTrigger.refresh();
+    requestAnimationFrame(() => {
+      if (!next.closest('#hero, .site-header')) $(place)?.scrollIntoView({ block: 'start' });
+      next.focus(); // (the browser scrolls it into view)
+    });
+  };
+  addEventListener('keydown', (e) => {
+    if (keyboardMode || e.key !== 'Tab' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey || !smoother) return;
+    const order = $$(FOCUSABLE).filter(el => el.getClientRects().length && !el.closest('[inert], [aria-hidden="true"], [hidden]'));
+    const from = document.activeElement;
+    const next = order.find(el => from === document.body ? true : (from.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) && !from.contains(el));
+    if (!next || next.closest('.site-header, #hero, .skip-link')) return; // the top of the page works as it is
+    e.preventDefault();
+    enterKeyboardMode(next);
+  }, true);
 
   /* Keyboard (desktop): focus moving into the site header (Tab from the top of the page, Shift+Tab
      back) brings it in over any section; it goes again when focus leaves it. */

@@ -4068,9 +4068,11 @@ button.chip, a.chip {
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 .form-group input:focus, .form-group textarea:focus {
-  outline: none;
   border-color: #276FF8;
   box-shadow: 0 0 0 3px rgba(39, 111, 248, 0.15);
+}
+.form-group input:focus:not(:focus-visible), .form-group textarea:focus:not(:focus-visible) {
+  outline: none;
 }
 .form-group input[aria-invalid=true], .form-group textarea[aria-invalid=true] {
   border-color: #C8292C;
