@@ -645,7 +645,7 @@
       .set(dots, { autoAlpha: 0 }, 'greet')
       .set(bubble, full, 'greet')
       .set(text, { autoAlpha: 1 }, 'greet')
-      .call(() => { caption.textContent = 'concierge · 9:12 PM'; }, null, 'greet')
+      .call(() => { caption.textContent = 'concierge81 · 9:12 PM'; }, null, 'greet')
       .fromTo(bubble, { scale: 0.86 }, { scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', immediateRender: false }, 'greet')
       // hold, then hand the greeting to the hero while the card builds around it
       .addLabel('handoff', 'greet+=1.8')
