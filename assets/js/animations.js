@@ -150,15 +150,15 @@
       placeDots(dots, reply);
       if (sub) gsap.set(sub, { autoAlpha: 0, y: 0, scale: 0.85, transformOrigin: 'left top' });
     };
-    const play = (tl, at = 0) => {
+    const play = (tl, at = 0, typingFor = 0.8) => {
       let typing = at;
       if (user) {
         popIn(tl, user, at + 0.01).to(pill, { ...sent, duration: 0.4, ease: 'none' }, at + 0.3);
         typing = at + 0.45;
       }
-      typeIn(tl, dots, typing);
-      bubbleIn(tl, reply, typing + 0.6);
-      if (sub) popIn(tl, sub, typing + 0.85);
+      typeIn(tl, dots, typing, typingFor);
+      bubbleIn(tl, reply, typing + typingFor + 0.05);
+      if (sub) popIn(tl, sub, typing + typingFor + 0.35);
       return tl;
     };
     return { user, pill, reply, sub, start, play };
@@ -412,7 +412,9 @@
       const distance = target - tl.time();
       if (distance <= 0) { playing = null; resting(); return; }
       trigger.classList.add('is-playing');
-      const natural = distance / STEP_SPEED;
+      // (the section's chat, its first step, plays at its own pace so "•••" and the replies read;
+      // the steps after it play quicker)
+      const natural = distance / (tl.time() < firstStep() - 0.001 ? 1 : STEP_SPEED);
       const duration = natural <= CATCH_UP ? natural : CATCH_UP + (natural - CATCH_UP) * 0.35;
       const passed = stops().filter(t => t > tl.time() + 0.001 && t <= target + 0.001);
       playing = tl.tweenTo(target, {
@@ -1323,7 +1325,7 @@
       // Step 3 (34.5–36s), on the next scroll: the view moves down; "•••" types, then "Let me
       // handle the repeats." pops in and the sub-bubble after it
       .to(content, { y: showClosing, duration: MOTION.slow, ease: MOTION.easeInOut }, 'inbox');
-    closingHeading.play(tl, tl.labels.inbox + 0.2)
+    closingHeading.play(tl, tl.labels.inbox + 0.2, 1.5) // (a later step, played quicker: a longer "•••")
       .addLabel('repeats');
 
     // The card in full view starts the show. When the page is only re-measuring (a refresh past
@@ -1596,10 +1598,10 @@
       .to(listening, { autoAlpha: 1, duration: 0.4 }, 'voice+=0.3');
     const said = cards.labels.voice;
     popIn(cards, messages[0], said);
-    typeIn(cards, miniDots, said + 0.45);
-    popIn(cards, messages[1], said + 1.05);
-    popIn(cards, messages[2], said + 1.4);
-    cards.to(chips, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)', stagger: 0.12 }, said + 1.75);
+    typeIn(cards, miniDots, said + 0.5, 1.4); // (played quicker, like every step after the first)
+    popIn(cards, messages[1], said + 1.95);
+    popIn(cards, messages[2], said + 2.5);
+    cards.to(chips, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)', stagger: 0.12 }, said + 3.0);
     // (the rings around the mic keep their own gentle CSS pulse, so "Listening…" looks alive)
     tl.add(cards, 'cards').addLabel('played');
     const next = $('#industries');
@@ -1770,10 +1772,10 @@
       .to(controls, { autoAlpha: 1, duration: 0.4 }, 'cards+=0.9');
     // as the cards settle, each card's chat plays: the question pops up, "•••", the answer pops in
     chats.forEach(({ question, answer, dots }, i) => {
-      const asked = tl.labels.cards + 0.6 + i * 0.12;
+      const asked = tl.labels.cards + 0.6 + i * 0.15;
       popIn(tl, question, asked);
-      typeIn(tl, dots, asked + 0.35, 0.45);
-      popIn(tl, answer, asked + 0.85);
+      typeIn(tl, dots, asked + 0.45, 1.3); // (played quicker, like every step after the first)
+      popIn(tl, answer, asked + 1.8);
     });
     tl.addLabel('shown');
     // (the row itself is the visitor's to move: arrows, dots, swipes and drags; scrolling down
