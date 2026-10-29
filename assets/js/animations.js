@@ -119,8 +119,9 @@
        What was built stays (nothing rewinds, disappears or replays); the view inside follows the
        scroll back through the positions seen at each step, and the section that slid over it
        slides back down. A step under way carries on while in view and pauses while the visitor
-       is away from it. The story (layers of one screen) is the one exception: it turns plain once
-       seen to the end (`onBack`), and can't be scrolled back before that (its one-way lock).
+       is away from it. The story (layers of one screen) is the one exception: it retraces its
+       steps with the scroll (`followBack`), and can't be scrolled back before it has been seen
+       to the end (its one-way lock).
      New steps only ever play on the way down, the first time. Each second of the timeline gets
      PACE of a screen of scrolling; `tail` keeps the scene pinned after its last step (the next
      section can slide up over it). `seen` starts the scene as already watched; `startShown` says
@@ -194,7 +195,7 @@
   let measuring = false;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
   ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
-  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, onBack = null, hold = () => false, runs = () => [] }) => {
+  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, canGoBack = () => true, hold = () => false, runs = () => [] }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
@@ -345,19 +346,14 @@
           show(want);
           return;
         }
-        if (self.direction < 0 && tl.time() > 0.001 && !measuring && !pulledBack()) {
-          // Back up: the page stays the same kind of page. A scene keeps what was built (nothing
-          // rewinds, disappears or replays) and its view follows the scroll back (followSeen); a
-          // step under way carries on while in view and pauses once the visitor has scrolled away
-          // (watchView). The story, layers of one screen, is the exception: it can't be scrolled
-          // back before it has been seen to the end (its one-way lock), then turns plain (onBack);
-          // a link back into it before that rewinds it step by step.
-          if (onBack && tl.progress() > 0.999 && !playing && (self.isActive || self.progress === 0)) {
-            onBack();
-            return;
-          }
-          if (followBack && !jumping) return;
-        }
+        // Back up: the page stays the same kind of page. A scene keeps what was built (nothing
+        // rewinds, disappears or replays) and its view follows the scroll back (followSeen); a
+        // step under way carries on while in view and pauses once the visitor has scrolled away
+        // (watchView). The story, layers of one screen, retraces its steps instead (followBack):
+        // the same pinned screen runs back with the scroll, so there is no break on the way up.
+        // It only runs back when the visitor scrolls back (not the page's own clamp-back, a
+        // re-measure, or a held scroll while it is still one-way: `canGoBack`).
+        if (followBack && self.direction < 0 && (measuring || pulledBack() || !canGoBack())) return;
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001) {
           playOn(want);
@@ -861,42 +857,19 @@
     tl.addLabel('fan');
 
     // The site header stays away for the rest of the page; it comes back only when the visitor
-    // scrolls back up to the intro step (the header tween above runs back)
-    // Once the story has been seen to the end, scrolling back up turns it into plain sections
-    // (before that it rewinds step by step), the view staying on what the visitor was looking at
-    // (the inbox where it had slid over, otherwise the step's main part: the hero card, the intro
-    // kiosk, or the features with their kiosk)
-    let plain = null;
-    const becomePlain = () => {
-      if (plain) return;
-      const t = tl.time();
-      const inbox = next.getBoundingClientRect();
-      const anchor = inbox.top < innerHeight && inbox.bottom > 0 ? next
-        : t < tl.labels.kiosk - 0.001 ? hero.surface : t < tl.labels.features - 0.001 ? introKiosk : featuresStage;
-      const onScreen = anchor.getBoundingClientRect().top;
-      scene.kill();
-      unstage();
-      plain = plainStory();
-      // (the smooth scrolling is paused for the move, so it doesn't ease on from where it was)
-      settle(() => {
-        smoother?.paused(true);
-        ScrollTrigger.refresh();
-        const y = Math.max(0, topOf(anchor) - onScreen);
-        smoother?.paused(false);
-        scrollToY(y, false);
-        ScrollTrigger.update();
-      });
-    };
-
+    // scrolls back up to the intro step (the header tween above runs back).
+    // Scrolling back up, the story stays the same pinned screen and runs back step by step with
+    // the scroll (the inbox slides back down off it first), so there is no switch of layout.
+    let oneWay = true; // until the inbox has slid half way up (see below)
     const scene = scrollScene({
       trigger: story,
       tl,
       startShown: true, // its start is the hero, a full page
-      followBack: true, // until seen to the end, it rewinds smoothly with the scroll
+      followBack: true, // on the way back it retraces its steps with the scroll
+      canGoBack: () => !oneWay,
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
-      onBack: becomePlain,
       onRefresh: () => {
         fitTraveller();
         applyStart();
@@ -907,7 +880,7 @@
        scroll back up (wheel, trackpad, keys; a dragged scrollbar is held at the furthest point
        reached), so the story is always watched through, never rewound or cut. Scrolling down
        and in-page links work as usual. Once the inbox has slid half way up over it, it unlocks
-       for good (the session remembers), and the story is plain sections on the way back. */
+       for good (the session remembers), and the story retraces its steps on the way back. */
     let furthest = scrollY;
     const remeasured = () => { furthest = scrollY; }; // positions change when the page re-measures
     const upKeys = ['ArrowUp', 'PageUp', 'Home'];
@@ -927,6 +900,7 @@
       else if (scrollY < furthest - 1) scrollToY(furthest, false);
     };
     const unlock = () => {
+      oneWay = false;
       removeEventListener('wheel', onWheel, { capture: true });
       removeEventListener('keydown', onKey, { capture: true });
       removeEventListener('scroll', onScroll);
@@ -940,7 +914,6 @@
     // In-page links to the intro and features land on their step inside the pinned story
     const stepLinks = { '#intro': 'intro', '#features': 'fan' };
     const onStepLink = (e) => {
-      if (plain) return; // plain sections: the link goes to the section itself
       const link = e.target.closest('a[href^="#"]');
       const label = link ? stepLinks[link.getAttribute('href')] : undefined;
       if (label === undefined) return; // not one of the story's links: leave the click alone
@@ -964,8 +937,7 @@
     return () => {
       document.removeEventListener('click', onStepLink, true);
       unlock();
-      if (plain) plain();
-      else unstage();
+      unstage();
     };
   });
 
@@ -2655,29 +2627,6 @@
       };
     }
   );
-
-  /* After the opening the site header stays out of the way while the visitor reads down, and
-     comes back as soon as they scroll up (to move around or ask for a demo), with its bar so it
-     reads over any section; it goes again on the way down. (Desktop; in the opening the story
-     itself moves the header.) */
-  let headerY = scrollY;
-  let peeking = false;
-  const peek = (show) => {
-    if (show === peeking) return;
-    peeking = show;
-    siteHeader.classList.toggle('is-peek', show);
-    gsap.to(siteHeader, { yPercent: show ? 0 : -100, duration: 0.35, ease: MOTION.easeInOut, overwrite: 'auto' });
-  };
-  addEventListener('scroll', () => {
-    if (!smoother || measuring || root.classList.contains('is-opening')) return;
-    const y = scrollY;
-    const moved = y - headerY;
-    headerY = y;
-    const past = y > topOf('#problem') + innerHeight * 0.5; // the opening is behind
-    if (!past) { if (peeking) { peeking = false; siteHeader.classList.remove('is-peek'); } return; }
-    if (moved < -6 && !pulledBack()) peek(true);
-    else if (moved > 6) peek(false);
-  }, { passive: true });
 
   // In-page links glide there with the smooth scrolling (the story's step links are handled first)
   document.addEventListener('click', (e) => {
