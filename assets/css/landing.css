@@ -114,7 +114,7 @@ code, kbd, samp, pre {
 /* =========================================
    Global Utilities & Buttons
    ========================================= */
-.press-card .suggest-label, .data-table th, .post-toc .suggest-label, .post-eyebrow, .form-group label, .form-group .form-label, .eyebrow, .faq-suggested-label, .tier-label, .bento-label, .industry-more-label, .mode-tag, .process-label {
+.press-card .suggest-label, .data-table th, .post-toc .suggest-label, .post-eyebrow, .form-group > label, .form-group .form-label, .eyebrow, .faq-suggested-label, .tier-label, .bento-label, .industry-more-label, .mode-tag, .process-label {
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.1em;
@@ -137,11 +137,19 @@ code, kbd, samp, pre {
   font-size: 0.95rem;
   line-height: 1.2;
   text-decoration: none;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out, scale 0.12s ease-out;
   cursor: pointer;
   border: 1px solid transparent;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .btn:active, .filter-btn:active, .faq-suggestion:active, .helpful button:active, .helpful-row button:active {
+    scale: 0.97;
+  }
+  .interest-pill:active > span {
+    scale: 0.97;
+  }
+}
 .btn-primary {
   background: #276FF8;
   color: #FFFFFF;
@@ -3458,7 +3466,7 @@ button.chip, a.chip {
   font: inherit;
   font-size: 0.82rem;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out, scale 0.12s ease-out;
 }
 .filter-btn:hover {
   border-color: #276FF8;
@@ -3694,6 +3702,7 @@ button.chip, a.chip {
   font-size: 0.75rem;
   color: #5C5A4D;
   cursor: pointer;
+  transition: scale 0.12s ease-out;
 }
 .helpful button:hover, .helpful button.is-active {
   border-color: #276FF8;
@@ -3742,7 +3751,7 @@ button.chip, a.chip {
   line-height: 1.56;
   letter-spacing: -0.012em;
   cursor: pointer;
-  transition: background 0.2s ease-in-out;
+  transition: background 0.2s ease-in-out, scale 0.12s ease-out;
 }
 .faq-suggestion span {
   color: #8A867B;
@@ -3909,6 +3918,7 @@ button.chip, a.chip {
   color: #0E1013;
   border-radius: 36px 36px 8px 36px;
   padding: clamp(1.5rem, 3vw, 2.5rem);
+  scroll-margin-top: 5.5rem;
 }
 
 #leadForm {
@@ -3927,11 +3937,11 @@ button.chip, a.chip {
   gap: 8px;
 }
 
-.form-group label, .form-group .form-label {
+.form-group > label, .form-group .form-label {
   color: #6E6B63;
 }
 
-.form-group input {
+.form-group input, .form-group textarea {
   width: 100%;
   padding: 1rem 1.25rem;
   border: 1px solid #CFCBC0;
@@ -3942,16 +3952,49 @@ button.chip, a.chip {
   line-height: 1.47;
   color: #0E1013;
 }
-.form-group input::placeholder {
-  color: #6E6B63;
+.form-group input::placeholder, .form-group textarea::placeholder {
+  color: #75726A;
 }
-.form-group input {
+.form-group input, .form-group textarea {
   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
-.form-group input:focus {
+.form-group input:focus, .form-group textarea:focus {
   outline: none;
   border-color: #276FF8;
   box-shadow: 0 0 0 3px rgba(39, 111, 248, 0.15);
+}
+.form-group input[aria-invalid=true], .form-group textarea[aria-invalid=true] {
+  border-color: #C8292C;
+}
+.form-group input[aria-invalid=true]:focus, .form-group textarea[aria-invalid=true]:focus {
+  box-shadow: 0 0 0 3px rgba(200, 41, 44, 0.15);
+}
+
+.form-group textarea {
+  display: block;
+  resize: vertical;
+  min-height: 3.6em;
+}
+
+.field-error {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.43;
+  color: #C8292C;
+}
+.field-error:empty {
+  display: none;
+}
+
+.interest-group {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.interest-group legend {
+  padding: 0;
+  margin-bottom: 8px;
 }
 
 .interest-pills {
@@ -3962,21 +4005,46 @@ button.chip, a.chip {
 }
 
 .interest-pill {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+.interest-pill input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.interest-pill > span {
   background: #FFFFFF;
   border: 1px solid #CFCBC0;
   padding: 10px clamp(12px, 1.06vw, 18px);
   border-radius: 999px;
   white-space: nowrap;
-  font: inherit;
   font-size: 0.9375rem;
   line-height: 1.47;
   color: #0E1013;
-  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out, scale 0.12s ease-out;
 }
-.interest-pill.is-active {
+.interest-pill input:checked + span {
   background: #EDF3FE;
   color: #1F59C6;
   border-color: #276FF8;
+}
+.interest-pill input:focus-visible + span {
+  outline: 2px solid #276FF8;
+  outline-offset: 2px;
+}
+
+.form-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }
 
 #leadForm .btn-primary {
@@ -3986,6 +4054,48 @@ button.chip, a.chip {
   color: #F6F6F3;
 }
 
+#leadForm .btn-primary.is-sending {
+  cursor: progress;
+  background: #1F59C6;
+}
+#leadForm .btn-primary.is-sending::before {
+  content: "";
+  width: 1em;
+  height: 1em;
+  border: 2px solid rgba(246, 246, 243, 0.35);
+  border-top-color: #F6F6F3;
+  border-radius: 50%;
+  animation: form-spin 0.7s linear infinite;
+}
+
+@keyframes form-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+.footer-form-card.is-arrived {
+  animation: form-arrive 1s ease-out;
+}
+
+@keyframes form-arrive {
+  from {
+    box-shadow: 0 0 0 0 rgba(39, 111, 248, 0), 0 0 0 0 rgba(39, 111, 248, 0);
+  }
+  20% {
+    box-shadow: 0 0 0 4px rgba(39, 111, 248, 0.85), 0 0 32px 4px rgba(39, 111, 248, 0.35);
+  }
+  to {
+    box-shadow: 0 0 0 10px rgba(39, 111, 248, 0), 0 0 32px 4px rgba(39, 111, 248, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-form-card.is-arrived {
+    animation: none;
+  }
+  #leadForm .btn-primary.is-sending::before {
+    animation-duration: 2s;
+  }
+}
 .privacy-text {
   text-align: center;
   font-size: 0.75rem;
@@ -4109,6 +4219,26 @@ button.chip, a.chip {
 .copy-btn svg {
   width: 16px;
   height: 16px;
+}
+
+.copy-toast {
+  position: fixed;
+  z-index: 1000;
+  translate: -50% -100%;
+  margin-top: -8px;
+  pointer-events: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #0E1013;
+  color: #F6F6F3;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+.copy-toast.is-shown {
+  opacity: 1;
 }
 
 .footer-nav {
@@ -5102,11 +5232,14 @@ main > .blog-section:last-child {
   font-size: 0.9375rem;
   color: #0E1013;
   cursor: pointer;
+  transition: scale 0.12s ease-out;
 }
-.helpful-row button.is-active {
-  border-color: #276FF8;
-  color: #276FF8;
-  background: #EDF3FE;
+.helpful-row .helpful-thanks {
+  margin: 0;
+  padding: 10px 0;
+  font-size: 0.9375rem;
+  color: #0E1013;
+  outline: none;
 }
 
 .post-pager {

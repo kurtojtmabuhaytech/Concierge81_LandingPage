@@ -271,9 +271,9 @@ main > .blog-section:last-child { padding-bottom: clamp(4rem, 7.9vw, 7.5rem); }
 
 .helpful-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding-top: 1rem; font-size: 0.875rem; color: $color-text-secondary;
   div { display: flex; gap: 8px; }
-  button { background: $color-white; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 10px 18px; font: inherit; font-size: 0.9375rem; color: $color-ink; cursor: pointer;
-    &.is-active { border-color: $color-cobalt-bright; color: $color-cobalt-bright; background: $cobalt-50; }
-  }
+  button { background: $color-white; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 10px 18px; font: inherit; font-size: 0.9375rem; color: $color-ink; cursor: pointer; transition: scale 0.12s ease-out; }
+  // Once voted, the buttons give way to a thank-you (main.js)
+  .helpful-thanks { margin: 0; padding: 10px 0; font-size: 0.9375rem; color: $color-ink; outline: none; }
 }
 
 // Previous / next article

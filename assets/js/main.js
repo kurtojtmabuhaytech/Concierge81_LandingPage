@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Single-select pill groups (mode toggle, interest pills, filters, "helpful")
+  const motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Single-select pill groups (mode toggle, filters, the FAQ's "helpful")
   const singleSelect = (group, activeClass = 'is-active') => {
     if (!group) return;
     const buttons = [...group.querySelectorAll('button')];
@@ -12,14 +14,47 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Copy text, briefly confirm on the button, then restore its label
+  // Copy text, then say so in a small tip over the button for a moment (also read out: the tip
+  // is a live region, made up front so screen readers are listening before the first copy)
+  const copyTip = document.createElement('div');
+  copyTip.className = 'copy-toast';
+  copyTip.setAttribute('role', 'status');
+  document.body.append(copyTip);
+  let copyTipTimer;
+  const showCopyTip = (btn, message) => {
+    clearTimeout(copyTipTimer);
+    copyTip.textContent = message;
+    const box = btn.getBoundingClientRect();
+    const half = copyTip.offsetWidth / 2 + 8;
+    copyTip.style.left = `${Math.min(Math.max(box.left + box.width / 2, half), innerWidth - half)}px`;
+    copyTip.style.top = `${box.top}px`;
+    copyTip.classList.add('is-shown');
+    copyTipTimer = setTimeout(() => {
+      copyTip.classList.remove('is-shown');
+      copyTipTimer = setTimeout(() => { copyTip.textContent = ''; }, 250);
+    }, 1500);
+  };
+  // Older browsers and plain-http previews have no navigator.clipboard: copy from a hidden textarea
+  const copyFallback = (text, btn) => {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+    document.body.append(area);
+    area.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) { /* not allowed */ }
+    area.remove();
+    btn.focus({ preventScroll: true });
+    return ok;
+  };
   const copyText = async (btn, text, done = 'Copied!') => {
-    if (!navigator.clipboard) return;
-    await navigator.clipboard.writeText(text);
-    const hasText = btn.textContent.trim() !== '';
-    const original = hasText ? btn.textContent : btn.getAttribute('aria-label');
-    if (hasText) btn.textContent = done; else btn.setAttribute('aria-label', done);
-    setTimeout(() => { if (hasText) btn.textContent = original; else btn.setAttribute('aria-label', original); }, 2000);
+    let ok = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (err) { /* permission denied */ }
+    }
+    if (!ok) ok = copyFallback(text, btn);
+    showCopyTip(btn, ok ? done : 'Couldn’t copy');
   };
 
   // Mobile Menu Toggle
@@ -62,46 +97,162 @@ document.addEventListener('DOMContentLoaded', () => {
     else desktop.addListener(onDesktop);
   }
 
-  // Lead form: once sent, the card shows "Request sent." with the visitor's email (Figma); "Send
+  // Lead form: checked on send (and each field again as it is left, once tried), then "Sending…"
+  // for a moment, then the card shows "Request sent." with the visitor's email (Figma); "Send
   // another request" brings the empty form back. (Static site: nothing is sent anywhere yet.)
   const leadForm = document.getElementById('leadForm');
   const leadSent = document.getElementById('leadSent');
   if (leadForm && leadSent) {
     const card = leadForm.closest('.footer-form-card');
+    const sendBtn = leadForm.querySelector('[type="submit"]');
+    const { name, email, website } = leadForm.elements;
+    const checked = [name, email]; // company and notes are optional
+    const messages = { name: 'Please enter your name.', email: 'Please enter your work email.' };
+    const emailOK = value => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+    const errorOf = input => document.getElementById(input.getAttribute('aria-describedby'));
+    let tried = false;
+    let sending = false;
+
+    const check = (input) => {
+      const value = input.value.trim();
+      let message = '';
+      if (input.required && !value) message = messages[input.name];
+      else if (input.type === 'email' && value && !emailOK(value)) message = 'Please enter a valid email, like you@company.com.';
+      errorOf(input).textContent = message;
+      if (message) input.setAttribute('aria-invalid', 'true'); else input.removeAttribute('aria-invalid');
+      return !message;
+    };
+    checked.forEach((input) => {
+      input.addEventListener('blur', () => { if (tried) check(input); });
+      // a fixed field loses its error as soon as it is right
+      input.addEventListener('input', () => { if (input.hasAttribute('aria-invalid')) check(input); });
+    });
+
     leadForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      document.getElementById('leadSentEmail').textContent = leadForm.elements.email.value;
-      leadForm.hidden = true;
-      leadSent.hidden = false;
-      card.classList.add('is-sent');
-      leadSent.focus({ preventScroll: true });
+      if (sending) return;
+      tried = true;
+      const invalid = checked.filter(input => !check(input));
+      if (invalid.length) { invalid[0].focus(); return; }
+
+      sending = true;
+      const label = sendBtn.textContent;
+      sendBtn.disabled = true;
+      sendBtn.classList.add('is-sending');
+      sendBtn.textContent = 'Sending…';
+      // A filled-in honeypot is a bot: it sees the same thing, but nothing would be sent
+      const isBot = website.value !== '';
+      if (!isBot) { /* WordPress: send the request here */ }
+
+      setTimeout(() => {
+        const plan = leadForm.elements.plan.value;
+        document.getElementById('leadSentThanks').textContent = `Thanks, ${name.value.trim().split(/\s+/)[0]}.`;
+        document.getElementById('leadSentEmail').textContent = email.value.trim();
+        document.getElementById('leadSentPlan').textContent = plan && plan !== 'Not sure yet' ? ` about the ${plan} plan` : '';
+        sending = false;
+        sendBtn.disabled = false;
+        sendBtn.classList.remove('is-sending');
+        sendBtn.textContent = label;
+        leadForm.hidden = true;
+        leadSent.hidden = false;
+        card.classList.add('is-sent');
+        leadSent.focus({ preventScroll: true });
+      }, 900);
     });
     document.getElementById('leadAgain').addEventListener('click', () => {
       leadForm.reset();
+      tried = false;
+      checked.forEach((input) => { input.removeAttribute('aria-invalid'); errorOf(input).textContent = ''; });
       leadSent.hidden = true;
       leadForm.hidden = false;
       card.classList.remove('is-sent');
-      leadForm.elements.name.focus();
+      name.focus();
     });
+
+    /* Arriving from a link to #contact (nav, "Request a demo", the plans...): a plan card's button
+       picks its plan in the form; once the form is on screen (the desktop glide takes a moment),
+       the name field gets the focus and the card lights up briefly. Window capture: runs before
+       animations.js stops the click on the document to glide there. */
+    let arrival;
+    const watchArrival = () => {
+      arrival?.();
+      if (!('IntersectionObserver' in window)) return;
+      let frame;
+      // On the landing page the card fades in as the contact section arrives (animations.js):
+      // wait until it is fully shown, a hidden field cannot take the focus
+      const land = () => {
+        if (parseFloat(getComputedStyle(card).opacity) < 0.95) { frame = requestAnimationFrame(land); return; }
+        stop();
+        if (!leadForm.hidden) name.focus({ preventScroll: true });
+        if (motionOK) {
+          card.classList.remove('is-arrived');
+          void card.offsetWidth; // restart the highlight
+          card.classList.add('is-arrived');
+        }
+      };
+      const observer = new IntersectionObserver(([entry]) => {
+        // a good part of the card (its top, with the name field) is in view
+        const shown = entry.intersectionRect.height >= Math.min(entry.boundingClientRect.height, innerHeight) * 0.3;
+        cancelAnimationFrame(frame);
+        if (entry.isIntersecting && shown) land();
+      }, { threshold: Array.from({ length: 21 }, (_, i) => i / 20) });
+      const giveUp = setTimeout(() => stop(), 5000); // the visitor went elsewhere
+      const stop = () => { observer.disconnect(); cancelAnimationFrame(frame); clearTimeout(giveUp); arrival = null; };
+      observer.observe(card);
+      arrival = stop;
+    };
+    card.addEventListener('animationend', () => card.classList.remove('is-arrived'));
+    window.addEventListener('click', (e) => {
+      const link = e.target.closest?.('a[href="#contact"]');
+      if (!link) return;
+      const plan = link.dataset.plan && leadForm.querySelector(`input[name="plan"][value="${link.dataset.plan}"]`);
+      if (plan) plan.checked = true;
+      watchArrival();
+    }, true);
   }
 
-  // Smooth scroll for in-page links (sections set scroll-margin-top for the sticky header)
+  // Smooth scroll for in-page links (sections set scroll-margin-top for the sticky header).
+  // On phones the form sits below the contact headline and steps: "contact" links go to the form.
+  const phoneLayout = window.matchMedia('(max-width: 900px)');
   document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
       const href = this.getAttribute('href');
       if (href === '#') return;
-      const target = document.querySelector(href);
+      const target = (href === '#contact' && phoneLayout.matches && document.querySelector('#contact .footer-form-card'))
+        || document.querySelector(href);
       if (target) {
         e.preventDefault();
-        target.scrollIntoView({ behavior: 'smooth' });
+        target.scrollIntoView({ behavior: motionOK ? 'smooth' : 'auto' });
         history.replaceState(null, '', href);
       }
     });
   });
 
   singleSelect(document.querySelector('.mode-toggle'));
-  singleSelect(document.getElementById('interestPills'));
-  singleSelect(document.querySelector('#helpfulRow div'));
+
+  // "Was this article helpful?": a vote swaps the buttons for a thank-you (read out: the spot is a
+  // live region); one vote per article for the browser session
+  const helpfulRow = document.getElementById('helpfulRow');
+  if (helpfulRow) {
+    const answer = helpfulRow.querySelector('[aria-live]');
+    const VOTED = `c81:helpful:${location.pathname}`;
+    const thank = (text, focus) => {
+      const note = document.createElement('p');
+      note.className = 'helpful-thanks';
+      note.tabIndex = -1; // keeps the keyboard's place once the buttons are gone
+      note.textContent = text;
+      answer.replaceChildren(note);
+      if (focus) note.focus({ preventScroll: true });
+    };
+    const voted = (() => { try { return sessionStorage.getItem(VOTED); } catch (e) { return null; } })();
+    if (voted) thank(voted, false);
+    answer.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-thanks]');
+      if (!btn) return;
+      try { sessionStorage.setItem(VOTED, btn.dataset.thanks); } catch (err) { /* storage blocked */ }
+      thank(btn.dataset.thanks, true);
+    });
+  }
 
   // Filterable lists (FAQ, blog grid, news list) with optional "Load more"
   // Items marked data-more stay hidden until "Load more" reveals the next page of them.
@@ -401,7 +552,6 @@ document.addEventListener('DOMContentLoaded', () => {
       stagger: 0.08
     }
   ];
-  const motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (document.body.classList.contains('reveal-page') && motionOK && 'IntersectionObserver' in window) {
     // Blog and news (<body class="reveal-once">): shown once, stays shown, so focus never lands on hidden content
     const once = document.body.classList.contains('reveal-once');

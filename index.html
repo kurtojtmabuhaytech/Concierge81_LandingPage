@@ -814,7 +814,7 @@
           <span class="tier-label">Basic</span>
           <h3>Start simple.<br>Start with AI.</h3>
           <p>For businesses beginning their AI-powered customer assistance journey.</p>
-          <a href="#contact" class="btn btn-white">Learn More</a>
+          <a href="#contact" class="btn btn-white" data-plan="Basic">Learn More</a>
         </article>
         <article class="tier-card tier-2" data-anim>
           <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
@@ -826,7 +826,7 @@
           <span class="tier-label">Professional</span>
           <h3>More capacity.<br>More ways to assist.</h3>
           <p>For businesses with higher customer interaction volumes and dedicated deployment needs.</p>
-          <a href="#contact" class="btn btn-white">Learn More</a>
+          <a href="#contact" class="btn btn-white" data-plan="Professional">Learn More</a>
         </article>
         <article class="tier-card tier-3" data-anim>
           <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
@@ -839,7 +839,7 @@
           <span class="tier-label">Business</span>
           <h3>Built for growing<br>operations.</h3>
           <p>For organizations with higher customer traffic and broader operational requirements.</p>
-          <a href="#contact" class="btn btn-white">Learn More</a>
+          <a href="#contact" class="btn btn-white" data-plan="Business">Learn More</a>
         </article>
         <article class="tier-card tier-4" data-anim>
           <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
@@ -853,7 +853,7 @@
           <span class="tier-label">Enterprise</span>
           <h3>Built around your<br>organization.</h3>
           <p>For multi-location businesses and customized implementations.</p>
-          <a href="#contact" class="btn btn-white">Talk to our team</a>
+          <a href="#contact" class="btn btn-white" data-plan="Enterprise">Talk to our team</a>
         </article>
       </div>
 
@@ -1006,32 +1006,39 @@
         </div>
 
         <div class="footer-form-card" data-anim>
-          <form id="leadForm">
+          <form id="leadForm" novalidate>
             <div class="form-group">
               <label for="leadName">Full name</label>
-              <input id="leadName" name="name" type="text" placeholder="Your name" autocomplete="name" required>
+              <input id="leadName" name="name" type="text" placeholder="Your name" autocomplete="name" required aria-describedby="leadNameError">
+              <p class="field-error" id="leadNameError" aria-live="polite"></p>
             </div>
             <div class="form-group">
               <label for="leadEmail">Work email</label>
-              <input id="leadEmail" name="email" type="email" placeholder="you@company.com" autocomplete="email" required>
+              <input id="leadEmail" name="email" type="email" placeholder="you@company.com" autocomplete="email" required aria-describedby="leadEmailError">
+              <p class="field-error" id="leadEmailError" aria-live="polite"></p>
             </div>
             <div class="form-group">
               <label for="leadCompany">Company</label>
               <input id="leadCompany" name="company" type="text" placeholder="Company name" autocomplete="organization">
             </div>
-            <div class="form-group">
-              <span class="form-label">I’m interested in</span>
+            <fieldset class="form-group interest-group">
+              <legend class="form-label">I’m interested in</legend>
               <div class="interest-pills" id="interestPills">
-                <button type="button" class="interest-pill">Basic</button>
-                <button type="button" class="interest-pill">Professional</button>
-                <button type="button" class="interest-pill">Business</button>
-                <button type="button" class="interest-pill">Enterprise</button>
-                <button type="button" class="interest-pill is-active">Not sure yet</button>
+                <label class="interest-pill"><input type="radio" name="plan" value="Basic"><span>Basic</span></label>
+                <label class="interest-pill"><input type="radio" name="plan" value="Professional"><span>Professional</span></label>
+                <label class="interest-pill"><input type="radio" name="plan" value="Business"><span>Business</span></label>
+                <label class="interest-pill"><input type="radio" name="plan" value="Enterprise"><span>Enterprise</span></label>
+                <label class="interest-pill"><input type="radio" name="plan" value="Not sure yet" checked><span>Not sure yet</span></label>
               </div>
-            </div>
+            </fieldset>
             <div class="form-group">
               <label for="leadNotes">Anything else?</label>
-              <input id="leadNotes" name="notes" type="text" placeholder="Anything else we should know? (optional)">
+              <textarea id="leadNotes" name="notes" rows="3" placeholder="Anything else we should know? (optional)"></textarea>
+            </div>
+            <!-- Left empty by people; bots that fill every field are dropped (main.js) -->
+            <div class="form-trap" aria-hidden="true">
+              <label for="leadWebsite">Website</label>
+              <input id="leadWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
             </div>
             <button type="submit" class="btn btn-primary btn-block">Send</button>
             <p class="privacy-text">By submitting, you agree to our <a href="#">Privacy Policy</a>.</p>
@@ -1042,11 +1049,11 @@
             <span class="lead-sent-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
             <div class="lead-sent-message">
               <h3>Request sent.</h3>
-              <p>We’ve sent a confirmation to <span id="leadSentEmail">your email</span>.<br>Expect a reply within one business day to schedule your short call.</p>
+              <p><span id="leadSentThanks">Thanks.</span> We’ll reply to <span id="leadSentEmail">your email</span><span id="leadSentPlan"></span>.<br>Expect it within one business day, to schedule your short call.</p>
             </div>
             <hr>
             <button type="button" class="btn btn-outline btn-block" id="leadAgain">Send another request</button>
-            <p class="privacy-text">Need to change something? Just reply to the confirmation email.</p>
+            <p class="privacy-text">Need to change something? Write to us at <a href="mailto:info@mabuhaytech.com">info@mabuhaytech.com</a>.</p>
           </div>
         </div>
       </div>

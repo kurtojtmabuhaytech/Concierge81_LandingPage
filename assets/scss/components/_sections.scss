@@ -20,9 +20,17 @@
   font-size: 0.95rem;
   line-height: 1.2;
   text-decoration: none;
-  transition: all $transition-fast;
+  transition: background-color $transition-fast, color $transition-fast, border-color $transition-fast, scale 0.12s ease-out;
   cursor: pointer;
   border: 1px solid transparent;
+}
+// Press feedback: buttons, chips and pills give a little under the finger (the `scale`
+// property, so it adds to any transform GSAP sets)
+@media (prefers-reduced-motion: no-preference) {
+  .btn, .filter-btn, .faq-suggestion, .helpful button, .helpful-row button {
+    &:active { scale: 0.97; }
+  }
+  .interest-pill:active > span { scale: 0.97; } // the hidden radio on top takes the press
 }
 .btn-primary { background: $color-cobalt-bright; color: $color-white; &:hover { background: $color-cobalt-dark; color: $color-white; } }
 .btn-white { background: $color-white; color: $color-ink; &:hover { background: $color-cobalt-soft; color: $color-cobalt-bright; } }
@@ -1249,7 +1257,8 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 .filter-btn {
   background: $color-white; border: 1px solid $neutral-300; color: $color-ink;
   padding: 0.45rem 1.5rem; border-radius: $radius-full;
-  font: inherit; font-size: 0.82rem; cursor: pointer; transition: all $transition-fast;
+  font: inherit; font-size: 0.82rem; cursor: pointer;
+  transition: background-color $transition-fast, color $transition-fast, border-color $transition-fast, scale 0.12s ease-out;
   &:hover { border-color: $color-cobalt-bright; }
   &.is-active { background: $color-cobalt-bright; color: $color-white; border-color: $color-cobalt-bright; }
 }
@@ -1313,7 +1322,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 .msg-ai { display: flex; align-items: flex-end; gap: 0.5rem; }
 .msg-avatar { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; }
 .helpful { display: flex; align-items: center; gap: 8px; padding-left: 40px; font-size: $type-caption; color: #6E6B63;
-  button { background: none; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 4px 12px; font: inherit; font-size: $type-caption; color: $color-text-secondary; cursor: pointer;
+  button { background: none; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 4px 12px; font: inherit; font-size: $type-caption; color: $color-text-secondary; cursor: pointer; transition: scale 0.12s ease-out;
     &:hover, &.is-active { border-color: $color-cobalt-bright; color: $color-cobalt-bright; } }
   > span { display: inline-flex; gap: 8px; }
 }
@@ -1328,7 +1337,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   padding: 10px 16px 10px 14px; border: 0; border-radius: $radius-full;
   background: #F6F6F3; color: $neutral-950;
   font: inherit; font-size: 1rem; line-height: 1.56; letter-spacing: -0.012em; cursor: pointer;
-  transition: background $transition-fast;
+  transition: background $transition-fast, scale 0.12s ease-out;
   span { color: $neutral-500; }
   &:hover, &.is-first { background: rgba(0, 122, 255, 0.15); } // the first one shown is tinted (Figma; main.js)
 }
@@ -1379,26 +1388,60 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   color: $color-ink;
   border-radius: 36px 36px 8px 36px;
   padding: clamp(1.5rem, 3vw, 2.5rem);
+  scroll-margin-top: 5.5rem; // phones: "contact" links land on the form, below the sticky header (main.js)
 }
 #leadForm { display: flex; flex-direction: column; gap: 1.5rem; }
 #leadForm[hidden] { display: none; }
 .form-group { display: flex; flex-direction: column; gap: 8px; }
-.form-group label, .form-group .form-label { @extend %eyebrow; color: #6E6B63; }
-.form-group input {
+.form-group > label, .form-group .form-label { @extend %eyebrow; color: #6E6B63; }
+.form-group input, .form-group textarea {
   width: 100%; padding: 1rem 1.25rem;
   border: 1px solid $neutral-300; border-radius: 16px; background: transparent;
   font: inherit; font-size: 1.0625rem; line-height: 1.47; color: $color-ink;
-  &::placeholder { color: #6E6B63; }
+  &::placeholder { color: #75726A; } // lighter than the labels, still 4.4:1 on the card
   transition: border-color $transition-fast, box-shadow $transition-fast;
   &:focus { outline: none; border-color: $color-cobalt-bright; box-shadow: 0 0 0 3px rgba($color-cobalt-bright, 0.15); }
+  &[aria-invalid="true"] { border-color: $color-critical-text;
+    &:focus { box-shadow: 0 0 0 3px rgba($color-critical-text, 0.15); } }
+}
+.form-group textarea { display: block; resize: vertical; min-height: 3.6em; }
+// Under a field once the form has been tried (main.js); empty, it takes no room
+.field-error { margin: 0; font-size: 0.875rem; line-height: 1.43; color: $color-critical-text; &:empty { display: none; } }
+
+// "I'm interested in": a radio group dressed as pills (the radio is invisible, its text is the pill)
+.interest-group { border: 0; margin: 0; padding: 0; min-width: 0;
+  legend { padding: 0; margin-bottom: 8px; }
 }
 .interest-pills { display: flex; flex-wrap: wrap; gap: 8px 6px; margin-top: 4px; }
-.interest-pill {
-  background: $color-white; border: 1px solid $neutral-300; padding: 10px clamp(12px, 1.06vw, 18px); border-radius: $radius-full; white-space: nowrap;
-  font: inherit; font-size: 0.9375rem; line-height: 1.47; color: $color-ink; cursor: pointer;
-  &.is-active { background: $cobalt-50; color: $cobalt-600; border-color: $color-cobalt-bright; }
+.interest-pill { position: relative; display: inline-flex; cursor: pointer;
+  input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  > span {
+    background: $color-white; border: 1px solid $neutral-300; padding: 10px clamp(12px, 1.06vw, 18px); border-radius: $radius-full; white-space: nowrap;
+    font-size: 0.9375rem; line-height: 1.47; color: $color-ink;
+    transition: background-color $transition-fast, color $transition-fast, border-color $transition-fast, scale 0.12s ease-out;
+  }
+  input:checked + span { background: $cobalt-50; color: $cobalt-600; border-color: $color-cobalt-bright; }
+  input:focus-visible + span { outline: 2px solid $color-cobalt-bright; outline-offset: 2px; }
 }
+// Off screen for people, still in the form for bots (main.js drops anything that fills it)
+.form-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 #leadForm .btn-primary { padding: 0.875rem 1.625rem; font-size: 1.0625rem; font-weight: $font-weight-medium; color: #F6F6F3; }
+// "Sending…": the button waits with a small spinner before the success panel (main.js)
+#leadForm .btn-primary.is-sending { cursor: progress; background: $color-cobalt-dark;
+  &::before { content: ''; width: 1em; height: 1em; border: 2px solid rgba(#F6F6F3, 0.35); border-top-color: #F6F6F3; border-radius: 50%; animation: form-spin 0.7s linear infinite; }
+}
+@keyframes form-spin { to { transform: rotate(1turn); } }
+// Arriving from a "contact" link, the card lights up for a moment (main.js)
+.footer-form-card.is-arrived { animation: form-arrive 1s ease-out; }
+@keyframes form-arrive {
+  from { box-shadow: 0 0 0 0 rgba($color-cobalt-bright, 0), 0 0 0 0 rgba($color-cobalt-bright, 0); }
+  20% { box-shadow: 0 0 0 4px rgba($color-cobalt-bright, 0.85), 0 0 32px 4px rgba($color-cobalt-bright, 0.35); }
+  to { box-shadow: 0 0 0 10px rgba($color-cobalt-bright, 0), 0 0 32px 4px rgba($color-cobalt-bright, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .footer-form-card.is-arrived { animation: none; }
+  #leadForm .btn-primary.is-sending::before { animation-duration: 2s; }
+}
 .privacy-text { text-align: center; font-size: $type-caption; color: #6E6B63; margin: 0; }
 
 // "Request sent." (Figma, after the form is sent)
@@ -1430,6 +1473,12 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   a { color: inherit; font-size: 0.9375rem; line-height: 1.47; letter-spacing: -0.027em; b { font-weight: $font-weight-medium; } }
 }
 .copy-btn { background: transparent; border: none; color: inherit; cursor: pointer; padding: 0; display: grid; place-items: center; svg { width: 16px; height: 16px; } }
+// "Copied!" over the button that copied (main.js places it; also read out, it is a live region)
+.copy-toast { position: fixed; z-index: 1000; translate: -50% -100%; margin-top: -8px; pointer-events: none;
+  padding: 6px 12px; border-radius: $radius-full; background: $color-ink; color: #F6F6F3; font-size: 0.8125rem; line-height: 1.4; white-space: nowrap;
+  opacity: 0; transition: opacity $transition-fast;
+  &.is-shown { opacity: 1; }
+}
 
 .footer-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.75rem; }
 .legal-links { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; }
