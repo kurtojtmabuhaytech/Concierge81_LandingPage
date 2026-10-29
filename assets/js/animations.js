@@ -559,9 +559,9 @@
 
   /* ---- 0–2. Opening screen → hero ---------------------------------------------------------
      Plays once per browser session, on the first open: as soon as the hero picture is ready, the
-     greeting pops in whole and flies into the hero. The page doesn't scroll while it plays; a
-     scroll (wheel, Space, arrow down) fast-forwards it to the hero instead. A refresh in the same
-     session, a #section link or reduced motion skip it. Runs once, outside matchMedia. */
+     greeting pops in whole and flies into the hero. The page can't be scrolled while it plays, so
+     every first visitor watches it. A refresh in the same session, a #section link or reduced
+     motion skip it. Runs once, outside matchMedia. */
   const OPENING_SLOW = 0.9; // the greeting's glide into the hero and the card building around it
   const OPENING_TYPING = 0.9; // "concierge81 is typing…"
   const OPENING_HOLD = 1.0; // the greeting on its own before it flies into the hero
@@ -660,18 +660,6 @@
     Promise.all([picture?.decode?.().catch(() => {}), document.fonts?.ready]).then(start);
     setTimeout(start, 2500);
 
-    // A visitor who scrolls (or presses Space / arrow down) during it doesn't wait: it plays on
-    // quickly to the hero, then the page scrolls as usual
-    const hurry = (e) => {
-      const down = e.type === 'wheel' ? e.deltaY > 0 : e.type === 'touchmove' || [' ', 'ArrowDown', 'PageDown'].includes(e.key);
-      if (!down || done) return;
-      if (!started) start();
-      tl.timeScale(6);
-    };
-    const hurryEvents = ['wheel', 'keydown', 'touchmove'];
-    hurryEvents.forEach(type => addEventListener(type, hurry, { passive: true }));
-    const stopHurry = () => hurryEvents.forEach(type => removeEventListener(type, hurry));
-    tl.eventCallback('onComplete', () => { stopHurry(); finish(); });
   };
 
   /* ---- Scenes: each is ({ isDesktop, isMobile }) => cleanup?, rebuilt when the breakpoint changes ---- */
