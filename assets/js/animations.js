@@ -252,6 +252,15 @@
     return unfinished.length > 0;
   };
   const backKeys = ['ArrowUp', 'PageUp', 'Home'];
+  // A dragged scrollbar can't be held, but going up with it starts the plain way back too
+  let draggingBar = false;
+  addEventListener('pointerdown', (e) => { draggingBar = e.clientX >= document.documentElement.clientWidth; }, true);
+  addEventListener('pointerup', () => { draggingBar = false; }, true);
+  let barY = scrollY;
+  addEventListener('scroll', () => {
+    if (draggingBar && scrollY < barY - 1 && !measuring && !jumping) goPlain();
+    barY = scrollY;
+  }, { passive: true });
   const onLimitWheel = (e) => {
     if (scrollsItself(e)) return;
     if (e.deltaY < 0 && !jumping && !measuring) {
@@ -1023,7 +1032,8 @@
     });
     plainables.push({
       id: '.story',
-      done: () => !!plain || (!oneWay && tl.progress() > 0.999),
+      // (only together with the inbox below it: never a plain opening over a half-played inbox)
+      done: () => !!plain || (!oneWay && tl.progress() > 0.999 && (plainables.find(p => p.id === '#problem')?.done() ?? true)),
       inView: () => false, // (its one-way lock already keeps the visitor going until it has played)
       finish: () => {},
       makePlain: () => {
