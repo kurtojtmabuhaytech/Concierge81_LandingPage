@@ -5944,6 +5944,9 @@ main > .blog-section:has(+ #contact) {
 .story.is-staged > .section a, .story.is-staged > .section button {
   pointer-events: auto;
 }
+.story.is-staged.is-built > #features .feature-item {
+  pointer-events: auto;
+}
 .story.is-staged > .section > .container {
   width: 100%;
 }
@@ -6107,10 +6110,10 @@ main > .blog-section:has(+ #contact) {
   }
 }
 @media (min-width: 901px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .is-staged :is(.process-card, .mode-card, .bento-card, .tier-card) {
+  .is-staged :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card) {
     transition: translate 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s ease;
   }
-  .is-staged.is-built:not(.is-playing) :is(.process-card, .mode-card, .bento-card, .tier-card):hover {
+  .is-staged.is-built:not(.is-playing) :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card):hover {
     translate: 0 -6px !important;
     box-shadow: 0 18px 40px rgba(13, 15, 20, 0.18);
   }

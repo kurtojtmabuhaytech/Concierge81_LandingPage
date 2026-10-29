@@ -2491,8 +2491,11 @@
       current = null;
       finishing.progress(1).kill();
     };
+    // (already over it when its section finishes playing: the next move of the mouse starts it)
+    const move = () => { if (over && !current && ready()) next(); };
     el.addEventListener('mouseenter', enter);
     el.addEventListener('mouseleave', leave);
+    el.addEventListener('mousemove', move);
     el.addEventListener('focusin', enter); // (keyboard: focus inside it plays it too)
     el.addEventListener('focusout', leave);
     stopOn.forEach(type => el.addEventListener(type, stop));
@@ -2500,6 +2503,7 @@
       stop();
       el.removeEventListener('mouseenter', enter);
       el.removeEventListener('mouseleave', leave);
+      el.removeEventListener('mousemove', move);
       el.removeEventListener('focusin', enter);
       el.removeEventListener('focusout', leave);
       stopOn.forEach(type => el.removeEventListener(type, stop));
@@ -2680,6 +2684,80 @@
       .to(spokes, { strokeDashoffset: 0, duration: 0.45, ease: 'power1.inOut', stagger: 0.07 })
       .to(entNodes, { scale: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.07 }, '-=0.3')
       .to({}, pause(0.8)));
+
+    // Every section's chat (not the opening's, which the story moves): the conversation plays
+    // again, the question pops up, "•••" types, then the answer and the sub-bubble pop in
+    $$('section .chat-section-header').filter(header => !header.closest('.story')).forEach((header) => {
+      const user = $('.chat-header-row.right', header);
+      const reply = $('.header-pill--ai', header);
+      const sub = $('.sub-pill-text', header);
+      if (!reply) return;
+      const dots = typingDots(reply);
+      const parts = [user, reply, sub].filter(Boolean);
+      const staged = header.closest('section').classList.contains('is-staged');
+      loop(header, () => {
+        placeDots(dots, reply);
+        const round = gsap.timeline()
+          .to(parts, { autoAlpha: 0, duration: 0.15 })
+          .set(parts, { scale: 0.6, transformOrigin: i => (parts[i] === user ? 'right bottom' : 'left bottom') });
+        let at = 0.2;
+        if (user) { popIn(round, user, at); at += 0.35; }
+        typeIn(round, dots, at, 0.5);
+        popIn(round, reply, at + 0.55);
+        if (sub) popIn(round, sub, at + 0.8);
+        return round.to({}, pause(1.2));
+      }, staged ? undefined : { ready: () => shownWhole(reply) }); // (the contact section isn't a scene)
+    });
+
+    // The opening's features: the icon pops and the row nudges toward the kiosk
+    const storyDone = () => root.classList.contains('story-plain') || $('.story').classList.contains('is-built');
+    $$('#features .feature-item').forEach((item) => {
+      const icon = $('.feature-icon', item);
+      const toward = item.closest('.left-col') ? 6 : -6;
+      loop(item, () => gsap.timeline()
+        .to(item, { x: toward, duration: 0.25, ease: 'power2.out' })
+        .fromTo(icon, { scale: 1 }, { scale: 1.18, duration: 0.18, ease: 'power2.out', yoyo: true, repeat: 1 }, '<')
+        .to(item, { x: 0, duration: 0.35, ease: 'power2.inOut' })
+        .to({}, pause(0.6)), { section: $('.story'), ready: () => storyDone() && shownWhole(item) });
+    });
+
+    // The concierge says hello: the hero avatar and the kiosks glow softly
+    const sayHello = el => gsap.timeline()
+      .to(el, { filter: 'brightness(1.08) drop-shadow(0 0 18px rgba(39, 111, 248, 0.45))', duration: 0.35, ease: 'power2.out' })
+      .to(el, { filter: 'brightness(1) drop-shadow(0 0 0px rgba(39, 111, 248, 0))', duration: 0.6, ease: 'power2.inOut' })
+      .set(el, { clearProps: 'filter' })
+      .to({}, pause(0.8));
+    [hero.avatar, $('#intro .kiosk-device')].forEach(el => el && loop(el, () => sayHello(el), { section: $('.story'), ready: () => !root.classList.contains('is-opening') && shownWhole(el) }));
+    const ctaScreen = $('#cta .kiosk-screen');
+    if (ctaScreen) loop(ctaScreen, () => sayHello(ctaScreen), { section: cta.section });
+
+    // Where would my concierge live?: each device's icon pulses (the card lifts, in the CSS)
+    deployment.cards.forEach((card) => {
+      const icon = $('.platform-icon', card);
+      if (icon) loop(card, () => gsap.timeline()
+        .fromTo(icon, { scale: 1 }, { scale: 1.15, duration: 0.2, ease: 'power2.out', yoyo: true, repeat: 1 })
+        .to({}, pause(0.7)));
+    });
+
+    // Why concierge81?: the demo card's rings ripple out and the concierge nods
+    const demoCard = $('#values .bento-card--cta');
+    if (demoCard) {
+      const rings = $$('.cta-rings i', demoCard);
+      const face = $('.avatar-circle', demoCard);
+      loop(demoCard, () => gsap.timeline()
+        .fromTo(rings, { scale: 0.85, opacity: 0.6 }, { scale: 1.15, opacity: 0, duration: 0.9, ease: 'power2.out', stagger: 0.12 })
+        .to(face, { y: -5, duration: 0.2, ease: 'power2.out', yoyo: true, repeat: 1 }, 0)
+        .set(rings, { clearProps: 'transform,opacity,scale' })
+        .to({}, pause(0.6)));
+    }
+
+    // How do I get started?: each next step's number pops
+    $$('#contact .step-item').forEach((item) => {
+      const number = $('.step-number', item);
+      if (number) loop(item, () => gsap.timeline()
+        .fromTo(number, { scale: 1 }, { scale: 1.2, duration: 0.18, ease: 'power2.out', yoyo: true, repeat: 1 })
+        .to({}, pause(0.5)), { ready: () => shownWhole(item) });
+    });
 
     // The page re-measures (a refresh resets the scenes): every loop stops on its finished frame
     const stopAll = () => offs.forEach(off => off.stop?.());
