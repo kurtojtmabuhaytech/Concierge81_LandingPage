@@ -191,13 +191,6 @@
   const STEP_SPEED = 1.9; // new steps play quicker than the timeline (the whole page in about 40 s), still easy to read
   const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
   let jumping = false; // an in-page link is gliding past scenes: show them finished
-  // A scene is turning plain: the page re-measures while the scroll is still where it was in the
-  // old, longer page, so the scenes below must not take that as the visitor reaching them
-  let settling = false;
-  const settle = (move) => {
-    settling = true;
-    try { move(); } finally { settling = false; }
-  };
   /* The scroll follows the animation (desktop): the visitor can scroll down as far as the end of
      the step that is playing (or, once it has finished, of the next one, which starts as they
      scroll into it), and no further, so a section is never left half built while the next one
@@ -238,7 +231,7 @@
   let clampedAt = -1e4;
   const pulledBack = () => performance.now() - clampedAt < 400;
   const onLimitScroll = () => {
-    if (measuring || settling || jumping) return;
+    if (measuring || jumping) return;
     const max = scrollLimit();
     if (scrollY > max + 1) {
       clampedAt = performance.now();
@@ -447,10 +440,8 @@
         followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, watched)), self.direction);
       },
       onRefresh: (self) => {
-        // Rewind with the old measurements, re-measure the starting
-        // state, then show (no replay) the finished step at the scroll position. While another
-        // scene turns plain (settle), a step under way here carries on from where it was.
-        const resume = settling && playing ? { at: tl.time(), to: playingTo } : null;
+        // Rewind with the old measurements, re-measure the starting state, then show (no replay)
+        // the finished step at the scroll position
         stopAll();
         builtAt = -1;
         views.length = 0;
@@ -461,7 +452,7 @@
         tl.invalidate();
         if (self.progress > 0) beforeMove();
         const want = self.progress > 0 ? Math.max(firstStep(), stepAfter(self.progress * tl.duration())) : 0;
-        if (!settling) seen = Math.max(seen === Infinity ? Infinity : seen, want); // (see settle)
+        seen = Math.max(seen, want);
         // the views seen, re-measured at each step (going back over the seen part retraces them)
         stops().filter(t => t > 0 && t <= Math.min(seen, tl.duration()) + 0.001).forEach((t) => { tl.time(t); noteView(t); });
         // what was built stays built, wherever the visitor is (a scene below the screen, seen
@@ -469,22 +460,6 @@
         tl.time(Math.min(seen, tl.duration()));
         noteView(tl.time());
         if (content && seen > want + 0.001) gsap.set(content, { y: viewAt(Math.max(firstStep(), want)) });
-        if (resume) {
-          tl.time(resume.at);
-          playingTo = resume.to;
-          trigger.classList.add('is-playing');
-          playing = tl.tweenTo(resume.to, {
-            duration: Math.max(0.05, (resume.to - resume.at) / STEP_SPEED),
-            ease: 'none',
-            onComplete: () => {
-              playing = null;
-              resting();
-              seen = Math.max(seen, resume.to);
-              noteView(resume.to);
-              builtAt = Math.min(seen, tl.duration());
-            }
-          });
-        }
       }
     });
     // .is-built: the scene has played to its end (e.g. the device list can be picked from)
@@ -1194,9 +1169,7 @@
     // reached the card (they don't need the scroll, and the scroll never waits for them); then
     // the questions can be picked up. Built below; reset with the scene.
     let show = null;
-    let showKept = 0; // how far the show had got when the page re-measured while a scene turned plain
     const applyStart = () => {
-      showKept = settling && show ? show.progress() : 0;
       show?.pause(0);
       gsap.set(content, { y: 0 });
       asking.start();
@@ -1263,10 +1236,8 @@
     // it, a resize), or a link glides past, it is shown finished instead: it never replays.
     const startShow = (time) => {
       if (time < tl.labels.inbox - 0.001 || show.progress() > 0) return;
-      if (showKept > 0 && showKept < 1) show.progress(showKept).play(); // carries on from where it was
-      else if (measuring || jumping) show.progress(1);
+      if (measuring || jumping) show.progress(1);
       else show.play();
-      showKept = 0;
     };
 
     const next = $('#how');
