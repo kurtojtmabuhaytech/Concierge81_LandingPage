@@ -558,11 +558,13 @@
   let finishOpening = () => {};
 
   /* ---- 0–2. Opening screen → hero ---------------------------------------------------------
-     Plays once per browser session, on the first open: it waits until the page (avatar, photos)
-     has loaded, then the greeting pops in whole and flies into the hero. The page can't be
-     scrolled while it plays, so every first visitor sees it. A refresh in the same session, a
-     #section link or reduced motion skip it. Runs once, outside matchMedia. */
-  const OPENING_SLOW = 1.2; // the greeting's glide into the hero and the card building around it
+     Plays once per browser session, on the first open: as soon as the hero picture is ready, the
+     greeting pops in whole and flies into the hero. The page doesn't scroll while it plays; a
+     scroll (wheel, Space, arrow down) fast-forwards it to the hero instead. A refresh in the same
+     session, a #section link or reduced motion skip it. Runs once, outside matchMedia. */
+  const OPENING_SLOW = 0.9; // the greeting's glide into the hero and the card building around it
+  const OPENING_TYPING = 0.9; // "concierge81 is typing…"
+  const OPENING_HOLD = 1.0; // the greeting on its own before it flies into the hero
   const runOpening = () => {
     const splash = $('.splash');
     let done = false;
@@ -616,14 +618,14 @@
       .fromTo(bubble, { scale: 0.6, transformOrigin: 'left bottom' }, { autoAlpha: 1, scale: 1, duration: MOTION.fast, ease: 'back.out(2)' })
       .to(caption, { autoAlpha: 1, duration: MOTION.fast }, '<0.1')
       // a short "typing…", then the whole greeting pops in at once
-      .addLabel('greet', `+=${MOTION.typing}`)
+      .addLabel('greet', `+=${OPENING_TYPING}`)
       .set(dots, { autoAlpha: 0 }, 'greet')
       .set(bubble, full, 'greet')
       .set(text, { autoAlpha: 1 }, 'greet')
       .call(() => { caption.textContent = 'concierge81 · 9:12 PM'; }, null, 'greet')
       .fromTo(bubble, { scale: 0.86 }, { scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', immediateRender: false }, 'greet')
       // hold, then hand the greeting to the hero while the card builds around it
-      .addLabel('handoff', 'greet+=1.8')
+      .addLabel('handoff', `greet+=${OPENING_HOLD}`)
       .to(splash, { backgroundColor: 'rgba(255, 255, 255, 0)', duration: OPENING_SLOW, ease: 'none' }, 'handoff')
       .to(msg, {
         x: () => heroBubble.getBoundingClientRect().left - bubble.getBoundingClientRect().left,
@@ -637,27 +639,39 @@
       // the greeting lands: the real hero bubble takes over from the splash copy
       .set(hero.greeting, { autoAlpha: 1 }, `handoff+=${OPENING_SLOW}`)
       .set(msg, { autoAlpha: 0 }, `handoff+=${OPENING_SLOW}`)
-      .fromTo(hero.composer, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.7, ease: MOTION.ease })
-      .fromTo(hero.controls, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: MOTION.fast, ease: MOTION.ease, stagger: 0.16 })
+      .fromTo(hero.composer, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: MOTION.ease })
+      .fromTo(hero.controls, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: MOTION.fast, ease: MOTION.ease, stagger: 0.1 }, '-=0.2')
       // the visitor "sends" the suggested question: it pops in whole
       .fromTo(hero.question, { autoAlpha: 0, scale: 0.86, transformOrigin: 'right bottom' },
-        { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, '+=0.6');
+        { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, '+=0.3');
 
-    // Start once everything has loaded, so nothing pops in half-drawn (a slow network still
-    // starts it after a few seconds)
+    // Start as soon as the hero picture is ready to draw (and the fonts), so nothing pops in
+    // half-drawn; the rest of the page goes on loading behind it (a slow network still starts it
+    // after a couple of seconds)
     let started = false;
     const start = () => {
-      if (started) return;
+      if (started || done) return;
       started = true;
       tl.play();
       // never leaves the page locked: if the browser stalls its frames, the opening ends anyway
       setTimeout(finish, (tl.duration() + 4) * 1000);
     };
-    if (document.readyState === 'complete') start();
-    else {
-      addEventListener('load', start, { once: true });
-      setTimeout(start, 4000);
-    }
+    const picture = $('img', hero.avatar);
+    Promise.all([picture?.decode?.().catch(() => {}), document.fonts?.ready]).then(start);
+    setTimeout(start, 2500);
+
+    // A visitor who scrolls (or presses Space / arrow down) during it doesn't wait: it plays on
+    // quickly to the hero, then the page scrolls as usual
+    const hurry = (e) => {
+      const down = e.type === 'wheel' ? e.deltaY > 0 : e.type === 'touchmove' || [' ', 'ArrowDown', 'PageDown'].includes(e.key);
+      if (!down || done) return;
+      if (!started) start();
+      tl.timeScale(6);
+    };
+    const hurryEvents = ['wheel', 'keydown', 'touchmove'];
+    hurryEvents.forEach(type => addEventListener(type, hurry, { passive: true }));
+    const stopHurry = () => hurryEvents.forEach(type => removeEventListener(type, hurry));
+    tl.eventCallback('onComplete', () => { stopHurry(); finish(); });
   };
 
   /* ---- Scenes: each is ({ isDesktop, isMobile }) => cleanup?, rebuilt when the breakpoint changes ---- */
