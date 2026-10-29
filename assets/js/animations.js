@@ -484,12 +484,13 @@
         if (followBack && self.direction < 0 && (measuring || pulledBack() || !canGoBack())) return;
         if (plain) return;
         const watched = Math.min(seen, tl.duration());
-        if (self.direction > 0 && want > watched + 0.001 && !switching) { // (see goPlain)
+        if (self.direction > 0 && want > watched + 0.001 && !switching && !measuring) { // (see goPlain; never during a re-measure)
           playOn(want);
           return;
         }
         if (playing) return; // a step under way plays on (never cut short)
-        followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, watched)), self.direction);
+        // (while the page re-measures, the view is the one of the step there, not one in between)
+        followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(measuring ? stepAfter(at) : at, watched)), self.direction);
       },
       onRefresh: (self) => {
         // Rewind with the old measurements, re-measure the starting state, then show (no replay)
@@ -2920,6 +2921,35 @@
     smoother.scrollTo(target, true, 'top top');
     history.replaceState(null, '', href);
   }, true);
+
+  /* A resize keeps the visitor's place: the scrolling of a pinned scene scales with the window
+     height (and so does everything above it), so after the page has been measured again the scroll
+     goes to the same point of the same section, scaled to the new height */
+  const pinOf = sel => ScrollTrigger.getAll().find(t => t.pin === $(sel));
+  const startOf = sel => pinOf(sel)?.start ?? topOf(sel);
+  let measuredH = innerHeight; // the height the page was last measured at (a resize has already changed innerHeight)
+  let kept = null;
+  ScrollTrigger.addEventListener('refreshInit', () => {
+    if (kept || switching || !smoother || root.classList.contains('is-opening')) return; // (the plain switch keeps its own place)
+    const y = scrollY;
+    const id = [...places].reverse().find(sel => startOf(sel) <= y + 1) || places[0];
+    kept = { id, offset: y - startOf(id), h: measuredH, pinned: !!pinOf(id) };
+  });
+  ScrollTrigger.addEventListener('refresh', () => {
+    measuredH = innerHeight;
+    if (!kept) return;
+    const { id, offset, h, pinned } = kept;
+    kept = null;
+    if (!smoother || Math.abs(innerHeight - h) < 1) return;
+    const y = Math.max(0, startOf(id) + (pinned ? offset * innerHeight / h : offset));
+    // (on the next frame, still as part of the re-measure: the scenes show the step there, nothing plays)
+    if (Math.abs(y - scrollY) > 1) requestAnimationFrame(() => {
+      measuring = true;
+      scrollToY(y, false);
+      ScrollTrigger.update();
+      requestAnimationFrame(() => { measuring = false; });
+    });
+  });
 
   const savePlace = () => {
     if (root.classList.contains('is-opening')) return;
