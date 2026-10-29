@@ -8,6 +8,23 @@
 
 .section { padding: $space-section 0; }
 
+// Keyboard focus is always visible: a cobalt ring, white on dark and blue surfaces
+:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 3px; }
+:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card, .tier-card--featured) :focus-visible,
+:is(.btn-primary, .theme-dark .btn):focus-visible { outline-color: $color-white; }
+main:focus { outline: none; } // the skip link's target
+.form-group :is(input, textarea):focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 1px; } // (over their own soft glow)
+
+// "Skip to content": the first stop for the keyboard, shown only when focused
+.skip-link {
+  position: fixed; top: 0.75rem; left: 0.75rem; z-index: 1000;
+  padding: 0.6rem 1.1rem; border-radius: 999px;
+  background: $color-white; color: $color-ink; font-weight: $font-weight-semibold; text-decoration: none;
+  box-shadow: 0 6px 20px rgba(13, 15, 20, 0.18);
+  transform: translateY(-200%);
+  &:focus { transform: none; }
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

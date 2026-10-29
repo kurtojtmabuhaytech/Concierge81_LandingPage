@@ -32,6 +32,7 @@
   <script src="assets/js/main.js" defer></script>
 </head>
 <body class="page-cream reveal-page reveal-once">
+  <a class="skip-link" href="#main">Skip to content</a>
 
   <!-- Navigation / Header -->
   <header class="site-header">
@@ -44,7 +45,7 @@
         <span class="hamburger-line"></span>
       </button>
 
-      <nav class="nav-menu" id="navMenu">
+      <nav class="nav-menu" id="navMenu" aria-label="Main">
         <a href="news.html">news</a>
         <a href="blog.html">blog</a>
         <a href="#contact">contact</a>
@@ -59,7 +60,7 @@
   </header>
   <div class="nav-backdrop" aria-hidden="true"></div>
 
-  <main>
+  <main id="main" tabindex="-1">
     <!-- Placeholder until the real text is ready (noindex above) -->
     <section class="section theme-cream blog-hero">
       <div class="container">
@@ -70,7 +71,6 @@
         </header>
       </div>
     </section>
-  </main>
 
   <!-- Contact -->
   <section id="contact" class="section theme-dark">
@@ -149,6 +149,8 @@
       </div>
     </div>
   </section>
+
+  </main>
 
   <!-- Footer -->
   <footer class="site-footer">

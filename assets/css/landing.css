@@ -125,6 +125,43 @@ code, kbd, samp, pre {
   padding: clamp(4rem, 6.614vw, 6.25rem) 0;
 }
 
+:focus-visible {
+  outline: 2px solid #276FF8;
+  outline-offset: 3px;
+}
+
+:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card, .tier-card--featured) :focus-visible,
+:is(.btn-primary, .theme-dark .btn):focus-visible {
+  outline-color: #FFFFFF;
+}
+
+main:focus {
+  outline: none;
+}
+
+.form-group :is(input, textarea):focus-visible {
+  outline: 2px solid #276FF8;
+  outline-offset: 1px;
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1000;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: #0E1013;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 6px 20px rgba(13, 15, 20, 0.18);
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: none;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -4348,7 +4385,7 @@ button.chip, a.chip {
   padding-bottom: clamp(3rem, 6.35vw, 6rem);
 }
 
-main > .blog-section:last-child {
+main > .blog-section:has(+ #contact) {
   padding-bottom: clamp(4rem, 7.9vw, 7.5rem);
 }
 
@@ -5971,7 +6008,8 @@ main > .blog-section:last-child {
     backdrop-filter: none;
     border-bottom-color: transparent;
   }
-  .js-motion.story-plain .site-header {
+  .js-motion.story-plain .site-header,
+  .js-motion .site-header:focus-within {
     background: rgba(255, 255, 255, 0.96);
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);

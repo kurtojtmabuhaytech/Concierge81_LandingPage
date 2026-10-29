@@ -66,6 +66,7 @@
   <script src="assets/js/main.js" defer></script>
 </head>
 <body class="page-cream reveal-page reveal-once">
+  <a class="skip-link" href="#main">Skip to content</a>
   <!-- Reading progress through the article (main.js) -->
   <div class="read-progress" aria-hidden="true"><span id="readProgress"></span></div>
 
@@ -80,7 +81,7 @@
         <span class="hamburger-line"></span>
       </button>
 
-      <nav class="nav-menu" id="navMenu">
+      <nav class="nav-menu" id="navMenu" aria-label="Main">
         <a href="news.html">news</a>
         <a href="blog.html" class="is-current" aria-current="page">blog</a>
         <a href="#contact">contact</a>
@@ -95,7 +96,7 @@
   </header>
   <div class="nav-backdrop" aria-hidden="true"></div>
 
-  <main>
+  <main id="main" tabindex="-1">
     <article>
       <!-- 1. Post Header + Hero -->
       <section class="section theme-cream blog-hero">
@@ -299,7 +300,6 @@
         </div>
       </div>
     </section>
-  </main>
 
   <!-- Back to top: appears after about one screen of scrolling (main.js) -->
   <button type="button" class="to-top" id="toTop" aria-label="Back to top">
@@ -383,6 +383,8 @@
       </div>
     </div>
   </section>
+
+  </main>
 
   <!-- Footer -->
   <footer class="site-footer">

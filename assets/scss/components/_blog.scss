@@ -16,7 +16,7 @@
 .blog-hero .chat-header-row.left { margin-bottom: 1rem; }
 .blog-hero .sub-pill-text { max-width: none; } // one line, as in the Figma
 .blog-section { padding-top: 0; padding-bottom: clamp(3rem, 6.35vw, 6rem); }
-main > .blog-section:last-child { padding-bottom: clamp(4rem, 7.9vw, 7.5rem); }
+main > .blog-section:has(+ #contact) { padding-bottom: clamp(4rem, 7.9vw, 7.5rem); } // the last one (the contact section follows it inside main)
 .blog-section-title { font-size: $type-title; line-height: 1.19; font-weight: $font-weight-semibold; letter-spacing: -0.019em; margin: 0 0 1.5rem; }
 
 // Article prose (blog + news): direct paragraphs only, so chat bubbles keep their own colors

@@ -2073,7 +2073,6 @@
     cards.forEach((card) => {
       card.setAttribute('role', 'button');
       card.tabIndex = 0;
-      card.setAttribute('aria-label', `Show concierge81 on a ${card.dataset.device}`);
     });
     // When the scene shows its finished frame again (the page re-measuring), the choice comes back
     const keepChoice = (t) => {
@@ -2429,11 +2428,15 @@
     };
     el.addEventListener('mouseenter', enter);
     el.addEventListener('mouseleave', leave);
+    el.addEventListener('focusin', enter); // (keyboard: focus inside it plays it too)
+    el.addEventListener('focusout', leave);
     stopOn.forEach(type => el.addEventListener(type, stop));
     const off = () => {
       stop();
       el.removeEventListener('mouseenter', enter);
       el.removeEventListener('mouseleave', leave);
+      el.removeEventListener('focusin', enter);
+      el.removeEventListener('focusout', leave);
       stopOn.forEach(type => el.removeEventListener(type, stop));
     };
     off.stop = stop;
@@ -2667,6 +2670,20 @@
       };
     }
   );
+
+  /* Keyboard (desktop): focus moving into the site header (Tab from the top of the page, Shift+Tab
+     back) brings it in over any section; it goes again when focus leaves it. */
+  let headerForFocus = false;
+  siteHeader.addEventListener('focusin', () => {
+    if (!smoother || gsap.getProperty(siteHeader, 'yPercent') > -1) return;
+    headerForFocus = true;
+    gsap.to(siteHeader, { yPercent: 0, duration: 0.3, ease: MOTION.easeInOut, overwrite: 'auto' });
+  });
+  siteHeader.addEventListener('focusout', (e) => {
+    if (!headerForFocus || siteHeader.contains(e.relatedTarget)) return;
+    headerForFocus = false;
+    gsap.to(siteHeader, { yPercent: -100, duration: 0.3, ease: MOTION.easeInOut, overwrite: 'auto' });
+  });
 
   // In-page links glide there with the smooth scrolling (the story's step links are handled first)
   document.addEventListener('click', (e) => {

@@ -192,7 +192,8 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   // Once the intro story is plain sections (scrolled back up, or done earlier in the session) the
   // content scrolls under the header, so it gets its frosted bar back
-  .js-motion.story-plain .site-header {
+  .js-motion.story-plain .site-header,
+  .js-motion .site-header:focus-within { // (keyboard focus brings it in over any section, with its bar)
     background: rgba(255, 255, 255, 0.96);
     -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     border-bottom-color: $color-border;
