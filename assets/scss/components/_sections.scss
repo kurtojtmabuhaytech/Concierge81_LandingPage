@@ -190,8 +190,9 @@
   display: inline-flex; align-items: center; gap: 4px;
   background: $neutral-100; border: 1px solid transparent; color: $color-ink;
   padding: 0.4rem 0.85rem; border-radius: $radius-full;
-  font: inherit; font-size: 0.8rem; cursor: pointer;
+  font: inherit; font-size: 0.8rem;
 }
+button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures of a chat
 .chip--soft { background: $color-cobalt-soft; color: $cobalt-700; }
 
 .msg-row { display: flex; flex-direction: column; gap: 4px; }
@@ -773,6 +774,8 @@ $q-pile: (
   h3 { font-size: clamp(1.3rem, 2.2vw, 1.55rem); font-weight: $font-weight-semibold; line-height: 1.1; letter-spacing: -0.02em; margin: 0.25rem 0 0; max-width: 13ch; }
 }
 .industries-section { overflow-x: clip; } // contains the gallery bleed so the page never scrolls sideways
+// "Swipe to explore" is a touch hint; a mouse gets the arrows and dots instead
+@media (hover: hover) and (pointer: fine) { .industries-section .swipe-hint { display: none; } }
 // Landscape photos cropped to the portrait card; each keeps its kiosk + visitors in frame (Figma)
 .industry-photo {
   position: absolute; inset: 0;

@@ -507,6 +507,9 @@ code, kbd, samp, pre {
   border-radius: 999px;
   font: inherit;
   font-size: 0.8rem;
+}
+
+button.chip, a.chip {
   cursor: pointer;
 }
 
@@ -1968,6 +1971,11 @@ code, kbd, samp, pre {
   overflow-x: clip;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .industries-section .swipe-hint {
+    display: none;
+  }
+}
 .industry-photo {
   position: absolute;
   inset: 0;
