@@ -441,7 +441,7 @@
     // above that was holding this one): it starts now, so what is on screen always matches the
     // scroll position (and a refresh brings back the same)
     const catchUp = () => {
-      if (playing || measuring || jumping || !steps?.isActive) return;
+      if (playing || measuring || jumping || plain || !pin?.isActive) return; // (the pin: also right at the end of the steps)
       const allowed = gsap.utils.clamp(0, 1, (scrollLimit() - steps.start) / Math.max(1, steps.end - steps.start));
       const want = Math.max(firstStep(), stepAfter(Math.min(steps.progress, allowed) * tl.duration()));
       if (want > Math.min(seen, tl.duration()) + 0.001) playOn(want);
@@ -482,7 +482,6 @@
         // It only runs back when the visitor scrolls back (not the page's own clamp-back, a
         // re-measure, or a held scroll while it is still one-way: `canGoBack`).
         if (followBack && self.direction < 0 && (measuring || pulledBack() || !canGoBack())) return;
-        if (self.direction < 0 && !measuring && !pulledBack()) goPlain(); // (a dragged scrollbar: the wheel and keys did it already)
         if (plain) return;
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001 && !switching) { // (see goPlain)
