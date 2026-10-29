@@ -2715,15 +2715,28 @@
         .to({}, pause(0.6)), { section: $('.story'), ready: () => storyDone() && shownWhole(item) });
     });
 
-    // The concierge says hello: the hero avatar and the kiosks glow softly
-    const sayHello = el => gsap.timeline()
-      .to(el, { filter: 'brightness(1.08) drop-shadow(0 0 18px rgba(39, 111, 248, 0.45))', duration: 0.35, ease: 'power2.out' })
-      .to(el, { filter: 'brightness(1) drop-shadow(0 0 0px rgba(39, 111, 248, 0))', duration: 0.6, ease: 'power2.inOut' })
-      .set(el, { clearProps: 'filter' })
-      .to({}, pause(0.8));
-    [hero.avatar, $('#intro .kiosk-device')].forEach(el => el && loop(el, () => sayHello(el), { section: $('.story'), ready: () => !root.classList.contains('is-opening') && shownWhole(el) }));
-    const ctaScreen = $('#cta .kiosk-screen');
-    if (ctaScreen) loop(ctaScreen, () => sayHello(ctaScreen), { section: cta.section });
+    // The concierge says hello: she nods, and a kiosk's screen lights up softly around her (a
+    // box-shadow, not a filter: filters on these layers can flash black while the page scrolls)
+    const sayHello = (face, screen) => {
+      const round = gsap.timeline()
+        .to(face, { y: -6, duration: 0.22, ease: 'power2.out' })
+        .to(face, { y: 0, duration: 0.55, ease: 'bounce.out' });
+      if (screen) round
+        .to(screen, { boxShadow: '0 0 0 3px rgba(39, 111, 248, 0.35), 0 0 28px rgba(39, 111, 248, 0.35)', duration: 0.3 }, 0)
+        .to(screen, { boxShadow: '0 0 0 0px rgba(39, 111, 248, 0), 0 0 0px rgba(39, 111, 248, 0)', duration: 0.5 }, 0.45)
+        .set(screen, { clearProps: 'boxShadow' });
+      return round.to({}, pause(0.8));
+    };
+    const heroFace = $('img', hero.avatar);
+    if (heroFace) loop(hero.avatar, () => sayHello(heroFace), { section: $('.story'), ready: () => root.classList.contains('story-plain') && shownWhole(hero.avatar) }); // (once the opening is plain: the story moves it otherwise)
+    [$('#intro .kiosk-screen'), $('#cta .kiosk-screen')].forEach((screen) => {
+      const face = screen && $('.kiosk-avatar', screen);
+      if (!face) return;
+      const inStory = !!screen.closest('.story');
+      loop(screen, () => sayHello(face, screen), inStory
+        ? { section: $('.story'), ready: () => root.classList.contains('story-plain') && shownWhole(screen) }
+        : { section: cta.section });
+    });
 
     // Where would my concierge live?: each device's icon pulses (the card lifts, in the CSS)
     deployment.cards.forEach((card) => {
