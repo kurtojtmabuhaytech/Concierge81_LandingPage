@@ -154,6 +154,16 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   .gallery-dots span { cursor: pointer; }
 }
 
+// A section the visitor has scrolled back up past is a plain section again: everything shown, in
+// full, and it scrolls like the rest of the page (animations.js adds .is-plain)
+:is(#problem, #how, #interaction, #industries, #values, #deployment, #pricing, #faq, #cta).is-staged.is-plain {
+  height: auto;
+  overflow: visible;
+  padding: $space-section 0;
+  > .container { padding-block: 0; will-change: auto; }
+}
+#cta.is-staged.is-plain { padding-bottom: 0; overflow: hidden; }
+
 // The section after a pinned scene slides up over it (the scene stays pinned for one more screen)
 .slides-over {
   position: relative;

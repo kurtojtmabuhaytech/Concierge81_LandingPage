@@ -214,8 +214,50 @@
     }
     return false;
   };
+  /* The way back. Once a section has been seen to its end, the first scroll back up makes it a
+     plain section for good: laid out in full, no pin, no slide-over, nothing replays (only its
+     hover animations still play). Every section seen to its end turns plain at once, before the
+     page moves, with the scroll put so that what is on screen stays exactly where it is. A section
+     still playing its steps finishes first: the scroll back waits until it has played to its end. */
+  const plainables = []; // each scene: { id, done(), inView(), finish(), makePlain(), isPlain() }
+  const plainAtStart = []; // scenes seen this session, plain from the start (after a refresh)
+  const plainSaved = (() => { try { return JSON.parse(session.get('plain')) || []; } catch (e) { return []; } })();
+  // something on screen to keep in place while the sections around it turn plain
+  const anchorOnScreen = () => $$('.chat-section-header > *, [data-anim], .bento-row, .industry-card, .tier-card, .faq-chat-box, h2, h3')
+    .find((el) => { const box = el.getBoundingClientRect(); return box.height > 0 && box.top >= 0 && box.top < innerHeight * 0.8; });
+  // While the page re-measures for that switch, the scroll still points where it was in the
+  // longer page: the scenes below must not take that as the visitor having reached them
+  let switching = false;
+  const goPlain = () => {
+    if (measuring || jumping) return;
+    const due = plainables.filter(p => !p.isPlain() && p.done());
+    if (!due.length) return;
+    const anchor = anchorOnScreen();
+    const at = anchor?.getBoundingClientRect().top;
+    due.forEach(p => p.makePlain());
+    session.set('plain', JSON.stringify(plainables.filter(p => p.isPlain()).map(p => p.id)));
+    smoother?.paused(true); // (so it doesn't ease on from where it was)
+    switching = true;
+    try {
+      ScrollTrigger.refresh();
+      smoother?.paused(false);
+      if (anchor) scrollToY(Math.max(0, topOf(anchor) - at), false);
+      ScrollTrigger.update();
+    } finally { switching = false; }
+  };
+  // A scroll back while a section on screen hasn't played to its end: it plays on, and the scroll waits
+  const holdBack = () => {
+    const unfinished = plainables.filter(p => !p.isPlain() && p.inView() && !p.done());
+    unfinished.forEach(p => p.finish());
+    return unfinished.length > 0;
+  };
+  const backKeys = ['ArrowUp', 'PageUp', 'Home'];
   const onLimitWheel = (e) => {
     if (scrollsItself(e)) return;
+    if (e.deltaY < 0 && !jumping && !measuring) {
+      if (holdBack()) { e.preventDefault(); return; }
+      goPlain();
+    }
     if (e.deltaY > 0 && atLimit()) { e.preventDefault(); return; }
     if (jumping || e.ctrlKey || !e.deltaY || !inFinished()) return;
     e.preventDefault();
@@ -224,6 +266,10 @@
   };
   const onLimitKey = (e) => {
     if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    if ((backKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) && !jumping && !measuring) {
+      if (holdBack()) { e.preventDefault(); return; }
+      goPlain();
+    }
     if (downKeys.includes(e.key) && !(e.key === ' ' && e.shiftKey) && atLimit()) e.preventDefault();
   };
   // When the page puts itself back at the limit, that small move up is not the visitor scrolling
@@ -250,6 +296,8 @@
       removeEventListener('scroll', onLimitScroll);
       ScrollTrigger.removeEventListener('scrollEnd', catchUpAll);
       limits.clear();
+      plainables.length = 0;
+      plainAtStart.length = 0;
       catchUps.clear();
       finishedRanges.clear();
     };
@@ -276,6 +324,7 @@
     let followTo = -1;
     let viewMove = null; // the view easing after the scroll (other scenes, over what was seen)
     let pin;
+    let plain = false; // turned into a plain section on the way back (makePlain)
 
     // The view inside the pinned screen at each point the visitor has watched (time → y), so going
     // back retraces it
@@ -431,8 +480,10 @@
         // It only runs back when the visitor scrolls back (not the page's own clamp-back, a
         // re-measure, or a held scroll while it is still one-way: `canGoBack`).
         if (followBack && self.direction < 0 && (measuring || pulledBack() || !canGoBack())) return;
+        if (self.direction < 0 && !measuring && !pulledBack()) goPlain(); // (a dragged scrollbar: the wheel and keys did it already)
+        if (plain) return;
         const watched = Math.min(seen, tl.duration());
-        if (self.direction > 0 && want > watched + 0.001) {
+        if (self.direction > 0 && want > watched + 0.001 && !switching) { // (see goPlain)
           playOn(want);
           return;
         }
@@ -452,7 +503,7 @@
         tl.invalidate();
         if (self.progress > 0) beforeMove();
         const want = self.progress > 0 ? Math.max(firstStep(), stepAfter(self.progress * tl.duration())) : 0;
-        seen = Math.max(seen, want);
+        if (!switching) seen = Math.max(seen, want); // (see goPlain)
         // the views seen, re-measured at each step (going back over the seen part retraces them)
         stops().filter(t => t > 0 && t <= Math.min(seen, tl.duration()) + 0.001).forEach((t) => { tl.time(t); noteView(t); });
         // what was built stays built, wherever the visitor is (a scene below the screen, seen
@@ -503,13 +554,13 @@
     // the next one once it has finished; held at the current one while the scene's own animation
     // runs (`hold`: the inbox's rain and demo); no limit once the scene has been seen to its end
     limits.add(() => {
-      if (!pin) return Infinity;
+      if (plain || !pin) return Infinity;
       const done = Math.min(seen, tl.duration());
       if (done >= tl.duration() - 0.001 && !playing && !hold()) return Infinity;
       const next = playing ? playingTo : (hold() ? done : (stops().find(t => t > done + 0.001) ?? tl.duration()));
       return toScroll(Math.max(next, firstStep()));
     });
-    if (!followBack) finishedRanges.add(() => (pin && !playing && tl.progress() > 0.999 ? [pin.start, pin.end] : null));
+    if (!followBack) finishedRanges.add(() => (!plain && pin && !playing && tl.progress() > 0.999 ? [pin.start, pin.end] : null));
     // The first step (the visitor's question and the answer) starts as the section slides up
     // into view, so it never arrives as an empty panel
     const early = startShown ? null : ScrollTrigger.create({
@@ -541,6 +592,33 @@
       tailTrigger?.kill();
       tl.pause();
       pin.kill(true);
+    }
+    // A plain section for good (see goPlain): laid out in full, no pin, the next section no longer
+    // slides over it; everything shown as built, and it scrolls like the rest of the page
+    const makePlain = () => {
+      if (plain) return;
+      plain = true;
+      seen = Infinity;
+      kill();
+      if (content) {
+        tl.getTweensOf(content).forEach(tween => tween.kill()); // (the view moves belonged to the pinned screen)
+        gsap.set(content, { y: 0 });
+      }
+      trigger.classList.add('is-plain');
+      $$('.slides-over').find(el => trigger.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)?.classList.remove('slides-over');
+      resting();
+      tl.progress(1);
+    };
+    if (!followBack) {
+      plainables.push({
+        id: `#${trigger.id}`,
+        done: () => plain || (tl.progress() > 0.999 && !playing && !hold()),
+        inView: () => !!pin?.isActive,
+        finish: () => { if (!playing || playingTo < tl.duration() - 0.001) playOn(tl.duration()); },
+        makePlain,
+        isPlain: () => plain
+      });
+      if (plainSaved.includes(`#${trigger.id}`)) plainAtStart.push(makePlain);
     }
     return { pin, scrub: { labelToScroll }, steps, kill };
   };
@@ -922,11 +1000,11 @@
     });
     tl.addLabel('fan');
 
-    // The site header stays away for the rest of the page; it comes back only when the visitor
-    // scrolls back up to the intro step (the header tween above runs back).
-    // Scrolling back up, the story stays the same pinned screen and runs back step by step with
-    // the scroll (the inbox slides back down off it first), so there is no switch of layout.
+    // The site header stays away for the rest of the page.
+    // On the way back (see goPlain) the story becomes plain sections, like every section seen:
+    // the switch happens while the inbox covers the whole screen, so it can't be seen.
     let oneWay = true; // until the inbox has slid half way up (see below)
+    let plain = null;
     const scene = scrollScene({
       trigger: story,
       tl,
@@ -940,6 +1018,19 @@
         fitTraveller();
         applyStart();
       }
+    });
+    plainables.push({
+      id: '.story',
+      done: () => !!plain || (!oneWay && tl.progress() > 0.999),
+      inView: () => false, // (its one-way lock already keeps the visitor going until it has played)
+      finish: () => {},
+      makePlain: () => {
+        if (plain) return;
+        scene.kill();
+        unstage();
+        plain = plainStory();
+      },
+      isPlain: () => !!plain
     });
 
     /* One way through the opening: until the visitor reaches the team inbox, the page doesn't
@@ -1003,7 +1094,8 @@
     return () => {
       document.removeEventListener('click', onStepLink, true);
       unlock();
-      unstage();
+      if (plain) plain();
+      else unstage();
     };
   });
 
@@ -2636,6 +2728,10 @@
       measuring = true; // setting up: shown finished where seen, nothing plays
       const unlimit = context.conditions.isDesktop ? limitScroll() : null; // the scroll follows the animation
       const cleanups = scenes.map(scene => scene(context.conditions)).filter(Boolean);
+      if (plainAtStart.length) { // seen this session before a refresh: plain from the start
+        plainAtStart.splice(0).forEach(makePlain => makePlain());
+        ScrollTrigger.refresh();
+      }
       requestAnimationFrame(() => { measuring = false; });
       return () => {
         unlimit?.();

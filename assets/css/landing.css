@@ -6043,6 +6043,21 @@ main > .blog-section:has(+ #contact) {
   cursor: pointer;
 }
 
+:is(#problem, #how, #interaction, #industries, #values, #deployment, #pricing, #faq, #cta).is-staged.is-plain {
+  height: auto;
+  overflow: visible;
+  padding: clamp(4rem, 6.614vw, 6.25rem) 0;
+}
+:is(#problem, #how, #interaction, #industries, #values, #deployment, #pricing, #faq, #cta).is-staged.is-plain > .container {
+  padding-block: 0;
+  will-change: auto;
+}
+
+#cta.is-staged.is-plain {
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
 .slides-over {
   position: relative;
   z-index: 1;
