@@ -249,7 +249,9 @@
   const holdBack = () => {
     const unfinished = plainables.filter(p => !p.isPlain() && p.inView() && !p.done());
     unfinished.forEach(p => p.finish());
-    return unfinished.length > 0;
+    // (and a section only sliding in that has started its first step: until that step has played)
+    const stepUnderWay = plainables.some(p => !p.isPlain() && !p.inView() && p.stepUnderWay?.());
+    return unfinished.length > 0 || stepUnderWay;
   };
   const backKeys = ['ArrowUp', 'PageUp', 'Home'];
   // A dragged scrollbar can't be held, but going up with it starts the plain way back too
@@ -625,6 +627,7 @@
         id: `#${trigger.id}`,
         done: () => plain || (tl.progress() > 0.999 && !playing && !hold()),
         inView: () => !!pin?.isActive,
+        stepUnderWay: () => { const box = trigger.getBoundingClientRect(); return !!playing && box.top < innerHeight && box.bottom > 0; },
         finish: () => { if (!playing || playingTo < tl.duration() - 0.001) playOn(tl.duration()); },
         makePlain,
         isPlain: () => plain
@@ -1032,12 +1035,14 @@
     });
     plainables.push({
       id: '.story',
-      // (only together with the inbox below it: never a plain opening over a half-played inbox)
-      done: () => !!plain || (!oneWay && tl.progress() > 0.999 && (plainables.find(p => p.id === '#problem')?.done() ?? true)),
+      // (only together with the inbox below it, once that has played to its end too: never a
+      // plain opening over a half-played inbox)
+      done: () => !!plain || (tl.progress() > 0.999 && (plainables.find(p => p.id === '#problem')?.done() ?? true)),
       inView: () => false, // (its one-way lock already keeps the visitor going until it has played)
       finish: () => {},
       makePlain: () => {
         if (plain) return;
+        unlock(); // (the one-way lock's job is done)
         scene.kill();
         unstage();
         plain = plainStory();
@@ -1048,8 +1053,9 @@
     /* One way through the opening: until the visitor reaches the team inbox, the page doesn't
        scroll back up (wheel, trackpad, keys; a dragged scrollbar is held at the furthest point
        reached), so the story is always watched through, never rewound or cut. Scrolling down
-       and in-page links work as usual. Once the inbox has slid half way up over it, it unlocks
-       for good (the session remembers), and the story retraces its steps on the way back. */
+       and in-page links work as usual. It stays one way until the inbox below it has played to
+       its end too (its chat, the rain, the drag demo, "Let me handle the repeats."); then the
+       first scroll back up turns both plain (see goPlain) and unlocks it for good. */
     let furthest = scrollY;
     const remeasured = () => { furthest = scrollY; }; // positions change when the page re-measures
     const upKeys = ['ArrowUp', 'PageUp', 'Home'];
@@ -1060,11 +1066,7 @@
     };
     const onScroll = () => {
       if (measuring) return;
-      if (scrollY >= topOf(next) - innerHeight * 0.5) { // the inbox has slid half way up: free from now on
-        session.set('introDone', '1');
-        unlock();
-        return;
-      }
+      if (scrollY >= topOf(next) - innerHeight * 0.5) session.set('introDone', '1'); // (a refresh from here shows the opening plain)
       if (jumping || scrollY >= furthest) furthest = scrollY;
       else if (scrollY < furthest - 1) scrollToY(furthest, false);
     };
