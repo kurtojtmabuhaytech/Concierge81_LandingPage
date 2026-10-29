@@ -4498,7 +4498,7 @@ button.chip, a.chip {
 }
 
 .blog-hero--post {
-  padding-top: clamp(2rem, 4.89vw, 4.625rem);
+  padding-top: clamp(2rem, 3.97vw, 3.75rem);
 }
 
 .blog-hero .chat-section-header {
@@ -5566,6 +5566,7 @@ main > .blog-section:has(+ #contact) {
 
 .news-featured-copy {
   padding: clamp(1.75rem, 4.2vw, 4rem) clamp(1.5rem, 3.7vw, 3.5rem);
+  padding-bottom: calc(clamp(1.75rem, 4.2vw, 4rem) + 1.25rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -5622,6 +5623,10 @@ main > .blog-section:has(+ #contact) {
     aspect-ratio: 4/3;
   }
 }
+.blog-section:has(.news-featured) {
+  padding-bottom: clamp(2rem, 3.7vw, 3.5rem);
+}
+
 /* News List (date · tag · title · arrow), Figma "News/Row": 80px rows in a white card */
 .news-list-wrap {
   container-type: inline-size;
@@ -5727,6 +5732,10 @@ main > .blog-section:has(+ #contact) {
   color: #1F59C6;
 }
 
+.news-list-wrap + .load-more {
+  margin-top: 1.5rem;
+}
+
 .load-more .btn-outline-accent {
   padding: 0.875rem 1.625rem;
   font-size: 1.0625rem;
@@ -5806,6 +5815,14 @@ main > .blog-section:has(+ #contact) {
   object-position: 45% 50%;
 }
 
+.news-body .news-quote + h2 {
+  margin-top: 2.875rem;
+}
+
+.keep-reading:has(.news-list) {
+  padding-top: calc(clamp(3rem, 5.8vw, 5.5rem) + 1.625rem);
+}
+
 .news-quote {
   margin: 0;
   padding: 1rem 0;
@@ -5859,7 +5876,7 @@ main > .blog-section:has(+ #contact) {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 2.125rem;
   background: #FFFFFF;
   border-radius: 24px;
   padding: 1.5rem 1.5rem 1.5rem 1.75rem;

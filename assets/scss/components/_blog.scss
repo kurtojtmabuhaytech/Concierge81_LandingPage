@@ -21,10 +21,10 @@
 }
 
 .blog-hero { padding-top: clamp(2.5rem, 6.9vw, 6.5rem); padding-bottom: clamp(2rem, 4.8vw, 4.5rem); }
-// Space above the first line, per page, as in the Figma frames (at 1512: 120, 80 and 74)
+// Space above the first line, per page, as in the Figma frames (at 1512: 120, 80 and 60)
 .blog-hero--list { padding-top: clamp(2.5rem, 7.94vw, 7.5rem); }
 .blog-hero--news { padding-top: clamp(2rem, 5.29vw, 5rem); }
-.blog-hero--post { padding-top: clamp(2rem, 4.89vw, 4.625rem); }
+.blog-hero--post { padding-top: clamp(2rem, 3.97vw, 3.75rem); }
 .blog-hero .chat-section-header { margin-bottom: 0; }
 .blog-hero .chat-header-row.left { margin-bottom: 1rem; }
 .blog-hero .sub-pill-text { max-width: none; } // one line, as in the Figma
