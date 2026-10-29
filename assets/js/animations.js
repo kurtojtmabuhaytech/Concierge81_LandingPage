@@ -188,7 +188,7 @@
      over the tail as the next section covers it. `hold` keeps the scroll at the current step while the scene's own animation runs,
      and `runs` are such animations, paused with the step while the visitor is away. */
   const PACE = 0.25; // screen heights of scrolling per second of animation
-  const STEP_SPEED = 1.15; // new steps play a little quicker than the timeline, still easy to read
+  const STEP_SPEED = 1.9; // new steps play quicker than the timeline (the whole page in about 40 s), still easy to read
   const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
   let jumping = false; // an in-page link is gliding past scenes: show them finished
   // A scene is turning plain: the page re-measures while the scroll is still where it was in the
@@ -204,6 +204,7 @@
      slides in. Each scene says how far it allows (`limits`); the smallest applies. Wheel, trackpad
      and keys stop there, a dragged scrollbar is held there; in-page links glide past freely. */
   const limits = new Set();
+  const catchUps = new Set(); // each scene's check, run whenever a step finishes
   const scrollLimit = () => Math.min(Infinity, ...[...limits].map(limit => limit()));
   const downKeys = ['ArrowDown', 'PageDown', 'End', ' '];
   const atLimit = () => !jumping && scrollY >= scrollLimit() - 1;
@@ -244,7 +245,9 @@
       scrollToY(max, false);
     }
   };
+  const catchUpAll = () => catchUps.forEach(fn => fn());
   const limitScroll = () => {
+    ScrollTrigger.addEventListener('scrollEnd', catchUpAll); // (and whenever the scroll comes to rest)
     addEventListener('wheel', onLimitWheel, { capture: true, passive: false });
     addEventListener('keydown', onLimitKey, { capture: true });
     addEventListener('scroll', onLimitScroll, { passive: true });
@@ -252,7 +255,9 @@
       removeEventListener('wheel', onLimitWheel, { capture: true });
       removeEventListener('keydown', onLimitKey, { capture: true });
       removeEventListener('scroll', onLimitScroll);
+      ScrollTrigger.removeEventListener('scrollEnd', catchUpAll);
       limits.clear();
+      catchUps.clear();
       finishedRanges.clear();
     };
   };
@@ -265,7 +270,9 @@
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
-    const stepAfter = time => stops().find(t => t >= time - 0.001) ?? tl.duration();
+    // (a position within a few pixels past a step counts as that step: the scroll limit stops the
+    // visitor right on it, and re-measuring after a refresh can land a hair beyond)
+    const stepAfter = time => stops().find(t => t >= time - 0.02) ?? tl.duration();
     // The scene's first moment worth showing: its start when that is already a full page (the story
     // opens on the hero), otherwise its first step (before it, most scenes are still empty)
     const firstStep = () => (startShown ? 0 : stops()[1] ?? tl.duration());
@@ -382,9 +389,20 @@
           seen = Math.max(seen, target);
           noteView(target);
           builtAt = Math.min(seen, tl.duration());
+          requestAnimationFrame(catchUpAll); // (this may have been holding a scene below)
         }
       });
     };
+    // The visitor may have scrolled on into the next step while a step played (here, or in a scene
+    // above that was holding this one): it starts now, so what is on screen always matches the
+    // scroll position (and a refresh brings back the same)
+    const catchUp = () => {
+      if (playing || measuring || jumping || !steps?.isActive) return;
+      const allowed = gsap.utils.clamp(0, 1, (scrollLimit() - steps.start) / Math.max(1, steps.end - steps.start));
+      const want = Math.max(firstStep(), stepAfter(Math.min(steps.progress, allowed) * tl.duration()));
+      if (want > Math.min(seen, tl.duration()) + 0.001) playOn(want);
+    };
+    catchUps.add(catchUp);
 
     pin = ScrollTrigger.create({
       trigger,
@@ -1169,8 +1187,8 @@
 
     // The pinned screen shows part of the content; moving it works like scrolling
     const offsetIn = el => el.getBoundingClientRect().top - content.getBoundingClientRect().top;
-    const showCard = () => -gsap.utils.clamp(0, offsetIn(card) - 16, offsetIn(card) + card.offsetHeight + 24 - innerHeight);
-    const showClosing = () => -Math.max(0, content.offsetHeight - innerHeight); // down to the section's end
+    const showCard = showInStage(section, content, card);
+    const showClosing = () => -uncut(content, Math.max(0, content.offsetHeight - innerHeight), offsetIn(closing)); // down to the section's end
 
     // The rain and the drag demo play on their own, at their own pace, once the visitor has
     // reached the card (they don't need the scroll, and the scroll never waits for them); then
@@ -1289,12 +1307,26 @@
 
   // Moving the content inside a pinned screen works like scrolling: the shift that brings an
   // element (or everything from `el` down to `last`) fully into view, top first if it is taller
-  // than the screen
+  // than the screen. It never stops part-way through a chat bubble (or a CTA line) above it: that
+  // one moves fully out of view, or stays whole if moving it out would cut `el`.
+  const aboveParts = '.chat-section-header > *, .status-line, .cta-title, .cta-sub, .cta-actions';
+  const uncut = (content, shift, top) => {
+    const box = content.getBoundingClientRect();
+    $$(aboveParts, content).forEach((part) => {
+      const b = part.getBoundingClientRect();
+      const partTop = b.top - box.top;
+      const partBottom = b.bottom - box.top;
+      if (shift <= partTop + 1 || shift >= partBottom - 1) return; // not cut
+      shift = partBottom + 12 <= top - 16 ? partBottom + 12 : Math.max(0, partTop - 12);
+    });
+    return shift;
+  };
   const showInStage = (section, content, el, last = el) => () => {
-    const top = el.getBoundingClientRect().top - content.getBoundingClientRect().top;
-    const bottom = last.getBoundingClientRect().bottom - content.getBoundingClientRect().top;
+    const box = content.getBoundingClientRect();
+    const top = el.getBoundingClientRect().top - box.top;
+    const bottom = last.getBoundingClientRect().bottom - box.top;
     const stageH = innerHeight; // the pinned screen (the section can measure taller while ScrollTrigger re-measures)
-    return -gsap.utils.clamp(0, top - 16, bottom + 24 - stageH);
+    return -uncut(content, gsap.utils.clamp(0, top - 16, bottom + 24 - stageH), top);
   };
 
   /* 9. How it works (Figma recording 37–50s). Desktop: a scroll scene that slides up over the
