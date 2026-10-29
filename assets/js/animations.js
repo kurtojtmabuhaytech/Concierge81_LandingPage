@@ -107,6 +107,63 @@
     .set(el, { color: '#FFFFFF' }, at)
     .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, at);
 
+  // A message popping in like a messaging app: it springs up from its tail corner
+  const popIn = (tl, el, at) => tl.to(el, { autoAlpha: 1, scale: 1, duration: MOTION.pop + 0.08, ease: 'back.out(1.8)' }, at);
+
+  // "•••" while the concierge types (the FAQ's): laid over the spot where `anchor` (the reply,
+  // still hidden) will appear, so nothing around it moves. One per reply, made once.
+  const dotsFor = new WeakMap();
+  const typingDots = (anchor, size = '') => {
+    if (dotsFor.has(anchor)) return dotsFor.get(anchor);
+    const dots = document.createElement('span');
+    dots.className = `typing-dots bubble bubble--sand faq-dots ${size}`;
+    dots.setAttribute('aria-hidden', 'true');
+    dots.innerHTML = '<i></i><i></i><i></i>';
+    const parent = anchor.parentElement;
+    if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+    parent.appendChild(dots);
+    dotsFor.set(anchor, dots);
+    return dots;
+  };
+  // (placed again on every re-measure: where the reply's top-left corner is)
+  const placeDots = (dots, anchor) => gsap.set(dots, { left: anchor.offsetLeft, top: anchor.offsetTop, autoAlpha: 0, scale: 0.6, transformOrigin: 'left bottom' });
+  // In a stepped timeline: the dots pop in at `at`, type for a moment, then give way to the reply
+  const typeIn = (tl, dots, at, typing = 0.55) => tl
+    .to(dots, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, at)
+    .to(dots, { autoAlpha: 0, scale: 0.8, duration: 0.15 }, at + typing);
+
+  /* A section's chat header, the same in every scene (desktop): the visitor's question pops up
+     from its corner and turns from grey to sent, "•••" types where the answer will appear, then
+     the answer pops in whole and the sub-bubble after it. `start()` sets the starting state (on
+     every re-measure); `play(tl, at)` adds the step to the scene's timeline. */
+  const chatHeader = (header, { pillFrom = { backgroundColor: '#A8A49A' }, pillTo } = {}) => {
+    const user = $('.chat-header-row.right', header);
+    const pill = user && $('.header-pill--user', user);
+    const reply = $('.header-pill--ai', header);
+    const sub = $('.sub-pill-text', header);
+    const dots = typingDots(reply);
+    const sent = pill && (pillTo || Object.fromEntries(Object.keys(pillFrom).map(key => [key, getComputedStyle(pill)[key]])));
+    const start = () => {
+      if (user) gsap.set(user, { autoAlpha: 0, y: 0, scale: 0.6, transformOrigin: 'right bottom' });
+      if (pill) gsap.set(pill, pillFrom);
+      gsap.set(reply, { autoAlpha: 0, scale: 0.6, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      placeDots(dots, reply);
+      if (sub) gsap.set(sub, { autoAlpha: 0, y: 0, scale: 0.85, transformOrigin: 'left top' });
+    };
+    const play = (tl, at = 0) => {
+      let typing = at;
+      if (user) {
+        popIn(tl, user, at + 0.01).to(pill, { ...sent, duration: 0.4, ease: 'none' }, at + 0.3);
+        typing = at + 0.45;
+      }
+      typeIn(tl, dots, typing);
+      bubbleIn(tl, reply, typing + 0.6);
+      if (sub) popIn(tl, sub, typing + 0.85);
+      return tl;
+    };
+    return { user, pill, reply, sub, start, play };
+  };
+
   // Pinned scenes sit right under the sticky header (--header-h feeds --stage-h in the CSS)
   const siteHeader = $('.site-header');
   const setHeaderHeight = () => root.style.setProperty('--header-h', `${siteHeader.offsetHeight}px`);
@@ -1078,12 +1135,8 @@
     if (!isDesktop) return;
     const { section, content, card, head, pile, tags, float, floatCursor, open } = inbox;
     const [ask, closing] = inbox.headers;
-    const askUser = $('.chat-header-row.right', ask);
-    const askPill = $('.header-pill--user', askUser);
-    const askReply = $('.header-pill--ai', ask);
-    const askSub = $('.sub-pill-text', ask);
-    const closingReply = $('.header-pill--ai', closing);
-    const closingSub = $('.sub-pill-text', closing);
+    const asking = chatHeader(ask, { pillTo: { backgroundColor: '#0E1013' } });
+    const closingHeading = chatHeader(closing);
     section.classList.add('is-staged');
 
     // The floating "Where is the restroom?" rests down in the pile until the demo lifts it out
@@ -1114,10 +1167,8 @@
       showKept = settling && show ? show.progress() : 0;
       show?.pause(0);
       gsap.set(content, { y: 0 });
-      gsap.set(askUser, { autoAlpha: 0, y: 12 });
-      gsap.set(askPill, { backgroundColor: '#A8A49A' });
-      gsap.set([askReply, closingReply], { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set([askSub, closingSub], { autoAlpha: 0, y: 16 });
+      asking.start();
+      closingHeading.start();
       gsap.set(card, { autoAlpha: 0, backgroundColor: '#CFCBC0' });
       gsap.set(head, { autoAlpha: 0 });
       gsap.set(pile, { '--pile-glow': 0 });
@@ -1155,13 +1206,11 @@
       .to(open, { x: 0, y: openRest.y, rotation: openRest.rotation, duration: 0.9, ease: 'bounce.out' }, 'demo+=2.5');
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (26–28s): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
-      .to(askUser, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(askPill, { backgroundColor: '#0E1013', duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, askReply, 0.6)
-      .to(askSub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (26–28s): the visitor's question pops up and is sent (grey → black), "•••" types,
+    // then the answer pops in and the sub-bubble after it
+    asking.play(tl)
       .addLabel('ask')
 
       // Step 2 (28–30s): the view moves to the inbox and the card darkens in; once the whole card
@@ -1172,11 +1221,10 @@
       .to(head, { autoAlpha: 1, duration: 0.4 }, 'ask+=0.55')
       .addLabel('inbox', 'ask+=0.95')
 
-      // Step 3 (34.5–36s), on the next scroll: the view moves down; "Let me handle the repeats."
-      // grows, then the sub-bubble
+      // Step 3 (34.5–36s), on the next scroll: the view moves down; "•••" types, then "Let me
+      // handle the repeats." pops in and the sub-bubble after it
       .to(content, { y: showClosing, duration: MOTION.slow, ease: MOTION.easeInOut }, 'inbox');
-    bubbleIn(tl, closingReply, 'inbox+=0.6')
-      .to(closingSub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    closingHeading.play(tl, tl.labels.inbox + 0.2)
       .addLabel('repeats');
 
     // The card in full view starts the show. When the page is only re-measuring (a refresh past
@@ -1261,25 +1309,17 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, wrap, stepper, dots, cards, answer } = how;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#5B5F66', color: 'rgba(255, 255, 255, 0.7)' } });
     const icons = cards.map(card => $('.process-icon', card));
     const texts = cards.map(card => $$('.process-label, h3, p', card));
     const dial = $('.process-glyph--round', cards[1]); // its tick ring turns with --dial
-    const pillColor = getComputedStyle(pill).backgroundColor;
-    const pillText = getComputedStyle(pill).color;
     const next = $('#interaction');
     section.classList.add('is-staged');
     next.classList.add('slides-over');
 
     const applyStart = () => {
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#5B5F66', color: 'rgba(255, 255, 255, 0.7)' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set(stepper, { '--line': 0 });
       gsap.set(dots, { autoAlpha: 0, scale: 0.6, '--on': 0 });
       gsap.set(cards, { autoAlpha: 0, y: 24 });
@@ -1297,13 +1337,11 @@
       .to(texts[i], { opacity: 1, duration: 0.4, stagger: 0.1 }, '<0.25');
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (37–40s): the visitor asks, the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, color: pillText, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (37–40s): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // The view moves to the steps; then they build (steps, below)
@@ -1385,37 +1423,32 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, grid, chat, voice } = modes;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#A8A49A' } });
     const titles = [chat, voice].map(card => $$('.mode-tag, h3', card));
     const words = [chat, voice].map(card => $$('.word', card));
     const mini = $('.mini-chat', chat);
     const messages = $$('.msg-row', mini);
     const question = $('.bubble', messages[0]);
     const chips = $$('.chip', mini);
+    const miniDots = typingDots(messages[1], 'is-sm');
     const stage = $('.voice-stage', voice);
     const listening = $('.listening', voice);
-    const pillColor = getComputedStyle(pill).backgroundColor;
     const questionColor = getComputedStyle(question).backgroundColor;
     const voiceColor = getComputedStyle(voice).backgroundColor;
     section.classList.add('is-staged');
 
     const applyStart = () => {
       gsap.set(content, { y: 0 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#A8A49A' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set([chat, voice], { autoAlpha: 0, y: 24 });
       gsap.set(voice, { backgroundColor: '#5B5D61' });
       gsap.set(titles.flat(), { opacity: 0 });
       gsap.set(words.flat(), { opacity: 0 });
       gsap.set(mini, { autoAlpha: 0, y: 40 });
-      gsap.set(messages, { autoAlpha: 0, y: 10 });
+      gsap.set(messages, { autoAlpha: 0, y: 0, scale: 0.6, transformOrigin: i => (messages[i].matches('.msg-row--user') ? 'right bottom' : 'left bottom') });
       gsap.set(question, { backgroundColor: '#C9C6BE' });
-      gsap.set(chips, { autoAlpha: 0, y: 8 });
+      placeDots(miniDots, messages[1]);
+      gsap.set(chips, { autoAlpha: 0, y: 0, scale: 0.8 });
       gsap.set(stage, { autoAlpha: 0, scale: 0.8 });
       gsap.set(listening, { autoAlpha: 0 });
     };
@@ -1427,13 +1460,11 @@
       .to(words[i], { opacity: 1, duration: 0.25, stagger: 0.05 }, '<0.3');
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (50–53s): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (50–53s): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // The view moves to the cards; then they play (cards, below)
@@ -1456,14 +1487,17 @@
       .to(stage, { autoAlpha: 1, scale: 1, duration: 0.9 }, 'chat+=0.7')
       .addLabel('voice')
 
-      // Step 4 (57–60s): the mini chat plays: the question (grey → black), the answer, the
-      // follow-up, then the chips; the voice card starts listening
-      .to(messages[0], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice')
+      // Step 4 (57–60s): the mini chat plays like a messaging app: the question pops up (grey →
+      // black), "•••" types, the answer and the follow-up pop in, then the chips; the voice card
+      // starts listening
       .to(question, { backgroundColor: questionColor, duration: 0.3, ease: 'none' }, 'voice+=0.25')
-      .to(listening, { autoAlpha: 1, duration: 0.4 }, 'voice+=0.3')
-      .to(messages[1], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice+=0.6')
-      .to(messages[2], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice+=1.0')
-      .to(chips, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.12 }, 'voice+=1.4');
+      .to(listening, { autoAlpha: 1, duration: 0.4 }, 'voice+=0.3');
+    const said = cards.labels.voice;
+    popIn(cards, messages[0], said);
+    typeIn(cards, miniDots, said + 0.45);
+    popIn(cards, messages[1], said + 1.05);
+    popIn(cards, messages[2], said + 1.4);
+    cards.to(chips, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)', stagger: 0.12 }, said + 1.75);
     // (the rings around the mic keep their own gentle CSS pulse, so "Listening…" looks alive)
     tl.add(cards, 'cards').addLabel('played');
     const next = $('#industries');
@@ -1499,11 +1533,10 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, gallery, cards, controls } = industries;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#A8A49A' } });
+    // Each card's little chat: the guest's question, then the concierge's answer (after "•••")
+    const chats = cards.map(card => $$('.industry-chat .bubble:not(.typing-dots)', card)).filter(pair => pair.length === 2)
+      .map(([question, answer]) => ({ question, answer, dots: typingDots(answer, 'is-sm') }));
     section.classList.add('is-staged');
 
     // Desktop carousel: the cards sit on a track that moves one card per step until "Built for
@@ -1615,24 +1648,24 @@
       measure();
       gsap.set(track, { x: 0 });
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#A8A49A' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set(all, { autoAlpha: 0, x: 0 });
       gsap.set(all.slice(1), { x: () => innerWidth * 0.35 });
       gsap.set(controls, { autoAlpha: 0 });
+      chats.forEach(({ question, answer, dots }) => {
+        gsap.set(question, { autoAlpha: 0, scale: 0.6, transformOrigin: 'right bottom' });
+        gsap.set(answer, { autoAlpha: 0, scale: 0.6, transformOrigin: 'left bottom' });
+        placeDots(dots, answer);
+      });
     };
     applyStart();
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (1:02–1:05): the visitor asks (grey → black), the answer grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (1:02–1:05): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // The view moves to the gallery; once it has settled on the gallery and its controls:
@@ -1642,8 +1675,15 @@
       // Step 2 (1:05–1:07): the first card fades in, the rest slide in from the right one by one
       .to(all[0], { autoAlpha: 1, duration: MOTION.base }, 'cards')
       .to(all.slice(1), { autoAlpha: 1, x: 0, duration: 0.9, ease: 'power3.out', stagger: 0.12 }, 'cards+=0.25')
-      .to(controls, { autoAlpha: 1, duration: 0.4 }, 'cards+=0.9')
-      .addLabel('shown')
+      .to(controls, { autoAlpha: 1, duration: 0.4 }, 'cards+=0.9');
+    // as the cards settle, each card's chat plays: the question pops up, "•••", the answer pops in
+    chats.forEach(({ question, answer, dots }, i) => {
+      const asked = tl.labels.cards + 0.6 + i * 0.12;
+      popIn(tl, question, asked);
+      typeIn(tl, dots, asked + 0.35, 0.45);
+      popIn(tl, answer, asked + 0.85);
+    });
+    tl.addLabel('shown')
 
       // Step 3 (1:07–1:14): the row moves along until "Built for yours, too." reaches the right edge
       .to(track, { x: () => -maxShift(), duration: 2.4, ease: 'none', onUpdate: syncDots }, 'shown+=0.3')
@@ -1692,11 +1732,7 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, rows, cards } = values;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#5B5F66' } });
     const part = selector => $(selector, section);
     const parts = selector => $$(selector, section);
     const timeline = part('.timeline');
@@ -1733,10 +1769,7 @@
 
     const applyStart = () => {
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#5B5F66' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set(cards, { autoAlpha: 0, y: 30 });
       gsap.set(timeline, { '--at': '0%' });
       gsap.set(fill, { scaleX: 0 });
@@ -1763,13 +1796,11 @@
     applyStart();
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (1:15–1:19): the visitor asks (grey → white), the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (1:15–1:19): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // Step 2 (1:19–1:25): the view moves to row 1; its two cards rise in. The dot travels the day,
@@ -1857,11 +1888,7 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, split, stage, device, cards } = deployment;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#A8A49A' } });
     const screen = $('.device-screen', device);
     const ui = Object.fromEntries(['logo', 'toggle', 'lang', 'avatar', 'greet', 'question', 'composer']
       .map(key => [key, $(`.ds-${key}`, screen)]));
@@ -1945,10 +1972,7 @@
 
     const applyStart = () => {
       gsap.set(content, { y: 0 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#A8A49A' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set(stage, { autoAlpha: 0, y: 30 });
       gsap.set(device, { ...shape('website'), scale: 0.92 });
       setLayout('website');
@@ -1957,13 +1981,11 @@
     applyStart();
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (1:38–1:41): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (1:38–1:41): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // Step 2 (1:41–1:43): the view moves to the stage; the device rises in as a website screen
@@ -2082,10 +2104,7 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, cards, help } = pricing;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#5B5F66' } });
     const [basic, capacity, business, enterprise] = cards;
     const texts = cards.map(card => $$('.tier-label, h3, p, .btn', card));
     const parts = (card, selector) => $$(selector, card);
@@ -2097,9 +2116,7 @@
 
     const applyStart = () => {
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#5B5F66' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      heading.start();
       gsap.set(cards, { autoAlpha: 0, y: 24, filter: 'brightness(0.35) saturate(0.6)' });
       gsap.set(texts.flat(), { opacity: 0.4 });
       // basic: the dot and its disc, the rings drawn in towards it
@@ -2123,12 +2140,11 @@
     applyStart();
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (2:06–2:08): the visitor asks (grey → white), then the concierge bubble grows
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
+    // Step 1 (2:06–2:08): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
       .to(content, { y: showInStage(section, content, header, help), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
       .addLabel('tiers', 'ask+=0.2');
@@ -2192,11 +2208,7 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, filters, box, help } = faq;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#A8A49A' } });
     const chip = $('.faq-ask', box);
     const demo = $(`.faq-pair[data-q="${chip.dataset.q}"]`, box);
     const thread = {
@@ -2227,10 +2239,7 @@
 
     const applyStart = () => {
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#A8A49A' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set([filters, box], { autoAlpha: 0, y: 24 });
       gsap.set(help, { autoAlpha: 0, scale: 0.85, transformOrigin: 'center bottom' });
       if (chatting()) {
@@ -2246,13 +2255,11 @@
     box.classList.toggle('is-waiting', !chatting());
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (2:16–2:18): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (2:16–2:18): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // Step 2 (2:18–2:24): the view moves to the topics; they and the chat with its suggestions rise in
@@ -2348,8 +2355,12 @@
   });
 
   // The contact section (every screen size): the chat, then the steps and the form
-  scenes.push(() => {
-    chatThread(contact.header);
+  scenes.push(({ isDesktop }) => {
+    if (isDesktop) { // the chat pops in like the other sections' (it is not pinned: it plays as it scrolls in)
+      const heading = chatHeader(contact.header, { pillFrom: { backgroundColor: '#5B5F66' } });
+      heading.start();
+      heading.play(gsap.timeline({ defaults: { ease: MOTION.ease }, scrollTrigger: { trigger: contact.header, start: 'top 80%', toggleActions: PLAY } }));
+    } else chatThread(contact.header);
     scrollReveal(contact.steps, contact.steps, { autoAlpha: 0, y: 30 });
     scrollReveal(contact.form, contact.form, { autoAlpha: 0, y: 40 });
   });
@@ -2450,14 +2461,23 @@
       .to(askIcon, { y: 0, duration: 0.45, ease: 'bounce.out' })
       .to({}, pause(0.7)));
 
-    // Type or talk: the mini chat plays again, message by message; the voice orb glows
+    // Type or talk: the mini chat plays again like a messaging app (question, "•••", answers,
+    // chips); the voice orb glows
     const mini = $('.mini-chat', modes.chat);
-    const messages = $$('.msg-row, .chip', mini);
-    loop(modes.chat, () => gsap.timeline()
-      .to(messages, { autoAlpha: 0, duration: 0.2 })
-      .fromTo(messages, { autoAlpha: 0, y: 10, scale: 0.92, transformOrigin: i => (messages[i].matches('.msg-row--user') ? 'right bottom' : 'left bottom') },
-        { autoAlpha: 1, y: 0, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', stagger: 0.35 }, '+=0.2')
-      .to({}, pause(1.4)));
+    const rows = $$('.msg-row', mini);
+    const miniChips = $$('.chip', mini);
+    const miniDots = typingDots(rows[1], 'is-sm');
+    loop(modes.chat, () => {
+      const round = gsap.timeline()
+        .to([...rows, ...miniChips], { autoAlpha: 0, duration: 0.2 })
+        .set([...rows, ...miniChips], { y: 0, scale: 0.6, transformOrigin: i => (i === 0 ? 'right bottom' : 'left bottom') });
+      popIn(round, rows[0], 0.4);
+      typeIn(round, miniDots, 0.75, 0.45);
+      popIn(round, rows[1], 1.25);
+      popIn(round, rows[2], 1.6);
+      round.to(miniChips, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)', stagger: 0.1 }, 1.95);
+      return round.to({}, pause(1.4));
+    });
     // The voice card answers: the mic swells, sound waves ripple out across the card, the glow
     // brightens and "Listening…" turns to "Answering…" for a moment
     const orb = $('.voice-orb', modes.voice);
@@ -2537,13 +2557,18 @@
 
     // Industries: the chat on a card pops in again (its photo zooms, in the CSS)
     industries.cards.forEach((card) => {
-      const bubbles = $$('.industry-chat .bubble', card);
-      if (!bubbles.length) return;
-      loop(card, () => gsap.timeline()
-        .to(bubbles, { autoAlpha: 0, duration: 0.2 })
-        .fromTo(bubbles, { autoAlpha: 0, scale: 0.9, transformOrigin: i => (i ? 'left bottom' : 'right bottom') },
-          { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', stagger: 0.5 }, '+=0.1')
-        .to({}, pause(1.6)));
+      const [question, answer] = $$('.industry-chat .bubble:not(.typing-dots)', card);
+      if (!answer) return;
+      const dots = typingDots(answer, 'is-sm');
+      loop(card, () => {
+        const round = gsap.timeline()
+          .to([question, answer], { autoAlpha: 0, duration: 0.2 })
+          .set([question, answer], { scale: 0.6 });
+        popIn(round, question, 0.3);
+        typeIn(round, dots, 0.65, 0.45);
+        popIn(round, answer, 1.15);
+        return round.to({}, pause(1.6));
+      });
     });
 
     // Pricing: each tier's graphic builds again
