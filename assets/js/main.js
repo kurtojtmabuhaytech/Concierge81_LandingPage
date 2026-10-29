@@ -639,4 +639,116 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelector('.post-title')?.focus({ preventScroll: true });
     });
   }
+
+  /* Hero chat (landing): tapping a suggestion asks it, the concierge types "•••" and answers, like
+     the FAQ chat. The mic and Categories answer with an invitation to the live demo. The messages
+     area keeps the height it has, scrolling inside, so the hero card never changes size (the
+     opening measures it). */
+  const heroChat = document.querySelector('.hero-chat-interface');
+  if (heroChat) {
+    const area = heroChat.querySelector('.chat-messages-area');
+    const chips = [...heroChat.querySelectorAll('.chip-row .chip')];
+    const answers = {
+      'Where is the café?': 'The café is on the ground floor, just past the lobby on your left. It’s open from 7 AM to 10 PM.',
+      'Any vegetarian options?': 'Yes, the menu marks vegetarian and vegan dishes with a leaf. Would you like today’s specials?',
+      'Room service hours': 'Room service runs 24 hours. Dial 0 from your room, or I can place the order for you.'
+    };
+    const demoReply = 'In the live demo you can talk to me or browse topics by category. Request a demo to try it with your own questions.';
+    area.setAttribute('aria-live', 'polite');
+    let busy = false;
+    const row = (who, html) => {
+      const el = document.createElement('div');
+      el.className = `msg-row msg-row--${who} is-asked`;
+      el.innerHTML = html;
+      if (motionOK) el.classList.add('is-popping');
+      area.appendChild(el);
+      area.scrollTop = area.scrollHeight;
+      return el;
+    };
+    const say = (question, answer, withLink) => {
+      if (busy) return;
+      busy = true;
+      if (!area.style.height) { // keep the card's size from here on
+        area.style.height = `${area.offsetHeight}px`;
+        area.classList.add('is-chatting');
+      }
+      if (question) {
+        const q = row('user', '<p class="bubble bubble--user"></p><span class="timestamp">You · 9:12 PM</span>');
+        q.querySelector('p').textContent = question;
+      }
+      const typing = row('ai', '<p class="bubble bubble--sand faq-dots" aria-label="concierge81 is typing"><i></i><i></i><i></i></p>');
+      setTimeout(() => {
+        typing.remove();
+        const a = row('ai', '<p class="bubble bubble--ai"></p><span class="timestamp">concierge81 · 9:12 PM</span>');
+        a.querySelector('p').textContent = answer;
+        if (withLink) {
+          const link = document.createElement('a');
+          link.href = '#contact';
+          link.className = 'hero-chat-link';
+          link.textContent = 'Request a demo ›';
+          a.querySelector('p').append(' ', link);
+        }
+        busy = false;
+      }, motionOK ? 1100 : 300);
+    };
+    chips.forEach(chip => chip.addEventListener('click', () => say(chip.textContent.trim(), answers[chip.textContent.trim()] || demoReply)));
+    heroChat.querySelector('.mic-btn')?.addEventListener('click', () => say(null, demoReply, true));
+    heroChat.querySelector('.category-btn')?.addEventListener('click', () => say(null, demoReply, true));
+  }
+
+  /* Language button (header, hero, footer): a small menu of the four languages; only English is
+     live for now, the others say they are coming soon */
+  const languages = [['EN', 'English'], ['JA', '日本語', 'Japanese'], ['ZH', '中文', 'Chinese'], ['KO', '한국어', 'Korean']];
+  const langMenu = document.createElement('div');
+  langMenu.className = 'lang-menu';
+  langMenu.hidden = true;
+  langMenu.setAttribute('role', 'menu');
+  langMenu.innerHTML = languages.map(([code, name]) => `<button type="button" role="menuitemradio" aria-checked="${code === 'EN'}" data-lang="${code}"><span>${code}</span>${name}</button>`).join('')
+    + '<p class="lang-note" aria-live="polite"></p>';
+  document.body.append(langMenu);
+  const note = langMenu.querySelector('.lang-note');
+  let langFrom = null;
+  let langAt = 0; // the scroll position it opened at
+  const closeLang = (refocus) => {
+    if (langMenu.hidden) return;
+    langMenu.hidden = true;
+    note.textContent = '';
+    langFrom?.setAttribute('aria-expanded', 'false');
+    if (refocus) langFrom?.focus();
+    langFrom = null;
+  };
+  document.querySelectorAll('.lang-btn').forEach((btn) => {
+    btn.setAttribute('aria-haspopup', 'menu');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (langFrom === btn) { closeLang(); return; }
+      closeLang();
+      langFrom = btn;
+      btn.setAttribute('aria-expanded', 'true');
+      langMenu.hidden = false;
+      langAt = window.scrollY;
+      const box = btn.getBoundingClientRect();
+      const below = box.bottom + langMenu.offsetHeight + 8 < innerHeight;
+      langMenu.style.left = `${Math.min(Math.max(8, box.right - langMenu.offsetWidth), innerWidth - langMenu.offsetWidth - 8)}px`;
+      langMenu.style.top = `${below ? box.bottom + 6 : box.top - langMenu.offsetHeight - 6}px`;
+      langMenu.querySelector('button').focus();
+    });
+  });
+  langMenu.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-lang]');
+    if (!item) return;
+    e.stopPropagation();
+    if (item.dataset.lang === 'EN') { closeLang(true); return; }
+    const [, , english] = languages.find(([code]) => code === item.dataset.lang);
+    note.textContent = `${english} is coming soon.`;
+  });
+  langMenu.addEventListener('keydown', (e) => {
+    const items = [...langMenu.querySelectorAll('[data-lang]')];
+    const i = items.indexOf(document.activeElement);
+    if (e.key === 'Escape') closeLang(true);
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
+  });
+  document.addEventListener('click', (e) => { if (!langMenu.contains(e.target)) closeLang(); });
+  window.addEventListener('scroll', () => { if (Math.abs(window.scrollY - langAt) > 40) closeLang(); }, { passive: true }); // (a real scroll, not a tap's nudge)
 });

@@ -2685,6 +2685,39 @@
     gsap.to(siteHeader, { yPercent: -100, duration: 0.3, ease: MOTION.easeInOut, overwrite: 'auto' });
   });
 
+  /* Below the opening the site header stays away, so a small pill keeps "Request a demo" and the
+     menu at hand (bottom right, desktop). "Menu" brings the header in until the visitor scrolls
+     on; the pill steps aside once the contact form is on screen. */
+  const pill = document.createElement('div');
+  pill.className = 'float-pill';
+  pill.innerHTML = '<button type="button" class="float-pill-menu" aria-expanded="false">Menu</button><a href="#contact" class="btn btn-primary btn-small">Request a demo</a>';
+  document.body.append(pill);
+  const menuBtn = $('.float-pill-menu', pill);
+  let calledAt = null; // the scroll position where "Menu" brought the header in
+  const sendHeaderAway = () => {
+    if (calledAt === null) return;
+    calledAt = null;
+    siteHeader.classList.remove('is-called');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    if (!siteHeader.contains(document.activeElement)) gsap.to(siteHeader, { yPercent: -100, duration: 0.35, ease: MOTION.easeInOut, overwrite: 'auto' });
+  };
+  menuBtn.addEventListener('click', () => {
+    if (calledAt !== null) { sendHeaderAway(); return; }
+    calledAt = scrollY;
+    siteHeader.classList.add('is-called');
+    menuBtn.setAttribute('aria-expanded', 'true');
+    gsap.to(siteHeader, { yPercent: 0, duration: 0.35, ease: MOTION.easeInOut, overwrite: 'auto' });
+  });
+  let pillTick = false;
+  const placePill = () => {
+    pillTick = false;
+    const past = smoother && !root.classList.contains('is-opening') && scrollY > topOf('#problem') + innerHeight * 0.5;
+    const formOnScreen = $('#contact').getBoundingClientRect().top < innerHeight * 0.75;
+    pill.classList.toggle('is-shown', !!past && !formOnScreen);
+    if (calledAt !== null && Math.abs(scrollY - calledAt) > 60) sendHeaderAway();
+  };
+  addEventListener('scroll', () => { if (!pillTick) { pillTick = true; requestAnimationFrame(placePill); } }, { passive: true });
+
   // In-page links glide there with the smooth scrolling (the story's step links are handled first)
   document.addEventListener('click', (e) => {
     const link = e.target.closest('a[href^="#"]');

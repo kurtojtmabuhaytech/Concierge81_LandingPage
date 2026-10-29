@@ -193,7 +193,8 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   // Once the intro story is plain sections (scrolled back up, or done earlier in the session) the
   // content scrolls under the header, so it gets its frosted bar back
   .js-motion.story-plain .site-header,
-  .js-motion .site-header:focus-within { // (keyboard focus brings it in over any section, with its bar)
+  .js-motion .site-header:focus-within, // (keyboard focus brings it in over any section, with its bar)
+  .js-motion .site-header.is-called { // (or the floating pill's "Menu")
     background: rgba(255, 255, 255, 0.96);
     -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     border-bottom-color: $color-border;
@@ -228,3 +229,22 @@ html.is-opening { overflow: hidden; }
 // site header is fixed to the screen instead of sticky, and the content starts below it
 .is-smooth .site-header { position: fixed; top: 0; left: 0; right: 0; }
 .is-smooth #smooth-content { padding-top: var(--header-h, 4rem); }
+
+// Below the opening (desktop): "Menu" and "Request a demo" at hand in a small floating pill
+.float-pill {
+  position: fixed; right: clamp(1rem, 2vw, 2rem); bottom: clamp(1rem, 2vw, 2rem); z-index: 900;
+  display: flex; align-items: center; gap: 0.35rem; padding: 0.35rem;
+  background: rgba(255, 255, 255, 0.92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid $color-border; border-radius: $radius-full; box-shadow: 0 10px 30px rgba(13, 15, 20, 0.16);
+  opacity: 0; visibility: hidden; translate: 0 12px;
+  transition: opacity 0.3s ease, translate 0.3s $reveal-ease, visibility 0s linear 0.3s;
+  &.is-shown { opacity: 1; visibility: visible; translate: 0 0; transition-delay: 0s; }
+  .btn { white-space: nowrap; }
+}
+.float-pill-menu {
+  border: 0; background: none; font: inherit; font-size: 0.85rem; font-weight: $font-weight-semibold; color: $color-ink;
+  padding: 0.5rem 0.9rem; border-radius: $radius-full; cursor: pointer;
+  &:hover, &[aria-expanded="true"] { background: $color-cobalt-soft; }
+}
+@media (max-width: 900px) { .float-pill { display: none; } } // (phones keep their header)
+@media (prefers-reduced-motion: reduce) { .float-pill { transition: none; } }
