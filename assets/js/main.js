@@ -601,15 +601,24 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Blog post: highlight the "On this page" link for the section in view
+  // (from the scroll position: the last section whose top has passed 30% of the screen, or the
+  // first one above them all, so a quick scroll back to the top never leaves the last one lit)
   const toc = document.getElementById('postToc');
-  if (toc && 'IntersectionObserver' in window) {
+  if (toc) {
     const links = [...toc.querySelectorAll('a[href^="#"]')];
     const sections = links.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
     const setActive = (id) => links.forEach(link => link.classList.toggle('is-active', link.getAttribute('href') === `#${id}`));
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) setActive(entry.target.id); });
-    }, { rootMargin: '-20% 0px -70% 0px' });
-    sections.forEach(section => observer.observe(section));
+    let tocTicking = false;
+    const pick = () => {
+      tocTicking = false;
+      const line = window.innerHeight * 0.3;
+      const current = sections.filter(section => section.getBoundingClientRect().top <= line).pop() || sections[0];
+      if (current) setActive(current.id);
+    };
+    const onTocScroll = () => { if (!tocTicking) { tocTicking = true; requestAnimationFrame(pick); } };
+    window.addEventListener('scroll', onTocScroll, { passive: true });
+    window.addEventListener('resize', onTocScroll);
+    pick();
   }
 
   // Blog post: reading progress bar (through the article) and "Back to top" after about one screen

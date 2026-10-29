@@ -139,6 +139,18 @@ main:focus {
   outline: none;
 }
 
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .form-group :is(input, textarea):focus-visible {
   outline: 2px solid #276FF8;
   outline-offset: 1px;
@@ -4433,6 +4445,30 @@ button.chip, a.chip {
   border-bottom-color: #E5E2D9;
 }
 
+@media (min-width: 901px) {
+  .page-cream .site-header {
+    padding-block: calc(21 * var(--u));
+  }
+  .page-cream .site-header .brand-logo {
+    font-size: calc(22 * var(--u));
+  }
+  .page-cream .nav-menu a:not(.btn) {
+    color: #0E1013;
+    font-size: calc(14 * var(--u));
+  }
+  .page-cream .site-header .lang-btn {
+    background: transparent;
+    border-color: #CFCBC0;
+    color: #5C5A4D;
+    letter-spacing: 0.06em;
+    font-size: calc(12 * var(--u));
+    padding: calc(7 * var(--u)) calc(14 * var(--u));
+  }
+  .page-cream .header-actions .btn {
+    font-size: calc(13 * var(--u));
+    padding: calc(7 * var(--u)) calc(12 * var(--u));
+  }
+}
 .nav-menu a.is-current {
   color: #0E1013;
   font-weight: 600;
@@ -4451,6 +4487,18 @@ button.chip, a.chip {
 .blog-hero {
   padding-top: clamp(2.5rem, 6.9vw, 6.5rem);
   padding-bottom: clamp(2rem, 4.8vw, 4.5rem);
+}
+
+.blog-hero--list {
+  padding-top: clamp(2.5rem, 7.94vw, 7.5rem);
+}
+
+.blog-hero--news {
+  padding-top: clamp(2rem, 5.29vw, 5rem);
+}
+
+.blog-hero--post {
+  padding-top: clamp(2rem, 4.89vw, 4.625rem);
 }
 
 .blog-hero .chat-section-header {
@@ -4547,8 +4595,8 @@ main > .blog-section:has(+ #contact) {
 
 .story-chat {
   position: absolute;
-  top: 14%;
-  bottom: 8%;
+  top: 8%;
+  bottom: 2.5%;
   left: 47.5%;
   right: 4.5%;
   display: flex;
@@ -4565,7 +4613,7 @@ main > .blog-section:has(+ #contact) {
 
 .story-meta--end {
   align-self: flex-end;
-  margin-top: 1.4cqw;
+  margin-top: 0.4cqw;
 }
 
 .bubble--frost {
@@ -4610,7 +4658,7 @@ main > .blog-section:has(+ #contact) {
   border-color: rgba(255, 255, 255, 0.55);
   color: #FFFFFF;
   font-size: 0.6em;
-  padding: 0.6em 0.95em;
+  padding: 0.95em 0.95em;
   white-space: nowrap;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
@@ -4626,7 +4674,7 @@ main > .blog-section:has(+ #contact) {
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-radius: 999px;
-  padding: 0.5em 0.5em 0.5em 1.2em;
+  padding: 0.75em 0.6em 0.75em 1.2em;
   font-size: 0.78em;
   color: rgba(255, 255, 255, 0.75);
 }
@@ -4929,7 +4977,7 @@ main > .blog-section:has(+ #contact) {
   font-size: 0.875rem;
   font-weight: 500;
   color: #1F59C6;
-  margin-bottom: 1.625rem;
+  margin-bottom: 2.75rem;
 }
 
 .post-header .post-eyebrow {

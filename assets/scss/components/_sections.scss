@@ -13,6 +13,8 @@
 :is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card, .tier-card--featured) :focus-visible,
 :is(.btn-primary, .theme-dark .btn):focus-visible { outline-color: $color-white; }
 main:focus { outline: none; } // the skip link's target
+// Read by screen readers, not shown (e.g. the newsroom's "Showing 8 of 12 stories", not in the Figma)
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .form-group :is(input, textarea):focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 1px; } // (over their own soft glow)
 
 // "Skip to content": the first stop for the keyboard, shown only when focused
