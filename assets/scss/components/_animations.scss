@@ -50,7 +50,7 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   place-items: center;
   background: $color-white;
 }
-.splash-msg { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.splash-msg { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; visibility: hidden; } // shown by the opening once it is set up (no flash of the finished greeting)
 .splash-bubble {
   position: relative;
   overflow: hidden;
@@ -118,7 +118,12 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 // Desktop scenes (animations.js adds .is-staged): one pinned screen; the content moves inside it
 #how.is-staged,
 #interaction.is-staged,
-#industries.is-staged {
+#industries.is-staged,
+#deployment.is-staged,
+#pricing.is-staged,
+#faq.is-staged,
+#cta.is-staged,
+#values.is-staged {
   --stage-h: 100svh; // the site header has slid away by now (features step)
   height: var(--stage-h);
   overflow: hidden;
@@ -132,6 +137,11 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   padding: 0;
   > .container { padding-block: 1.5rem; will-change: transform; }
   .inbox-card { margin-bottom: 2rem; }
+}
+
+// Desktop Why concierge81?: Hello. and こんにちは。 share one spot and swap with the language tab
+#values.is-staged .hello { display: grid; place-items: center;
+  > span { grid-area: 1 / 1; }
 }
 
 // Desktop industries carousel: the cards sit on a track that moves one card per step
@@ -180,3 +190,11 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
     border-bottom-color: transparent;
   }
 }
+
+// The opening (first open in a session): no scrolling until it has played
+html.is-opening { overflow: hidden; }
+
+// Smooth scrolling (ScrollSmoother, desktop): the content moves inside a fixed wrapper, so the
+// site header is fixed to the screen instead of sticky, and the content starts below it
+.is-smooth .site-header { position: fixed; top: 0; left: 0; right: 0; }
+.is-smooth #smooth-content { padding-top: var(--header-h, 4rem); }

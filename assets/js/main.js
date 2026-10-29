@@ -62,16 +62,26 @@ document.addEventListener('DOMContentLoaded', () => {
     else desktop.addListener(onDesktop);
   }
 
-  // Simple form submission handler
+  // Lead form: once sent, the card shows "Request sent." with the visitor's email (Figma); "Send
+  // another request" brings the empty form back. (Static site: nothing is sent anywhere yet.)
   const leadForm = document.getElementById('leadForm');
-  if (leadForm) {
+  const leadSent = document.getElementById('leadSent');
+  if (leadForm && leadSent) {
+    const card = leadForm.closest('.footer-form-card');
     leadForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const input = leadForm.querySelector('input[type="email"]');
-      if (input && input.value) {
-        alert(`Thank you! We received: ${input.value}. We will be in touch shortly.`);
-        leadForm.reset();
-      }
+      document.getElementById('leadSentEmail').textContent = leadForm.elements.email.value;
+      leadForm.hidden = true;
+      leadSent.hidden = false;
+      card.classList.add('is-sent');
+      leadSent.focus({ preventScroll: true });
+    });
+    document.getElementById('leadAgain').addEventListener('click', () => {
+      leadForm.reset();
+      leadSent.hidden = true;
+      leadForm.hidden = false;
+      card.classList.remove('is-sent');
+      leadForm.elements.name.focus();
     });
   }
 
@@ -175,6 +185,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
   }
 
+  // Industry cards: the ＋ opens the "More info" panel (and turns into ×)
+  document.querySelectorAll('.industry-plus[aria-controls]').forEach(btn => {
+    const name = btn.getAttribute('aria-label');
+    btn.addEventListener('click', () => {
+      const open = btn.closest('.industry-card').classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', String(open));
+      btn.setAttribute('aria-label', open ? name.replace('More about', 'Close details for') : name);
+    });
+  });
+
   // Draggable inbox questions. With GSAP, animations.js runs the pile instead (drag and throw).
   const pile = document.getElementById('qPile');
   if (pile && !window.gsap) {
@@ -247,7 +267,12 @@ document.addEventListener('DOMContentLoaded', () => {
         '.feature-item', '.inbox-card', '.stepper', '.process-card',
         '.mode-card', '.gallery-controls', '.bento-card', '.deploy-stage', '.platform-card',
         '.tier-card', '.cta-row', '.faq-filters', '.faq-chat-box',
-        '.cta-sub', '.cta-actions', '.next-steps', '.footer-form-card'
+        '.cta-sub', '.cta-actions', '.next-steps', '.footer-form-card',
+        // blog pages
+        '.blog-section-title', '.featured-card', '.post-filters', '.post-card', '.load-more',
+        '.post-header > *', '.post-hero', '.post-toc', '.post-body > *', '.keep-reading-head',
+        // news pages
+        '.news-featured', '.news-list-wrap', '.news-hero', '.news-body > *'
       ].join(', '),
       stagger: 0.08
     }

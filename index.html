@@ -16,6 +16,7 @@
   </script>
   <script src="assets/js/vendor/gsap/gsap.min.js" defer></script>
   <script src="assets/js/vendor/gsap/ScrollTrigger.min.js" defer></script>
+  <script src="assets/js/vendor/gsap/ScrollSmoother.min.js" defer></script>
   <script src="assets/js/vendor/gsap/Flip.min.js" defer></script>
   <script src="assets/js/vendor/gsap/MorphSVGPlugin.min.js" defer></script>
   <script src="assets/js/main.js" defer></script>
@@ -60,6 +61,9 @@
   </header>
   <div class="nav-backdrop" aria-hidden="true"></div>
 
+  <!-- Smooth scrolling (ScrollSmoother, desktop): everything that scrolls sits in here -->
+  <div id="smooth-wrapper">
+  <div id="smooth-content">
   <main>
   <!-- Sections 1–3 form one pinned story on desktop (animations.js); a normal stack everywhere else -->
   <div class="story">
@@ -311,15 +315,31 @@
         <div class="process-grid">
           <div class="process-card" data-anim>
             <div class="process-icon">
-              <div class="process-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H9l-5 4Z"/><path d="M8 9h8M8 12h5"/></svg></div>
+              <svg class="how-art" viewBox="0 0 160 160" aria-hidden="true">
+                <defs><linearGradient id="howAskFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2D4F98"/><stop offset="1" stop-color="#1D3470"/></linearGradient></defs>
+                <circle class="how-ring" cx="80" cy="80" r="76"/>
+                <path d="M41 39h81a12 12 0 0 1 12 12v49a12 12 0 0 1-12 12H62l-17 18v-18h-4a12 12 0 0 1-12-12V51a12 12 0 0 1 12-12Z" fill="url(#howAskFill)" stroke="#6D9BFB" stroke-width="3" stroke-linejoin="round"/>
+                <rect x="48" y="60" width="60" height="7" rx="3.5" fill="#fff"/>
+                <rect x="48" y="75" width="40" height="7" rx="3.5" fill="#9AA5BE"/>
+                <circle cx="126" cy="110" r="18" fill="#276FF8" stroke="#0E1013" stroke-width="4"/>
+                <rect x="122" y="100" width="8" height="13" rx="4" fill="#fff"/>
+                <path d="M118 110a8 8 0 0 0 16 0M126 118v3" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              </svg>
             </div>
             <span class="process-label">Step 01 · Ask</span>
             <h3>Your customer asks.</h3>
             <p>By typing or speaking — at your kiosk, website, or app.</p>
           </div>
           <div class="process-card" data-anim>
-            <div class="process-icon">
-              <div class="process-glyph process-glyph--round"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/></svg></div>
+            <div class="process-icon process-glyph--round">
+              <svg class="how-art" viewBox="0 0 160 160" aria-hidden="true">
+                <defs><linearGradient id="howThinkFill" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#5B8FF9"/><stop offset="1" stop-color="#1F59C6"/></linearGradient></defs>
+                <g class="how-dial"><line x1="80.0" y1="20.0" x2="80.0" y2="10.0" class="is-lit"/><line x1="86.2" y1="17.3" x2="86.9" y2="10.3" class="is-lit"/><line x1="92.3" y1="18.2" x2="93.7" y2="11.3" class="is-lit"/><line x1="98.3" y1="19.7" x2="100.3" y2="13.0" class="is-lit"/><line x1="104.1" y1="21.8" x2="106.8" y2="15.3" class="is-lit"/><line x1="109.7" y1="24.4" x2="113.0" y2="18.3" class="is-lit"/><line x1="115.0" y1="27.6" x2="118.9" y2="21.8" class="is-lit"/><line x1="120.0" y1="31.3" x2="124.4" y2="25.9" class="is-lit"/><line x1="122.4" y1="37.6" x2="129.5" y2="30.5" class="is-lit"/><line x1="128.7" y1="40.0" x2="134.1" y2="35.6" class="is-lit"/><line x1="132.4" y1="45.0" x2="138.2" y2="41.1" class="is-lit"/><line x1="135.6" y1="50.3" x2="141.7" y2="47.0" class="is-lit"/><line x1="138.2" y1="55.9" x2="144.7" y2="53.2" class="is-lit"/><line x1="140.3" y1="61.7" x2="147.0" y2="59.7" class="is-lit"/><line x1="141.8" y1="67.7" x2="148.7" y2="66.3" class="is-lit"/><line x1="142.7" y1="73.8" x2="149.7" y2="73.1" class="is-lit"/><line x1="140.0" y1="80.0" x2="150.0" y2="80.0" class="is-lit"/><line x1="142.7" y1="86.2" x2="149.7" y2="86.9" class="is-lit"/><line x1="141.8" y1="92.3" x2="148.7" y2="93.7" class="is-lit"/><line x1="140.3" y1="98.3" x2="147.0" y2="100.3" class="is-lit"/><line x1="138.2" y1="104.1" x2="144.7" y2="106.8" class="is-lit"/><line x1="135.6" y1="109.7" x2="141.7" y2="113.0" class="is-lit"/><line x1="132.4" y1="115.0" x2="138.2" y2="118.9" class="is-lit"/><line x1="128.7" y1="120.0" x2="134.1" y2="124.4" class="is-lit"/><line x1="122.4" y1="122.4" x2="129.5" y2="129.5" class="is-lit"/><line x1="120.0" y1="128.7" x2="124.4" y2="134.1" class="is-lit"/><line x1="115.0" y1="132.4" x2="118.9" y2="138.2" class="is-lit"/><line x1="109.7" y1="135.6" x2="113.0" y2="141.7" class="is-lit"/><line x1="104.1" y1="138.2" x2="106.8" y2="144.7" class="is-lit"/><line x1="98.3" y1="140.3" x2="100.3" y2="147.0" class="is-lit"/><line x1="92.3" y1="141.8" x2="93.7" y2="148.7" class="is-lit"/><line x1="86.2" y1="142.7" x2="86.9" y2="149.7" class="is-lit"/><line x1="80.0" y1="140.0" x2="80.0" y2="150.0" class="is-lit"/><line x1="73.8" y1="142.7" x2="73.1" y2="149.7" class="is-lit"/><line x1="67.7" y1="141.8" x2="66.3" y2="148.7" class="is-lit"/><line x1="61.7" y1="140.3" x2="59.7" y2="147.0"/><line x1="55.9" y1="138.2" x2="53.2" y2="144.7"/><line x1="50.3" y1="135.6" x2="47.0" y2="141.7"/><line x1="45.0" y1="132.4" x2="41.1" y2="138.2"/><line x1="40.0" y1="128.7" x2="35.6" y2="134.1"/><line x1="37.6" y1="122.4" x2="30.5" y2="129.5"/><line x1="31.3" y1="120.0" x2="25.9" y2="124.4"/><line x1="27.6" y1="115.0" x2="21.8" y2="118.9"/><line x1="24.4" y1="109.7" x2="18.3" y2="113.0"/><line x1="21.8" y1="104.1" x2="15.3" y2="106.8"/><line x1="19.7" y1="98.3" x2="13.0" y2="100.3"/><line x1="18.2" y1="92.3" x2="11.3" y2="93.7"/><line x1="17.3" y1="86.2" x2="10.3" y2="86.9"/><line x1="20.0" y1="80.0" x2="10.0" y2="80.0"/><line x1="17.3" y1="73.8" x2="10.3" y2="73.1"/><line x1="18.2" y1="67.7" x2="11.3" y2="66.3"/><line x1="19.7" y1="61.7" x2="13.0" y2="59.7"/><line x1="21.8" y1="55.9" x2="15.3" y2="53.2"/><line x1="24.4" y1="50.3" x2="18.3" y2="47.0"/><line x1="27.6" y1="45.0" x2="21.8" y2="41.1"/><line x1="31.3" y1="40.0" x2="25.9" y2="35.6"/><line x1="37.6" y1="37.6" x2="30.5" y2="30.5"/><line x1="40.0" y1="31.3" x2="35.6" y2="25.9"/><line x1="45.0" y1="27.6" x2="41.1" y2="21.8"/><line x1="50.3" y1="24.4" x2="47.0" y2="18.3"/><line x1="55.9" y1="21.8" x2="53.2" y2="15.3"/><line x1="61.7" y1="19.7" x2="59.7" y2="13.0"/><line x1="67.7" y1="18.2" x2="66.3" y2="11.3" class="is-lit"/><line x1="73.8" y1="17.3" x2="73.1" y2="10.3" class="is-lit"/></g>
+                <circle cx="80" cy="80" r="46" fill="url(#howThinkFill)"/>
+                <path d="M78 58c2 13 7 18 20 20-13 2-18 7-20 20-2-13-7-18-20-20 13-2 18-7 20-20Z" fill="#fff"/>
+                <path d="M100 55c.6 4 2 5.4 6 6-4 .6-5.4 2-6 6-.6-4-2-5.4-6-6 4-.6 5.4-2 6-6Z" fill="#fff"/>
+                <path d="M60 94c.4 2.6 1.4 3.6 4 4-2.6.4-3.6 1.4-4 4-.4-2.6-1.4-3.6-4-4 2.6-.4 3.6-1.4 4-4Z" fill="#fff" opacity=".7"/>
+              </svg>
             </div>
             <span class="process-label">Step 02 · Understand</span>
             <h3>Concierge81 understands.</h3>
@@ -327,7 +347,12 @@
           </div>
           <div class="process-card" data-anim>
             <div class="process-icon">
-              <div class="process-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+              <svg class="how-art" viewBox="0 0 160 160" aria-hidden="true">
+                <defs><linearGradient id="howReplyFill" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#5B8FF9"/><stop offset="1" stop-color="#2059D8"/></linearGradient></defs>
+                <circle class="how-ring" cx="80" cy="80" r="76"/>
+                <path d="M44 40h72a16 16 0 0 1 16 16v45a16 16 0 0 1-16 16H64l-17 16v-16h-3a16 16 0 0 1-16-16V56a16 16 0 0 1 16-16Z" fill="url(#howReplyFill)"/>
+                <path class="how-mark" d="M58 79l16 15 30-28" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
             <span class="process-label">Step 03 · Answer</span>
             <h3>They get a clear reply.</h3>
@@ -410,51 +435,121 @@
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--hotel" src="assets/images/cards/industry-hotel.jpg" alt="A concierge81 kiosk greeting guests in a hotel lobby" width="1440" height="802" loading="lazy">
           <span class="industry-label">Hotels &amp; Resorts</span>
-          <h3>Check-in help, day or night.</h3>
-          <button type="button" class="industry-plus" aria-label="More about hotels">+</button>
+          <h3>Check-in help,<br>day or night.</h3>
+          <button type="button" class="industry-plus" aria-label="More about hotels" aria-expanded="false" aria-controls="more-hotels">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">What time is checkout?</p>
             <p class="bubble bubble--white">11 AM. Want me to arrange a late checkout?</p>
+          </div>
+          <div class="industry-more" id="more-hotels">
+            <p class="industry-more-summary">Greets guests at the desk, in the lobby and on the room tablet.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Check-in, checkout and late arrivals</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Rooms, amenities and event directions</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Room service and local recommendations</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Lobby kiosk · Room tablet</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Front desk, in one tap</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--office" src="assets/images/cards/industry-office.jpg" alt="A concierge81 kiosk welcoming visitors at a corporate reception" width="1440" height="802" loading="lazy">
           <span class="industry-label">Corporate Offices</span>
-          <h3>Reception, without the wait.</h3>
-          <button type="button" class="industry-plus" aria-label="More about offices">+</button>
+          <h3>Reception,<br>without the wait.</h3>
+          <button type="button" class="industry-plus" aria-label="More about offices" aria-expanded="false" aria-controls="more-offices">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Where is meeting room B?</p>
             <p class="bubble bubble--white">Third floor — take the lift on your left.</p>
+          </div>
+          <div class="industry-more" id="more-offices">
+            <p class="industry-more-summary">Checks visitors in and tells the host they’ve arrived — no queue.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Visitor check-in and badge pickup</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Meeting-room directions and bookings</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Deliveries and contractor sign-in</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Reception kiosk · Tablet</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Reception or host</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--airport" src="assets/images/cards/industry-airport.jpg" alt="A traveller asking a concierge81 kiosk for directions at an airport" width="1440" height="802" loading="lazy">
           <span class="industry-label">Airports &amp; Transit</span>
-          <h3>Wayfinding in the moment.</h3>
-          <button type="button" class="industry-plus" aria-label="More about airports">+</button>
+          <h3>Wayfinding<br>in the moment.</h3>
+          <button type="button" class="industry-plus" aria-label="More about airports" aria-expanded="false" aria-controls="more-airports">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Which way to Gate 12?</p>
             <p class="bubble bubble--white">Straight ahead, about 4 minutes on foot.</p>
+          </div>
+          <div class="industry-more" id="more-airports">
+            <p class="industry-more-summary">Answers gate, platform and timing questions in the terminal.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Gate, platform and walking directions</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Lounges, lost &amp; found and facilities</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Schedule changes and delay updates</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Terminal kiosk · Info desk</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Ground staff</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--healthcare" src="assets/images/cards/industry-healthcare.jpg" alt="A visitor talking to a concierge81 kiosk in a hospital waiting area" width="1440" height="802" loading="lazy">
           <span class="industry-label">Healthcare</span>
-          <h3>Calm guidance for every visitor.</h3>
-          <button type="button" class="industry-plus" aria-label="More about healthcare">+</button>
+          <h3>Calm guidance<br>for every visitor.</h3>
+          <button type="button" class="industry-plus" aria-label="More about healthcare" aria-expanded="false" aria-controls="more-healthcare">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Where is Pharmacy?</p>
             <p class="bubble bubble--white">Level 2, east wing. I'll show you the way.</p>
+          </div>
+          <div class="industry-more" id="more-healthcare">
+            <p class="industry-more-summary">Calmly guides patients and visitors through the building.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Department and ward directions</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Appointment check-in and wait times</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Visiting hours and pharmacy info</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Lobby kiosk · Tablet</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Nurse station, urgent first</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card" data-anim>
           <img class="industry-photo industry-photo--retail" src="assets/images/cards/industry-retail.jpg" alt="Visitors asking a concierge81 kiosk for help at an information centre" width="1440" height="802" loading="lazy">
           <span class="industry-label">Retail</span>
-          <h3>Answers right on the shop floor.</h3>
-          <button type="button" class="industry-plus" aria-label="More about retail">+</button>
+          <h3>Answers right<br>on the shop floor.</h3>
+          <button type="button" class="industry-plus" aria-label="More about retail" aria-expanded="false" aria-controls="more-retail">+</button>
           <div class="industry-chat">
             <p class="bubble bubble--glass">Do you have this in blue?</p>
             <p class="bubble bubble--white">Yes — sizes M and L are in aisle 4.</p>
+          </div>
+          <div class="industry-more" id="more-retail">
+            <p class="industry-more-summary">Helps shoppers find products and offers on the shop floor.</p>
+            <span class="industry-more-label">What it handles</span>
+            <ul class="industry-more-list">
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Product location, sizes and stock</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Promotions, loyalty and returns</li>
+              <li><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4"/></svg>Store hours and services</li>
+            </ul>
+            <dl class="industry-more-facts">
+              <div><dt>Runs on</dt><dd>Shop-floor kiosk · Tablet</dd></div>
+              <div><dt>Languages</dt><dd>EN · JA · ZH · KO</dd></div>
+              <div><dt>Handoff</dt><dd>Store associate</dd></div>
+            </dl>
           </div>
         </article>
         <article class="industry-card industry-card--cta" data-anim>
@@ -479,90 +574,107 @@
   </section>
 
   <!-- 8. Bento Value Grid -->
-  <section id="values" class="section theme-dark">
+  <section id="values" class="section theme-dark" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">Why concierge81?</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Less repetition. Better service.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Less repetition. Better service.</h2>
         </div>
-        <p class="sub-pill-text">Everything you need to give customers fast, reliable answers — without adding to your team's workload.</p>
+        <p class="sub-pill-text" data-anim>Everything you need to give customers fast, reliable answers — without adding to your team's workload.</p>
       </div>
 
       <div class="bento">
         <div class="bento-row">
-          <div class="bento-card bento-card--wide">
+          <article class="bento-card bento-card--wide" data-anim>
             <span class="bento-label">Availability</span>
             <h3>Open when you're closed.</h3>
             <p>Nights, weekends, and holidays — every question gets an answer.</p>
             <div class="bento-graphic availability">
-              <div class="big-247">24/7</div>
+              <div class="big-247" aria-label="24/7">24<span>/</span>7</div>
               <div class="timeline">
-                <span class="timeline-tip">● Answered at 2:14 AM</span>
-                <div class="timeline-track"></div>
+                <span class="timeline-tip"><i></i>Answered at 2:14 AM</span>
+                <span class="timeline-sun" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span>
+                <span class="timeline-moon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg></span>
+                <div class="timeline-track"><span class="timeline-fill"></span><span class="timeline-dot"></span></div>
+                <div class="timeline-ticks" aria-hidden="true"><i style="--t:0.0000" class="is-major"></i><i style="--t:0.0417"></i><i style="--t:0.0833"></i><i style="--t:0.1250"></i><i style="--t:0.1667"></i><i style="--t:0.2083"></i><i style="--t:0.2500" class="is-major"></i><i style="--t:0.2917"></i><i style="--t:0.3333"></i><i style="--t:0.3750"></i><i style="--t:0.4167"></i><i style="--t:0.4583"></i><i style="--t:0.5000" class="is-major"></i><i style="--t:0.5417"></i><i style="--t:0.5833"></i><i style="--t:0.6250"></i><i style="--t:0.6667"></i><i style="--t:0.7083"></i><i style="--t:0.7500" class="is-major"></i><i style="--t:0.7917"></i><i style="--t:0.8333"></i><i style="--t:0.8750"></i><i style="--t:0.9167"></i><i style="--t:0.9583"></i><i style="--t:1.0000" class="is-major"></i></div>
                 <div class="timeline-labels"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span></div>
               </div>
             </div>
-          </div>
-          <div class="bento-card">
+          </article>
+          <article class="bento-card" data-anim>
             <span class="bento-label">Human + AI</span>
             <h3>Knows when to hand off.</h3>
             <p>Complex requests reach your team with the full conversation.</p>
             <div class="bento-graphic handoff">
               <div class="handoff-node"><span class="handoff-avatar"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>Concierge81</div>
-              <div class="handoff-link"><span>Full context</span></div>
+              <div class="handoff-link"><i class="handoff-line"></i><span class="handoff-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>Full context</span><i class="handoff-line"></i></div>
               <div class="handoff-node">
-                <span class="handoff-team"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>
+                <span class="handoff-team"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg></span>
                 Your team
               </div>
             </div>
-          </div>
+          </article>
         </div>
 
         <div class="bento-row">
-          <div class="bento-card">
+          <article class="bento-card" data-anim>
             <span class="bento-label">Accuracy</span>
             <h3>Always on-brand.</h3>
             <p>Every reply comes from your own, up-to-date information.</p>
             <div class="bento-graphic info-tree">
-              <div class="info-box">Business info<small>✓ Hours 9 AM – 9 PM · updated</small></div>
+              <div class="info-box">
+                <span class="info-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>Business info</span>
+                <span class="info-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Open 9 AM – 9 PM</span>
+                <i class="info-line"></i><i class="info-line info-line--short"></i>
+              </div>
+              <svg class="info-branches" viewBox="0 0 220 48" preserveAspectRatio="none" aria-hidden="true"><path d="M110 0V48"/><path d="M110 20C110 30 30 24 30 48"/><path d="M110 20C110 30 190 24 190 48"/></svg>
               <div class="info-nodes">
-                <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></i>Kiosk</div>
-                <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></i>Web</div>
-                <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg></i>App</div>
+                <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></i>Kiosk</div>
+                <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></i>Web</div>
+                <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg></i>App</div>
               </div>
             </div>
-          </div>
-          <div class="bento-card">
+          </article>
+          <article class="bento-card" data-anim>
             <span class="bento-label">Languages</span>
             <h3>Fluent in your guests' language.</h3>
             <p>Serve every guest in the language they prefer.</p>
-            <div class="bento-graphic">
-              <div class="lang-tabs"><span class="is-active">EN</span><span>JP</span><span>ZH</span><span>KO</span><span>ES</span><span>+</span></div>
-              <div class="hello">Hello.<span>こんにちは。</span></div>
-              <div class="hello-alt">Hola · Bonjour · Xin chào · 안녕하세요</div>
+            <div class="bento-graphic languages">
+              <svg class="lang-globe" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><ellipse cx="100" cy="100" rx="44" ry="96"/><path d="M4 100h192M16 52h168M16 148h168"/></svg>
+              <div class="lang-tabs"><i class="lang-pill"></i><span class="is-active">EN</span><span>JP</span><span>ZH</span><span>KO</span><span>ES</span><span>+</span></div>
+              <div class="hello"><span class="hello-en">Hello.</span><span class="hello-jp" lang="ja">こんにちは。</span></div>
+              <div class="hello-alt">Hola · Bonjour · Xin chào · Kumusta</div>
             </div>
-          </div>
-          <div class="bento-card">
+          </article>
+          <article class="bento-card" data-anim>
             <span class="bento-label">Scale</span>
             <h3>Every location.</h3>
             <p>One branch or many — all managed from one place.</p>
-            <div class="bento-graphic">
-              <svg class="network" viewBox="0 0 240 150" fill="none" aria-hidden="true">
-                <g stroke="#35342F"><line x1="120" y1="75" x2="45" y2="28"/><line x1="120" y1="75" x2="195" y2="35"/><line x1="120" y1="75" x2="55" y2="125"/><line x1="120" y1="75" x2="190" y2="120"/></g>
-                <circle cx="120" cy="75" r="16" fill="rgba(39,111,248,0.25)"/><circle cx="120" cy="75" r="6" fill="#276FF8"/>
-                <g fill="#7DA7F9"><circle cx="45" cy="28" r="3.5"/><circle cx="195" cy="35" r="3.5"/><circle cx="55" cy="125" r="3.5"/><circle cx="190" cy="120" r="3.5"/></g>
-                <g fill="#A8A49A" font-size="8" font-family="inherit"><text x="30" y="17">Shinjuku</text><text x="182" y="24">Osaka</text><text x="40" y="142">Kyoto</text><text x="176" y="138">Nagoya</text></g>
+            <div class="bento-graphic scale">
+              <svg class="network" viewBox="0 0 360 230" aria-hidden="true">
+                <g class="network-lines"><path d="M180 112L62 22"/><path d="M180 112L296 40"/><path d="M180 112L76 178"/><path d="M180 112L274 188"/></g>
+                <circle class="network-glow" cx="180" cy="112" r="34"/>
+                <circle class="network-hub" cx="180" cy="112" r="16"/>
+                <path class="network-home" d="M174 113.5v5h12v-5M172.5 114.5l7.5-6.5 7.5 6.5"/>
+                <g class="network-node"><circle cx="62" cy="22" r="8"/><circle class="network-core" cx="62" cy="22" r="3.5"/></g>
+                <g class="network-node"><circle cx="296" cy="40" r="8"/><circle class="network-core" cx="296" cy="40" r="3.5"/></g>
+                <g class="network-node"><circle cx="76" cy="178" r="8"/><circle class="network-core" cx="76" cy="178" r="3.5"/></g>
+                <g class="network-node"><circle cx="274" cy="188" r="8"/><circle class="network-core" cx="274" cy="188" r="3.5"/></g>
               </svg>
+              <span class="network-tag" style="--x:17%;--y:22%">Downtown</span>
+              <span class="network-tag" style="--x:82%;--y:30%">Airport</span>
+              <span class="network-tag" style="--x:21%;--y:90%">Station</span>
+              <span class="network-tag" style="--x:76%;--y:95%">Harbor</span>
             </div>
-          </div>
+          </article>
         </div>
 
         <div class="bento-row">
-          <div class="bento-card bento-card--wide">
+          <article class="bento-card bento-card--wide" data-anim>
             <span class="bento-label">Insights</span>
             <h3>Know what customers need.</h3>
             <p>See the questions asked most — and keep improving.</p>
@@ -570,8 +682,8 @@
               <div class="insight-copy">
                 <div class="insight-kicker">Most asked topic this week</div>
                 <div class="insight-word">Parking</div>
-                <div class="insight-quote">"Where can I park, and how much is it?"</div>
-                <span class="trend-chip">↗ Trending up</span>
+                <div class="insight-quote">“Where can I park, and how much is it?”</div>
+                <span class="trend-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>Trending up</span>
               </div>
               <div class="bars-wrap">
                 <div class="bars-caption">Parking questions per day</div>
@@ -580,119 +692,158 @@
                 </div>
               </div>
             </div>
-          </div>
-          <div class="bento-card bento-card--cta">
+          </article>
+          <article class="bento-card bento-card--cta" data-anim>
+            <span class="cta-rings" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
             <span class="avatar-circle"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
             <h3>See it in action.</h3>
             <p>A live demo with your own questions.</p>
-            <a href="#contact" class="btn btn-white btn-small">Request a demo</a>
-          </div>
+            <a href="#contact" class="btn btn-white">Request a demo</a>
+          </article>
         </div>
       </div>
     </div>
   </section>
 
   <!-- 9. Deployment -->
-  <section id="deployment" class="section theme-light">
+  <section id="deployment" class="section theme-light" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">Where would my concierge live?</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Wherever your customers<br>already are.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Wherever your customers<br>already are.</h2>
         </div>
-        <p class="sub-pill-text">Scroll through our chat to see every place I can work.</p>
+        <p class="sub-pill-text" data-anim>Scroll through our chat to see every place I can work.</p>
       </div>
 
       <div class="deploy-split">
-        <div class="deploy-stage">
-          <div class="tablet-frame">
-            <div class="placeholder-box tablet-screen"><span>[ assets/images/tablet-ui.png ]</span></div>
+        <div class="deploy-stage" data-anim>
+          <!-- One device that changes shape with the list (animations.js); the website screen by default -->
+          <div class="device" data-shape="website">
+            <!-- One live concierge screen; animations.js moves its parts into each device's layout -->
+            <div class="device-screen" aria-label="Concierge81 on a website: the avatar beside a chat with suggested questions" role="img">
+              <span class="ds-logo">concierge<span>81</span></span>
+              <span class="ds-toggle"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>Avatar</b><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg>Chat</i></span>
+              <span class="ds-lang"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>EN</span>
+              <span class="ds-avatar"><img src="assets/images/Avatar.png" alt="" width="1672" height="2495" loading="lazy"></span>
+              <span class="ds-greet">Hi! I'm concierge81.<br>How may I assist you today?</span>
+              <span class="ds-question">What is concierge81?<small>You · 9:12 PM</small></span>
+              <span class="ds-composer">
+                <span class="ds-suggest">✦ Suggested next</span>
+                <span class="ds-chips"><i>Where is the café?</i><i>Any vegetarian options?</i><i>Room service hours</i></span>
+                <span class="ds-categories"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>Categories</span>
+                <span class="ds-mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg></span>
+              </span>
+            </div>
           </div>
         </div>
 
         <div class="platform-list">
-          <div class="platform-card">
+          <article class="platform-card" data-device="kiosk" data-anim>
             <div class="platform-header">
-              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
+              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
               <h3>Kiosk</h3>
             </div>
             <p>A friendly face in your lobby, store, or reception — greeting every guest by voice or touch.</p>
-          </div>
-          <div class="platform-card">
+          </article>
+          <article class="platform-card" data-device="website" data-anim>
             <div class="platform-header">
-              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></span>
+              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg></span>
               <h3>Website</h3>
             </div>
             <p>A chat window that answers visitors on any page, day or night.</p>
-          </div>
-          <div class="platform-card">
+          </article>
+          <article class="platform-card" data-device="tablet" data-anim>
             <div class="platform-header">
-              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></svg></span>
+              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M11 18h2"/></svg></span>
+              <h3>Tablet</h3>
+            </div>
+            <p>Help right inside your tablet app — wherever your customers are.</p>
+          </article>
+          <article class="platform-card" data-device="mobile" data-anim>
+            <div class="platform-header">
+              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5M3 17l9 5 9-5"/></svg></span>
               <h3>Mobile</h3>
             </div>
-            <p>Help right inside your app — in your customers' pocket, wherever they are.</p>
-          </div>
-          <div class="platform-card">
-            <div class="platform-header">
-              <span class="platform-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
-              <h3>Custom</h3>
-            </div>
-            <p>Built into your own displays, apps, or spaces — I'll fit right in.</p>
-          </div>
+            <p>Help right inside your app — in your customers’ pocket, wherever they are.</p>
+          </article>
         </div>
       </div>
     </div>
   </section>
 
   <!-- 10. Setup / Pricing -->
-  <section id="pricing" class="section theme-dark">
+  <section id="pricing" class="section theme-dark" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">Which setup is right for me?</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Find the setup that<br>fits your business.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Find the setup that<br>fits your business.</h2>
         </div>
       </div>
 
       <div class="pricing-tier-grid">
-        <div class="tier-card tier-1">
-          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><g stroke="#fff"><circle cx="110" cy="68" r="70" stroke-opacity=".22"/><circle cx="110" cy="68" r="50" stroke-opacity=".3"/></g><circle cx="110" cy="68" r="30" fill="#fff" fill-opacity=".22"/><circle cx="110" cy="68" r="9" fill="#fff" fill-opacity=".9"/></svg>
-          <span class="tier-label">BASIC</span>
+        <article class="tier-card tier-1" data-anim>
+          <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
+            <circle class="tier-ring" cx="245" cy="114" r="112" stroke="#fff" stroke-opacity=".22" stroke-width="1.25"/>
+            <circle class="tier-ring" cx="245" cy="114" r="80" stroke="#fff" stroke-opacity=".32" stroke-width="1.25"/>
+            <circle class="tier-disc" cx="245" cy="114" r="48" fill="#fff" fill-opacity=".22"/>
+            <circle class="tier-dot" cx="245" cy="114" r="14" fill="#fff" fill-opacity=".85"/>
+          </svg>
+          <span class="tier-label">Basic</span>
           <h3>Start simple.<br>Start with AI.</h3>
           <p>For businesses beginning their AI-powered customer assistance journey.</p>
-          <a href="#contact" class="btn btn-white btn-small">Learn More</a>
-        </div>
-        <div class="tier-card tier-2">
-          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><circle cx="94" cy="70" r="44" fill="#fff" fill-opacity=".16" stroke="#fff" stroke-opacity=".4"/><circle cx="132" cy="70" r="44" stroke="#fff" stroke-opacity=".4"/><circle cx="113" cy="70" r="72" stroke="#fff" stroke-opacity=".12"/></svg>
-          <span class="tier-label">BASIC</span>
+          <a href="#contact" class="btn btn-white">Learn More</a>
+        </article>
+        <article class="tier-card tier-2" data-anim>
+          <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
+            <defs><clipPath id="tierVenn"><circle cx="210" cy="114" r="68"/></clipPath></defs>
+            <circle class="tier-overlap" cx="280" cy="114" r="68" fill="#fff" fill-opacity=".3" clip-path="url(#tierVenn)"/>
+            <circle class="tier-left" cx="210" cy="114" r="68" stroke="#fff" stroke-opacity=".4" stroke-width="1.25"/>
+            <circle class="tier-right" cx="280" cy="114" r="68" stroke="#fff" stroke-opacity=".4" stroke-width="1.25"/>
+          </svg>
+          <span class="tier-label">Basic</span>
           <h3>More capacity.<br>More ways to assist.</h3>
           <p>For businesses with higher customer interaction volumes and dedicated deployment needs.</p>
-          <a href="#contact" class="btn btn-white btn-small">Learn More</a>
-        </div>
-        <div class="tier-card tier-3">
-          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><g stroke="#fff"><circle cx="102" cy="76" r="70" stroke-opacity=".18"/><circle cx="126" cy="54" r="26" stroke-opacity=".45"/><circle cx="132" cy="44" r="16" stroke-opacity=".35"/></g><circle cx="112" cy="74" r="22" fill="#fff" fill-opacity=".3"/><circle cx="142" cy="34" r="7" fill="#fff" fill-opacity=".95"/></svg>
-          <span class="tier-label">BUSINESS</span>
-          <h3>Built for growing operations.</h3>
+          <a href="#contact" class="btn btn-white">Learn More</a>
+        </article>
+        <article class="tier-card tier-3" data-anim>
+          <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
+            <circle class="tier-ring" cx="253" cy="81" r="112" stroke="#fff" stroke-opacity=".16" stroke-width="1.25"/>
+            <circle class="tier-orbit" cx="275.36" cy="59" r="35.35" stroke="#fff" stroke-opacity=".3" stroke-width="1.3"/>
+            <circle class="tier-orbit" cx="253.36" cy="81" r="35.35" stroke="#fff" stroke-opacity=".3" stroke-width="1.3"/>
+            <circle class="tier-disc" cx="231.36" cy="104" r="36" fill="#fff" fill-opacity=".37"/>
+            <circle class="tier-dot" cx="288.36" cy="45" r="11" fill="#fff" fill-opacity=".87"/>
+          </svg>
+          <span class="tier-label">Business</span>
+          <h3>Built for growing<br>operations.</h3>
           <p>For organizations with higher customer traffic and broader operational requirements.</p>
-          <a href="#contact" class="btn btn-white btn-small">Learn More</a>
-        </div>
-        <div class="tier-card tier-4">
-          <svg class="tier-art" viewBox="0 0 160 160" fill="none" aria-hidden="true"><circle cx="112" cy="68" r="72" stroke="#fff" stroke-opacity=".12"/><g stroke="#fff" stroke-opacity=".35"><path d="M112 68L112 23M112 68L151 45.5M112 68L151 90.5M112 68L112 113M112 68L73 90.5M112 68L73 45.5"/><path d="M112 23L151 45.5L151 90.5L112 113L73 90.5L73 45.5Z" stroke-opacity=".18"/></g><g stroke="#fff" stroke-opacity=".7"><circle cx="112" cy="23" r="5"/><circle cx="151" cy="45.5" r="5"/><circle cx="151" cy="90.5" r="5"/><circle cx="112" cy="113" r="5"/><circle cx="73" cy="90.5" r="5"/><circle cx="73" cy="45.5" r="5"/></g><circle cx="112" cy="68" r="18" fill="#fff" fill-opacity=".15"/><circle cx="112" cy="68" r="9" fill="#9DB8FF"/></svg>
-          <span class="tier-label">ENTERPRISE</span>
-          <h3>Built around your organization.</h3>
+          <a href="#contact" class="btn btn-white">Learn More</a>
+        </article>
+        <article class="tier-card tier-4" data-anim>
+          <svg class="tier-art" viewBox="0 0 325 340" fill="none" aria-hidden="true">
+            <circle class="tier-ring" cx="245" cy="114" r="118" stroke="#7DA7F9" stroke-opacity=".16" stroke-width="1.25"/>
+            <circle class="tier-ring" cx="245" cy="114" r="78" stroke="#7DA7F9" stroke-opacity=".3" stroke-width="1.25"/>
+            <g class="tier-spokes" stroke="#7DA7F9" stroke-opacity=".35" stroke-width="1.25"><path d="M245 114V36"/><path d="M245 114L312.5 75"/><path d="M245 114L312.5 153"/><path d="M245 114V192"/><path d="M245 114L177.5 153"/><path d="M245 114L177.5 75"/></g>
+            <circle class="tier-disc" cx="245" cy="114" r="30" fill="#7DA7F9" fill-opacity=".18"/>
+            <circle class="tier-dot" cx="245" cy="114" r="14" fill="#7DA7F9" fill-opacity=".9"/>
+            <g class="tier-nodes" fill="#003EB5" stroke="#7DA7F9" stroke-opacity=".8" stroke-width="1.5"><circle cx="245" cy="36" r="7"/><circle cx="312.5" cy="75" r="7"/><circle cx="312.5" cy="153" r="7"/><circle cx="245" cy="192" r="7"/><circle cx="177.5" cy="153" r="7"/><circle cx="177.5" cy="75" r="7"/></g>
+          </svg>
+          <span class="tier-label">Enterprise</span>
+          <h3>Built around your<br>organization.</h3>
           <p>For multi-location businesses and customized implementations.</p>
-          <a href="#contact" class="btn btn-white btn-small">Talk to Our Team</a>
-        </div>
+          <a href="#contact" class="btn btn-white">Talk to Our Team</a>
+        </article>
       </div>
 
       <div class="cta-row">
-        <div class="cta-pill">
+        <div class="cta-pill" data-anim>
           <span>Not sure which setup is right for you?</span>
           <a href="#contact" class="btn btn-primary btn-small">Talk to Our Team</a>
         </div>
@@ -701,20 +852,20 @@
   </section>
 
   <!-- 11. FAQ -->
-  <section id="faq" class="section theme-cream">
+  <section id="faq" class="section theme-cream" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">I still have a few questions.</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai">Ask me anything.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Ask me anything.</h2>
         </div>
-        <p class="sub-pill-text">Here are the questions I hear most.</p>
+        <p class="sub-pill-text" data-anim>Here are the questions I hear most.</p>
       </div>
 
-      <div class="faq-filters" id="faqFilters">
+      <div class="faq-filters" id="faqFilters" data-anim>
         <button type="button" class="filter-btn is-active" data-filter="all">All</button>
         <button type="button" class="filter-btn" data-filter="general">General</button>
         <button type="button" class="filter-btn" data-filter="chat-voice">Chat &amp; Voice</button>
@@ -723,87 +874,69 @@
         <button type="button" class="filter-btn" data-filter="support">Support</button>
       </div>
 
-      <div class="faq-chat-box">
-        <span class="timestamp">Today 9:12 AM</span>
+      <div class="faq-chat-box" data-anim>
+        <span class="faq-day">Today</span>
 
         <div class="faq-pair" data-cat="general">
-          <div class="msg-row msg-row--user"><p class="bubble bubble--user">What is Concierge81?</p></div>
-          <div class="msg-ai">
-            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
-            <p class="bubble bubble--sand">I'm an AI concierge for your business. I answer the questions your team hears every day — by chat or voice — so customers get help instantly.</p>
-          </div>
+          <div class="faq-q"><p class="bubble bubble--user">What is Concierge81?</p></div>
+          <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">I’m an AI concierge for your business. I answer the questions your team hears every day — by chat or voice — so customers get help instantly.</p></div>
         </div>
-
         <div class="faq-pair" data-cat="general support">
-          <div class="msg-row msg-row--user"><p class="bubble bubble--user">Will it replace my staff?</p></div>
-          <div class="msg-ai">
-            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
-            <p class="bubble bubble--sand">Not at all. I take care of routine questions so your team can focus on guests who need a personal touch. Anything complex goes straight to them, with the full conversation.</p>
-          </div>
+          <div class="faq-q"><p class="bubble bubble--user">Will it replace my staff?</p></div>
+            <span class="faq-typing">Concierge is typing…</span>
+          <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Not at all. I take care of routine questions so your team can focus on guests who need a personal touch. Anything complex goes straight to them, with the full conversation.</p></div>
           <div class="helpful">Was this helpful? <button type="button">Yes</button><button type="button">No</button></div>
         </div>
         <div class="faq-pair" data-cat="chat-voice" data-filter-only hidden>
-          <div class="msg-row msg-row--user"><p class="bubble bubble--user">Can customers talk instead of typing?</p></div>
-          <div class="msg-ai">
-            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
-            <p class="bubble bubble--sand">Yes. They can type or simply ask out loud — I answer in natural speech and show the reply on screen.</p>
-          </div>
+          <div class="faq-q"><p class="bubble bubble--user">Can customers talk instead of typing?</p></div>
+          <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Yes. They can type or simply ask out loud — I answer in natural speech and show the reply on screen.</p></div>
         </div>
-
         <div class="faq-pair" data-cat="languages" data-filter-only hidden>
-          <div class="msg-row msg-row--user"><p class="bubble bubble--user">Which languages does it support?</p></div>
-          <div class="msg-ai">
-            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
-            <p class="bubble bubble--sand">English, Japanese, and Filipino today, with Korean coming next. I reply in the language your guest uses.</p>
-          </div>
+          <div class="faq-q"><p class="bubble bubble--user">Which languages does it support?</p></div>
+          <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">English, Japanese, and Filipino today, with Korean coming next. I reply in the language your guest uses.</p></div>
         </div>
-
         <div class="faq-pair" data-cat="setup" data-filter-only hidden>
-          <div class="msg-row msg-row--user"><p class="bubble bubble--user">How long does setup take?</p></div>
-          <div class="msg-ai">
-            <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
-            <p class="bubble bubble--sand">Most teams go live the same week. Import the answers you already have, group them into topics, and you're ready.</p>
-          </div>
+          <div class="faq-q"><p class="bubble bubble--user">How long does setup take?</p></div>
+          <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Most teams go live the same week. Import the answers you already have, group them into topics, and you’re ready.</p></div>
         </div>
 
-        <div class="msg-ai">
-          <span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span>
-          <p class="bubble bubble--sand">Anything else I can help you with?</p>
-        </div>
+        <div class="faq-a faq-anything"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Anything else I can help you with?</p></div>
 
         <div class="faq-suggested">
-          <span class="suggest-label">SUGGESTED</span>
-          <div class="chip-row">
-            <button type="button" class="chip chip--soft">What kinds of questions can it answer?</button>
-            <button type="button" class="chip">Which languages does it support?</button>
-            <button type="button" class="chip">How long does setup take?</button>
-            <button type="button" class="chip">Can it hand a conversation to a person?</button>
-            <button type="button" class="chip">Does it work on our website?</button>
-            <button type="button" class="chip">How do I update its answers?</button>
+          <span class="faq-suggested-label">Suggested</span>
+          <div class="faq-suggestions">
+            <button type="button" class="faq-suggestion faq-ask"><span aria-hidden="true">↳</span>What is Concierge81?</button>
+            <button type="button" class="faq-suggestion faq-ask"><span aria-hidden="true">↳</span>Will it replace my staff?</button>
+            <button type="button" class="faq-suggestion"><span aria-hidden="true">↳</span>What kinds of questions can it answer?</button>
+            <button type="button" class="faq-suggestion"><span aria-hidden="true">↳</span>Which languages does it support?</button>
+            <button type="button" class="faq-suggestion"><span aria-hidden="true">↳</span>How long does setup take?</button>
+            <button type="button" class="faq-suggestion"><span aria-hidden="true">↳</span>Can it hand a conversation to a person?</button>
+            <button type="button" class="faq-suggestion"><span aria-hidden="true">↳</span>Does it work on our website?</button>
+            <button type="button" class="faq-suggestion"><span aria-hidden="true">↳</span>How do I update its answers?</button>
           </div>
         </div>
       </div>
 
       <div class="cta-row">
-        <div class="cta-pill cta-pill--dark">
-          <span>Can't find your answer?</span>
-          <a href="#contact" class="btn btn-primary btn-small">Talk to Our Team</a>
+        <div class="cta-pill cta-pill--dark" data-anim>
+          <span>Can’t find your answer?</span>
+          <a href="#contact" class="btn btn-primary">Talk to Our Team</a>
         </div>
       </div>
     </div>
   </section>
 
   <!-- 12. Final CTA -->
-  <section id="cta" class="section theme-light cta-hero">
+  <section id="cta" class="section theme-light cta-hero" data-motion>
     <div class="container">
-      <div class="status-line">Concierge81 <span class="online-dot">Online</span></div>
-      <h2 class="cta-title">Your AI assistant.<span>Now on every screen.</span></h2>
-      <p class="cta-sub">See Concierge81 answer your customers — live, with your own questions.</p>
-      <div class="cta-actions">
+      <div class="status-line" data-anim>Concierge81 <span class="online-dot">Online</span></div>
+      <h2 class="cta-title" data-anim>Your AI assistant.<span>Now on every screen.</span></h2>
+      <p class="cta-sub" data-anim>See Concierge81 answer your customers — live, with your own questions.</p>
+      <div class="cta-actions" data-anim>
         <a href="#contact" class="btn btn-primary">Request a demo</a>
         <a href="#contact" class="link-btn">Talk to our Team ›</a>
       </div>
-      <div class="kiosk-device">
+      <div class="kiosk-device" data-anim>
         <div class="kiosk-screen">
           <span class="brand-logo kiosk-logo">concierge<span>81</span></span>
           <img class="kiosk-avatar" src="assets/images/Frame%20174.png" alt="" width="414" height="639" loading="lazy">
@@ -816,20 +949,20 @@
   </main>
 
   <!-- 13. Contact -->
-  <section id="contact" class="section theme-dark">
+  <section id="contact" class="section theme-dark" data-motion>
     <div class="container">
       <div class="chat-section-header">
-        <div class="chat-header-row right">
+        <div class="chat-header-row right" data-anim>
           <div class="header-pill header-pill--user">How do I get started?</div>
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai header-pill--lg">Leave your email.<br>We'll take it from here.</h2>
+          <h2 class="header-pill header-pill--ai" data-anim>Leave your email.<br>We’ll take it from here.</h2>
         </div>
       </div>
 
       <div class="contact-split">
-        <div class="next-steps">
+        <div class="next-steps" data-anim>
           <span class="eyebrow">What happens next</span>
           <ol class="step-list">
             <li class="step-item"><span class="step-number">1</span>We reply to schedule a short call.</li>
@@ -838,22 +971,22 @@
           </ol>
         </div>
 
-        <div class="footer-form-card">
+        <div class="footer-form-card" data-anim>
           <form id="leadForm">
             <div class="form-group">
               <label for="leadName">Full name</label>
-              <input id="leadName" type="text" placeholder="Your name" required>
+              <input id="leadName" name="name" type="text" placeholder="Your name" autocomplete="name" required>
             </div>
             <div class="form-group">
               <label for="leadEmail">Work email</label>
-              <input id="leadEmail" type="email" placeholder="you@company.com" required>
+              <input id="leadEmail" name="email" type="email" placeholder="you@company.com" autocomplete="email" required>
             </div>
             <div class="form-group">
               <label for="leadCompany">Company</label>
-              <input id="leadCompany" type="text" placeholder="Company name">
+              <input id="leadCompany" name="company" type="text" placeholder="Company name" autocomplete="organization">
             </div>
             <div class="form-group">
-              <span class="form-label">I'm interested in</span>
+              <span class="form-label">I’m interested in</span>
               <div class="interest-pills" id="interestPills">
                 <button type="button" class="interest-pill">Basic</button>
                 <button type="button" class="interest-pill">Professional</button>
@@ -864,11 +997,23 @@
             </div>
             <div class="form-group">
               <label for="leadNotes">Anything else?</label>
-              <input id="leadNotes" type="text" placeholder="Anything else we should know? (optional)">
+              <input id="leadNotes" name="notes" type="text" placeholder="Anything else we should know? (optional)">
             </div>
             <button type="submit" class="btn btn-primary btn-block">Send</button>
             <p class="privacy-text">By submitting, you agree to our <a href="#">Privacy Policy</a>.</p>
           </form>
+
+          <!-- Shown once the form is sent (main.js) -->
+          <div class="lead-sent" id="leadSent" role="status" tabindex="-1" hidden>
+            <span class="lead-sent-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+            <div class="lead-sent-message">
+              <h3>Request sent.</h3>
+              <p>We’ve sent a confirmation to <span id="leadSentEmail">your email</span>.<br>Expect a reply within one business day to schedule your short call.</p>
+            </div>
+            <hr>
+            <button type="button" class="btn btn-outline btn-block" id="leadAgain">Send another request</button>
+            <p class="privacy-text">Need to change something? Just reply to the confirmation email.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -879,7 +1024,7 @@
     <div class="container">
       <div class="footer-top">
         <div class="mail-pill">
-          <a href="mailto:info@mabuhaytech.com">Write us: info@mabuhaytech.com</a>
+          <a href="mailto:info@mabuhaytech.com">Write us: <b>info@mabuhaytech.com</b></a>
           <button type="button" class="copy-btn" data-copy="info@mabuhaytech.com" aria-label="Copy email address">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
           </button>
@@ -899,11 +1044,13 @@
           <a href="#">Terms</a>
           <a href="#">Disclaimer</a>
           <a href="#">Commercial Transactions Act</a>
-          <button type="button" class="lang-btn" aria-label="Language: English">🌐 EN</button>
+          <button type="button" class="lang-btn footer-lang" aria-label="Language: English"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>EN</button>
         </div>
       </div>
     </div>
   </footer>
+  </div>
+  </div>
 
 </body>
 </html>

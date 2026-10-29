@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="assets/css/landing.css">
   <script src="assets/js/main.js" defer></script>
 </head>
-<body class="page-cream">
+<body class="page-cream reveal-page">
 
   <!-- Navigation / Header -->
   <header class="site-header">
@@ -52,7 +52,7 @@
             <p class="post-lead">A practical look at what hotel guests actually ask — and how a chat-and-voice concierge takes the repetitive 80% off the desk.</p>
             <div class="post-byline">
               <div class="author-row">
-                <span class="placeholder-box author-avatar" aria-hidden="true"></span>
+                <img class="author-avatar" src="assets/images/blog/author-carlo.png" alt="" width="88" height="88">
                 <div>
                   <div class="author-name">Carlo Mendoza</div>
                   <div class="author-meta">Customer Success Lead · Sep 22, 2026 · 8 min read</div>
@@ -64,7 +64,7 @@
 
           <figure class="post-hero story-media-wrap">
             <div class="story-media">
-              <div class="placeholder-box story-photo"><span>[ assets/images/blog/featured-hotel-concierge.jpg ]</span></div>
+              <img class="story-photo" src="assets/images/blog/featured-hotel-concierge.webp" alt="The concierge81 avatar welcoming guests in a hotel lobby" width="1683" height="935">
               <div class="story-chat" aria-hidden="true">
                 <span class="story-meta">concierge81 · 9:12 AM</span>
                 <p class="bubble bubble--frost">Hello! I'm concierge81. How can I help you with your hotel or resort stay today?</p>
@@ -195,7 +195,7 @@
     </article>
 
     <!-- 3. Keep Reading -->
-    <section class="section theme-cream blog-section">
+    <section class="section theme-cream keep-reading">
       <div class="container">
         <div class="keep-reading-head">
           <h2 class="blog-section-title">Keep reading</h2>
@@ -243,7 +243,7 @@
           <span class="timestamp">You · 9:12 PM</span>
         </div>
         <div class="chat-header-row left">
-          <h2 class="header-pill header-pill--ai header-pill--lg">Leave your email.<br>We'll take it from here.</h2>
+          <h2 class="header-pill header-pill--ai">Leave your email.<br>We’ll take it from here.</h2>
         </div>
       </div>
 
@@ -261,18 +261,18 @@
           <form id="leadForm">
             <div class="form-group">
               <label for="leadName">Full name</label>
-              <input id="leadName" type="text" placeholder="Your name" required>
+              <input id="leadName" name="name" type="text" placeholder="Your name" autocomplete="name" required>
             </div>
             <div class="form-group">
               <label for="leadEmail">Work email</label>
-              <input id="leadEmail" type="email" placeholder="you@company.com" required>
+              <input id="leadEmail" name="email" type="email" placeholder="you@company.com" autocomplete="email" required>
             </div>
             <div class="form-group">
               <label for="leadCompany">Company</label>
-              <input id="leadCompany" type="text" placeholder="Company name">
+              <input id="leadCompany" name="company" type="text" placeholder="Company name" autocomplete="organization">
             </div>
             <div class="form-group">
-              <span class="form-label">I'm interested in</span>
+              <span class="form-label">I’m interested in</span>
               <div class="interest-pills" id="interestPills">
                 <button type="button" class="interest-pill">Basic</button>
                 <button type="button" class="interest-pill">Professional</button>
@@ -283,11 +283,23 @@
             </div>
             <div class="form-group">
               <label for="leadNotes">Anything else?</label>
-              <input id="leadNotes" type="text" placeholder="Anything else we should know? (optional)">
+              <input id="leadNotes" name="notes" type="text" placeholder="Anything else we should know? (optional)">
             </div>
             <button type="submit" class="btn btn-primary btn-block">Send</button>
             <p class="privacy-text">By submitting, you agree to our <a href="#">Privacy Policy</a>.</p>
           </form>
+
+          <!-- Shown once the form is sent (main.js) -->
+          <div class="lead-sent" id="leadSent" role="status" tabindex="-1" hidden>
+            <span class="lead-sent-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+            <div class="lead-sent-message">
+              <h3>Request sent.</h3>
+              <p>We’ve sent a confirmation to <span id="leadSentEmail">your email</span>.<br>Expect a reply within one business day to schedule your short call.</p>
+            </div>
+            <hr>
+            <button type="button" class="btn btn-outline btn-block" id="leadAgain">Send another request</button>
+            <p class="privacy-text">Need to change something? Just reply to the confirmation email.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -298,16 +310,16 @@
     <div class="container">
       <div class="footer-top">
         <div class="mail-pill">
-          <a href="mailto:info@mabuhaytech.com">Write us: info@mabuhaytech.com</a>
+          <a href="mailto:info@mabuhaytech.com">Write us: <b>info@mabuhaytech.com</b></a>
           <button type="button" class="copy-btn" data-copy="info@mabuhaytech.com" aria-label="Copy email address">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
           </button>
         </div>
         <nav class="footer-nav" aria-label="Footer">
-          <a href="index.html#how">How it works</a>
-          <a href="index.html#industries">Industries</a>
-          <a href="index.html#pricing">Plans</a>
-          <a href="index.html#faq">FAQ</a>
+          <a href="#how">How it works</a>
+          <a href="#industries">Industries</a>
+          <a href="#pricing">Plans</a>
+          <a href="#faq">FAQ</a>
           <a href="#contact">Contact</a>
         </nav>
       </div>
@@ -318,7 +330,7 @@
           <a href="#">Terms</a>
           <a href="#">Disclaimer</a>
           <a href="#">Commercial Transactions Act</a>
-          <button type="button" class="lang-btn" aria-label="Language: English">🌐 EN</button>
+          <button type="button" class="lang-btn footer-lang" aria-label="Language: English"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>EN</button>
         </div>
       </div>
     </div>
