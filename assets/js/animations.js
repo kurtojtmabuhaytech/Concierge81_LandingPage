@@ -219,7 +219,7 @@
      hover animations still play). Every section seen to its end turns plain at once, before the
      page moves, with the scroll put so that what is on screen stays exactly where it is. A section
      still playing its steps finishes first: the scroll back waits until it has played to its end. */
-  const plainables = []; // each scene: { id, done(), inView(), finish(), makePlain(), isPlain() }
+  const plainables = []; // each scene: { id, done(), inView(), progress(), finish(), makePlain(), isPlain() }
   const plainAtStart = []; // scenes seen this session, plain from the start (after a refresh)
   const plainSaved = (() => { try { return JSON.parse(session.get('plain')) || []; } catch (e) { return []; } })();
   // something on screen to keep in place while the sections around it turn plain
@@ -246,12 +246,24 @@
     } finally { switching = false; }
   };
   // A scroll back while a section on screen hasn't played to its end: it plays on, and the scroll waits
+  // Between two sections:
+  // - a section still playing its first step (its chat), arriving or on screen: the scroll back waits
+  //   for that step to end;
+  // - a section that has only played its first step: the visitor can go back (it slides back down
+  //   with just its chat; nothing is forced to play through);
+  // - a section played further than that: it plays on to its end first, then the scroll back goes.
   const holdBack = () => {
-    const unfinished = plainables.filter(p => !p.isPlain() && p.inView() && !p.done());
-    unfinished.forEach(p => p.finish());
-    // (and a section only sliding in that has started its first step: until that step has played)
-    const stepUnderWay = plainables.some(p => !p.isPlain() && !p.inView() && p.stepUnderWay?.());
-    return unfinished.length > 0 || stepUnderWay;
+    let hold = false;
+    plainables.filter(p => !p.isPlain() && !p.done() && p.progress).forEach((p) => {
+      const { playing, playingTo, seen, first, onScreen, pinned } = p.progress();
+      if (!onScreen) return;
+      if (playing && playingTo <= first + 0.001) { hold = true; return; } // its chat: wait for it
+      if (!pinned) return;
+      if (!playing && seen <= first + 0.001) return; // only its chat so far: free to go back
+      p.finish(); // further along: it plays on to its end
+      hold = true;
+    });
+    return hold;
   };
   const backKeys = ['ArrowUp', 'PageUp', 'Home'];
   // A dragged scrollbar can't be held, but going up with it starts the plain way back too
@@ -627,7 +639,10 @@
         id: `#${trigger.id}`,
         done: () => plain || (tl.progress() > 0.999 && !playing && !hold()),
         inView: () => !!pin?.isActive,
-        stepUnderWay: () => { const box = trigger.getBoundingClientRect(); return !!playing && box.top < innerHeight && box.bottom > 0; },
+        progress: () => {
+          const box = trigger.getBoundingClientRect();
+          return { playing: !!playing, playingTo, seen: Math.min(seen, tl.duration()), first: firstStep(), onScreen: box.top < innerHeight && box.bottom > 0, pinned: !!pin?.isActive };
+        },
         finish: () => { if (!playing || playingTo < tl.duration() - 0.001) playOn(tl.duration()); },
         makePlain,
         isPlain: () => plain
