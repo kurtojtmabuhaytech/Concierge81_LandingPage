@@ -328,6 +328,10 @@
 
   // The page is re-measuring (a resize): scroll updates then are not the visitor's
   let measuring = false;
+  // When the visitor last scrolled the page themselves (wheel, keys, touch, pointer)
+  let inputAt = -1;
+  ['wheel', 'keydown', 'touchmove', 'pointerdown'].forEach(type => addEventListener(type, () => { inputAt = performance.now(); }, { capture: true, passive: true }));
+  const movedSince = at => inputAt > at;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
   ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
   const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, canGoBack = () => true, hold = () => false, runs = () => [] }) => {
@@ -358,6 +362,17 @@
       const i = views.findIndex(([t]) => Math.abs(t - time) < 0.001);
       if (i >= 0) views[i][1] = y; else views.push([time, y]);
       views.sort((a, c) => a[0] - c[0]);
+    };
+    let keptView = null; // (see keepView)
+    let keptAt = 0;
+    // The moment of the timeline whose view is `y` (the views only ever move one way)
+    const timeOfView = (y) => {
+      for (let i = 1; i < views.length; i++) {
+        const [t0, y0] = views[i - 1];
+        const [t1, y1] = views[i];
+        if ((y - y0) * (y - y1) <= 0) return Math.abs(y1 - y0) < 0.5 ? t0 : t0 + (t1 - t0) * ((y - y0) / (y1 - y0));
+      }
+      return null;
     };
     const viewAt = (time) => {
       let i = views.findIndex(([t]) => t >= time);
@@ -512,6 +527,7 @@
           return;
         }
         if (playing) return; // a step under way plays on (never cut short)
+        if (keptView !== null && !movedSince(keptAt)) { followSeen(Math.min(keptView, watched), self.direction); return; } // (a resize: the same view, see keepView)
         // (while the page re-measures, the view is the one of the step there, not one in between)
         followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(measuring ? stepAfter(at) : at, watched)), self.direction);
       },
@@ -535,7 +551,8 @@
         // before the visitor scrolled back up, keeps it); the view goes back to where it was
         tl.time(Math.min(seen, tl.duration()));
         noteView(tl.time());
-        if (content && seen > want + 0.001) gsap.set(content, { y: viewAt(Math.max(firstStep(), want)) });
+        if (keptView !== null && self.progress > 0 && self.progress < 1) gsap.set(content, { y: viewAt(Math.min(keptView, tl.duration())) });
+        else if (content && seen > want + 0.001) gsap.set(content, { y: viewAt(Math.max(firstStep(), want)) });
       }
     });
     // .is-built: the scene has played to its end (e.g. the device list can be picked from)
@@ -607,11 +624,20 @@
     };
     addEventListener('scroll', watchView, { passive: true });
     ScrollTrigger.addEventListener('refresh', watchView); // (positions change when the page re-measures)
+    /* A resize while the visitor is in the scene keeps the view they were looking at: before the
+       page re-measures, the view on screen is noted as a moment of the timeline, and after it the
+       same moment's view (re-measured) is shown, until the visitor moves on */
+    const keepView = () => {
+      keptView = content && !plain && !playing && pin?.isActive ? timeOfView(gsap.getProperty(content, 'y')) : null;
+      keptAt = performance.now();
+    };
+    ScrollTrigger.addEventListener('refreshInit', keepView);
     // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
     function kill() {
       early?.kill();
       removeEventListener('scroll', watchView);
       ScrollTrigger.removeEventListener('refresh', watchView);
+      ScrollTrigger.removeEventListener('refreshInit', keepView);
       stopAll();
       steps.kill();
       tailTrigger?.kill();
