@@ -6092,6 +6092,7 @@ main > .blog-section:has(+ #contact) {
 }
 .story.is-staged .kiosk-screen {
   aspect-ratio: 1672/2180;
+  border-radius: 21px;
 }
 .story.is-staged .kiosk-avatar {
   height: 100%;

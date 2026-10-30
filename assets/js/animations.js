@@ -1009,6 +1009,10 @@
     };
     applyStart();
 
+    // Figma prototype curves: the card closing into the kiosk, and the kiosk rising at the features
+    const toKiosk = bezier(0.115, 0, 0.002, 1.003);
+    const rise = bezier(0.065, -0.01, 0.007, 1.005);
+
     // Tweens start at 0.01 so resting on the first step never touches the hero the opening is building
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     tl.addLabel('hero', 0)
@@ -1017,14 +1021,15 @@
       .to([hero.top, hero.composer], { autoAlpha: 0, duration: 0.35 }, 0.01)
       .to([morph, morphEdge], { autoAlpha: 1, duration: 0.01 }, 0.01)
       .to(hero.surface, { '--hero-surface': 0, duration: 0.01 }, 0.02)
-      // Step 2: the card compresses into the kiosk screen and the avatar shrinks with it;
-      // the messages stay put. Then the kiosk body forms around the screen (grey → black).
-      .to(morph, { ...clipToLater(screenBox, 18, 0), duration: MOTION.slow, ease: MOTION.easeInOut }, 0.15)
-      .to(morphEdge, { ...clipToLater(screenBox, 18, 1), duration: MOTION.slow, ease: MOTION.easeInOut }, 0.15)
+      // Step 2: the card compresses into the kiosk screen (0.75s, fast-out, as in the Figma prototype)
+      // and the avatar shrinks with it; the messages stay put. Then the kiosk body forms around the
+      // screen (grey → black).
+      .to(morph, { ...clipToLater(screenBox, 21, 0), duration: 0.75, ease: toKiosk }, 0.15)
+      .to(morphEdge, { ...clipToLater(screenBox, 21, 1), duration: 0.75, ease: toKiosk }, 0.15)
       .to(heroImg, {
         x: () => avatarFit().x, y: () => avatarFit().y, scale: () => avatarFit().scale,
         '--avatar-clip-bottom': () => `${avatarFit().clip}px`,
-        transformOrigin: '0 0', duration: MOTION.slow, ease: MOTION.easeInOut
+        transformOrigin: '0 0', duration: 0.75, ease: toKiosk
       }, 0.15)
       .to(hero.avatar, { '--avatar-glow': 0, duration: 0.4, ease: 'none' }, 0.15)
       // the two avatar images cross-fade inside the screen
@@ -1060,7 +1065,7 @@
       // (so the features headline, which grows next, never sits under it)
       .to([intro.question, intro.headline, ...intro.rest], { autoAlpha: 0, y: -50, duration: 0.4, stagger: 0.05, ease: 'power2.in' }, 'intro')
       .to(siteHeader, { yPercent: -100, duration: 0.5, ease: MOTION.easeInOut }, 'intro+=0.3')
-      .to(traveller, { ...onSlot(featuresKiosk), duration: MOTION.slow, ease: MOTION.easeInOut }, 'intro+=0.5');
+      .to(traveller, { ...onSlot(featuresKiosk), duration: 1.5, ease: bezier(0.29, 0, 0, 1.09) }, 'intro+=0.5'); // a slight overshoot (Figma)
     bubbleIn(tl, featuresHeadline, 'intro+=1.2')
       .addLabel('features')
 
@@ -1068,8 +1073,8 @@
       // below the top edge, and the kiosk and features rise to show the whole kiosk; once the kiosk is in
       // place the features slide out from behind it row by row
       .to(featuresHeadline, { y: headlineToTop, scale: headlineScale, transformOrigin: 'left top', duration: 0.5, ease: MOTION.easeInOut }, 'features')
-      .to(featuresStage, { y: () => -centreLift(), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
-      .to(traveller, { ...onSlot(featuresKiosk, centreLift), duration: 0.6, ease: MOTION.easeInOut }, 'features+=0.1')
+      .to(featuresStage, { y: () => -centreLift(), duration: 2.84, ease: rise }, 'features+=0.1')
+      .to(traveller, { ...onSlot(featuresKiosk, centreLift), duration: 2.84, ease: rise }, 'features+=0.1')
       .addLabel('popOut', 'features+=0.7');
     left.forEach((el, i) => {
       tl.to([el, right[i]].filter(Boolean), { autoAlpha: 1, x: 0, duration: 0.7 }, `popOut+=${i * 0.3}`);
