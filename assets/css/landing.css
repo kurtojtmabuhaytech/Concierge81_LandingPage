@@ -1193,6 +1193,16 @@ button.chip, a.chip {
     flex: 0 0 calc(447 * var(--u));
     width: calc(447 * var(--u));
   }
+  .intro-split .kiosk-device {
+    height: calc(790 * var(--u));
+  }
+  :is(.intro-split, .feature-stage) .kiosk-device {
+    display: flex;
+    flex-direction: column;
+  }
+  :is(.intro-split, .feature-stage) .kiosk-base {
+    flex: 1 0 auto;
+  }
   .intro-thread {
     flex: 0 1 calc(717 * var(--u));
     gap: calc(12 * var(--u));
@@ -1248,6 +1258,7 @@ button.chip, a.chip {
   .feature-stage .kiosk-device {
     flex: 0 0 calc(498 * var(--u));
     width: calc(498 * var(--u));
+    height: calc(882 * var(--u));
   }
   .feature-col {
     flex: 0 1 calc(380 * var(--u));
@@ -6206,6 +6217,11 @@ main > .blog-section:has(+ #contact) {
   pointer-events: none;
   transform-origin: 0 0;
   will-change: transform, opacity;
+  display: flex;
+  flex-direction: column;
+}
+.kiosk-traveller .kiosk-base {
+  flex: 1 0 auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

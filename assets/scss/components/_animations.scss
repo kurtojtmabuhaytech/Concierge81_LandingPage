@@ -190,6 +190,8 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   pointer-events: none;
   transform-origin: 0 0;
   will-change: transform, opacity;
+  display: flex; flex-direction: column; // sized to the intro kiosk; the stand takes the height left
+  .kiosk-base { flex: 1 0 auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {

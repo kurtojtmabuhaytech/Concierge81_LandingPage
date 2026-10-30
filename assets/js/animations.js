@@ -888,7 +888,7 @@
     kioskBody.avatar.removeAttribute('loading');
     const fitTraveller = () => {
       story.style.setProperty('--hero-avatar-w', `${heroImg.offsetWidth}px`);
-      gsap.set(traveller, { width: introKiosk.offsetWidth });
+      gsap.set(traveller, { width: introKiosk.offsetWidth, height: introKiosk.offsetHeight });
     };
     fitTraveller();
 

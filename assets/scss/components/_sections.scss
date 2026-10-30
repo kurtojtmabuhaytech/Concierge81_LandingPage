@@ -501,6 +501,10 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   // Intro: kiosk (447 wide) then the thread (717 wide), 78 apart
   .intro-split { gap: u(78); flex-wrap: nowrap; }
   .intro-split .kiosk-device { flex: 0 0 u(447); width: u(447); }
+  // Kiosk 790 tall (Figma): the screen keeps its size and the black stand takes the rest
+  .intro-split .kiosk-device { height: u(790); }
+  :is(.intro-split, .feature-stage) .kiosk-device { display: flex; flex-direction: column; }
+  :is(.intro-split, .feature-stage) .kiosk-base { flex: 1 0 auto; }
   .intro-thread { flex: 0 1 u(717); gap: u(12); }
   .intro-thread .msg-row--user { margin-bottom: u(26); }
   .intro-thread .bubble--user { font-size: u(22); line-height: 1.27; padding: u(18) u(26); border-radius: u(22) u(22) u(6) u(22); max-width: none; }
@@ -514,7 +518,7 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   // Features: 44px headline, kiosk 498 wide, ten 52px icons on 108px rows
   #features .header-pill--ai { font-size: u(44); padding: u(24) u(28); border-radius: u(28) u(28) u(28) u(8); max-width: none; }
   .feature-stage { flex-wrap: nowrap; gap: u(80); }
-  .feature-stage .kiosk-device { flex: 0 0 u(498); width: u(498); }
+  .feature-stage .kiosk-device { flex: 0 0 u(498); width: u(498); height: u(882); } // the intro kiosk, scaled (790 × 498 / 446)
   .feature-col { flex: 0 1 u(380); max-width: none; gap: u(56); }
   .feature-item { gap: u(18); }
   .feature-item h3 { font-size: u(20); margin-bottom: u(4); }
