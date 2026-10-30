@@ -788,13 +788,17 @@ button.chip, a.chip {
 }
 
 .hero-card.is-mode-changing .hero-split-area {
-  animation: hero-mode-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: hero-mode-in 0.8s cubic-bezier(0.33, 1, 0.68, 1) both;
 }
 
 @keyframes hero-mode-in {
   from {
     opacity: 0;
-    translate: 0 0.5rem;
+    translate: 0 0.75rem;
+    scale: 0.985;
+  }
+  40% {
+    opacity: 0.6;
   }
 }
 @media (prefers-reduced-motion: reduce) {

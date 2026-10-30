@@ -344,8 +344,11 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   .hero-avatar { display: none; }
   .hero-chat-interface { width: 100%; max-width: 48rem; justify-self: center; }
 }
-.hero-card.is-mode-changing .hero-split-area { animation: hero-mode-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
-@keyframes hero-mode-in { from { opacity: 0; translate: 0 0.5rem; } }
+.hero-card.is-mode-changing .hero-split-area { animation: hero-mode-in 0.8s cubic-bezier(0.33, 1, 0.68, 1) both; } // (unhurried: a soft fade and settle)
+@keyframes hero-mode-in {
+  from { opacity: 0; translate: 0 0.75rem; scale: 0.985; }
+  40% { opacity: 0.6; }
+}
 @media (prefers-reduced-motion: reduce) { .hero-card.is-mode-changing .hero-split-area { animation: none; } }
 .chat-messages-area { display: flex; flex-direction: column; gap: 1rem; }
 // Once the visitor chats in the hero (main.js), the messages scroll inside the same space
