@@ -2144,11 +2144,6 @@ button.chip, a.chip {
   overflow-x: clip;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .industries-section .swipe-hint {
-    display: none;
-  }
-}
 .industry-photo {
   position: absolute;
   inset: 0;

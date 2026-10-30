@@ -703,7 +703,7 @@
      every first visitor watches it. A refresh in the same session, a #section link or reduced
      motion skip it. Runs once, outside matchMedia. */
   const OPENING_SLOW = 0.9; // the greeting's glide into the hero and the card building around it
-  const OPENING_TYPING = 0.9; // "concierge81 is typing…"
+  const OPENING_TYPING = 0.9; // "concierge is typing..."
   const OPENING_HOLD = 1.0; // the greeting on its own before it flies into the hero
   const runOpening = () => {
     const splash = $('.splash');

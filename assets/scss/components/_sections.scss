@@ -842,8 +842,6 @@ $q-pile: (
   h3 { font-size: clamp(1.3rem, 2.2vw, 1.55rem); font-weight: $font-weight-semibold; line-height: 1.1; letter-spacing: -0.02em; margin: 0.25rem 0 0; max-width: 13ch; }
 }
 .industries-section { overflow-x: clip; } // contains the gallery bleed so the page never scrolls sideways
-// "Swipe to explore" is a touch hint; a mouse gets the arrows and dots instead
-@media (hover: hover) and (pointer: fine) { .industries-section .swipe-hint { display: none; } }
 // Landscape photos cropped to the portrait card; each keeps its kiosk + visitors in frame (Figma)
 .industry-photo {
   position: absolute; inset: 0;
