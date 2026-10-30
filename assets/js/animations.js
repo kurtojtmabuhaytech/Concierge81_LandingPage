@@ -64,6 +64,17 @@
     pop: 0.32            // a message popping in whole
   };
 
+  // CSS cubic-bezier() as a GSAP ease, for the curves given in the Figma prototype (y may overshoot)
+  const bezier = (x1, y1, x2, y2) => {
+    const at = (a, b, t) => ((1 - 3 * b + 3 * a) * t + (3 * b - 6 * a)) * t * t + 3 * a * t;
+    return (x) => {
+      if (x <= 0 || x >= 1) return x;
+      let lo = 0, hi = 1, t = x;
+      for (let i = 0; i < 24; i++) { if (at(x1, x2, t) < x) lo = t; else hi = t; t = (lo + hi) / 2; }
+      return at(y1, y2, t);
+    };
+  };
+
   const $ = (selector, scope = document) => scope.querySelector(selector);
   const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
   const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -988,8 +999,10 @@
       gsap.set(kioskBody.screen, { backgroundImage: 'none' });
       gsap.set([kioskBody.avatar, kioskBody.base, kioskBody.logo], { opacity: 0 });
       gsap.set([intro.question, intro.headline, ...intro.rest, featuresHeadline], { autoAlpha: 0, x: 0, y: 0 });
-      gsap.set([intro.headline, featuresHeadline], { scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(intro.rest, { y: 16 });
+      gsap.set(featuresHeadline, { scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      gsap.set(intro.headline, { y: 178 });
+      gsap.set(intro.rest[0], { y: 112 });
+      gsap.set(intro.rest[1], { y: 12 });
       gsap.set(featuresStage, { y: 0 });
       gsap.set(features, { autoAlpha: 0, x: 0 });
       gsap.set(features, { x: towardKiosk });
@@ -1036,9 +1049,10 @@
       }, 'kiosk+=0.1')
       .set(intro.question, { autoAlpha: 1 }, 'kiosk+=0.7')
       .set(hero.question, { autoAlpha: 0 }, 'kiosk+=0.7');
-    bubbleIn(tl, intro.headline, 'kiosk+=0.75')
-      .to(intro.rest[0], { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
-      .to(intro.rest[1], { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.25')
+    // The intro bubbles slide up from below (Figma prototype): headline, then the text, then the buttons
+    tl.to(intro.headline, { autoAlpha: 1, y: 0, duration: 0.77, ease: bezier(0.19, 0, 0.01, 1) }, 'kiosk+=0.75')
+      .to(intro.rest[0], { autoAlpha: 1, y: 0, duration: 0.93, ease: bezier(0.19, 0, 0.01, 1) }, 'kiosk+=1.28')
+      .to(intro.rest[1], { autoAlpha: 1, y: 0, duration: 0.65, ease: 'back.out(1.6)' }, 'kiosk+=1.56')
       .addLabel('intro')
 
       // Step 3 (18–20s): the intro moves out before the kiosk glides to the centre (so scrolling
