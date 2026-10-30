@@ -1326,15 +1326,14 @@
     const floatInPile = () => pile.offsetHeight * 0.55;
     inbox.floatRest = () => ({ y: floatInPile(), rotation: -6 });
     const openRest = inbox.rest(open);
-    // Questions fall from above the card, each from its own height, with a slight spin, all within
-    // about 0.6s of each other (recording 28–29.5s)
-    const dropFrom = i => -(pile.offsetHeight + 80 + (i % 6) * 45);
+    // Questions fall 480–800px (Figma prototype), each from its own height, with a slight spin
+    const fallBy = i => 480 + ((i * 137) % 321);
     const spinFrom = i => ((i * 37) % 30) - 15;
     // The pile builds from the bottom up: the lowest questions land first and the rest heap on top
     // of them, a little irregularly (rank by resting height, plus a small shuffle)
     const restHeight = tags.map(tag => parseFloat(getComputedStyle(tag).getPropertyValue('--y')) || 0);
     const heightRank = tags.map((_, i) => restHeight.filter(h => h < restHeight[i]).length);
-    const fallDelay = i => (heightRank[i] / tags.length) * 0.5 + ((i * 7) % 5) * 0.03;
+    const fallDelay = i => heightRank[i] * 0.06 + ((i * 7) % 5) * 0.01; // ~0.06s apart, about 2s in all
 
     // The pinned screen shows part of the content; moving it works like scrolling
     const offsetIn = el => el.getBoundingClientRect().top - content.getBoundingClientRect().top;
@@ -1355,7 +1354,7 @@
       gsap.set(pile, { '--pile-glow': 0 });
       inbox.tosses.forEach(toss => toss.kill());
       inbox.moved.clear();
-      tags.forEach((tag, i) => gsap.set(tag, { autoAlpha: 0, zIndex: '', x: 0, y: dropFrom(i), rotation: spinFrom(i), scale: 1 }));
+      tags.forEach((tag, i) => gsap.set(tag, { autoAlpha: 0, zIndex: '', x: 0, y: inbox.rest(tag).y - fallBy(i), rotation: spinFrom(i), scale: 1 }));
       gsap.set(floatCursor, { opacity: 0 });
       show?.invalidate();
       pile.classList.add('is-busy');
@@ -1367,12 +1366,18 @@
     // with the cursor, hovers, and drops back; then "What time do you open?" does the same.
     show = gsap.timeline({ paused: true, onComplete: () => pile.classList.remove('is-busy') })
       .to(pile, { '--pile-glow': 1, duration: 1.8, ease: 'none' }, 0);
+    // Each one falls in 0.53–0.66s (ease-in), tilting as it goes, and lands with one small rebound
     tags.forEach((tag, i) => {
-      const at = fallDelay(i) * 2;
+      const at = fallDelay(i);
       const rest = inbox.rest(tag);
-      show.to(tag, { autoAlpha: 1, duration: 0.2, ease: 'none' }, at)
-        .to(tag, { y: rest.y, duration: 1.4, ease: 'bounce.out' }, at)
-        .to(tag, { rotation: rest.rotation, duration: 1.4, ease: 'back.out(1.7)' }, at);
+      const reach = (fallBy(i) - 480) / 320; // 0 for the shortest drop, 1 for the longest
+      const fall = 0.53 + reach * 0.13;
+      const rebound = 5 + reach * 5;
+      show.to(tag, { autoAlpha: 1, duration: 0.15, ease: 'none' }, at)
+        .to(tag, { y: rest.y, duration: fall, ease: 'power2.in' }, at)
+        .to(tag, { rotation: rest.rotation, duration: fall, ease: 'power1.out' }, at)
+        .to(tag, { y: rest.y - rebound, duration: 0.07, ease: 'power2.out' }, at + fall)
+        .to(tag, { y: rest.y, duration: 0.1, ease: 'power2.in' }, at + fall + 0.07);
     });
     show.addLabel('demo', '+=0.3')
       .set(float, { zIndex: 20 }, 'demo')
