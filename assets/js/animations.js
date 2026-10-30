@@ -1920,8 +1920,6 @@
     const nodes = parts('.info-nodes > div');
     const langPill = part('.lang-pill');
     const tabs = parts('.lang-tabs span');
-    const hello = part('.hello-en');
-    const konnichiwa = part('.hello-jp');
     const network = parts('.network-lines path');
     const places = parts('.network-node');
     const tags = parts('.network-tag');
@@ -1956,8 +1954,6 @@
       gsap.set(langPill, { x: 0 });
       gsap.set(tabs, { color: '' });
       gsap.set(tabs[0], { color: '#FFFFFF' });
-      gsap.set(konnichiwa, { autoAlpha: 0, y: 12 });
-      gsap.set(hello, { autoAlpha: 1, y: 0 });
       gsap.set(network, { opacity: 0 });
       gsap.set(places, { autoAlpha: 0, x: i => fromHub(places[i]).x, y: i => fromHub(places[i]).y });
       gsap.set(tags, { autoAlpha: 0, y: 6 });
@@ -2002,18 +1998,13 @@
       .to(infoBox, { autoAlpha: 1, y: 0, duration: 0.4 }, 'row2')
       .to(branches, { strokeDashoffset: 0, duration: 0.6, ease: 'power1.inOut', stagger: 0.1 }, 'row2+=0.4')
       .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, 'row2+=0.8')
-      // EN → JP: the pill and the white label move to JP; Hello. leaves and こんにちは。 takes its place
+      // EN → JP and back: the pill and the white label move (Hello. and こんにちは。 both stay, as in Figma)
       .to(langPill, { x: tabShift, duration: 0.45, ease: MOTION.easeInOut }, 'row2+=0.5')
       .to(tabs[0], { color: '#A8A49A', duration: 0.3 }, 'row2+=0.55')
       .to(tabs[1], { color: '#FFFFFF', duration: 0.3 }, 'row2+=0.65')
-      .to(hello, { autoAlpha: 0, y: -12, duration: 0.3, ease: 'power2.in' }, 'row2+=0.6')
-      .to(konnichiwa, { autoAlpha: 1, y: 0, duration: 0.4 }, 'row2+=0.85')
-      // JP → EN: back again, こんにちは。 leaves and Hello. returns
       .to(langPill, { x: 0, duration: 0.45, ease: MOTION.easeInOut }, 'row2+=1.7')
       .to(tabs[1], { color: '#A8A49A', duration: 0.3 }, 'row2+=1.75')
       .to(tabs[0], { color: '#FFFFFF', duration: 0.3 }, 'row2+=1.85')
-      .to(konnichiwa, { autoAlpha: 0, y: 12, duration: 0.3, ease: 'power2.in' }, 'row2+=1.8')
-      .to(hello, { autoAlpha: 1, y: 0, duration: 0.4 }, 'row2+=2.05')
       .to(hub, { autoAlpha: 1, scale: 1, duration: 0.4, ease: 'back.out(1.7)', stagger: 0.08 }, 'row2+=0.4')
       .to(network, { opacity: 1, duration: 0.4, stagger: 0.1 }, 'row2+=0.8')
       .to(places, { autoAlpha: 1, x: 0, y: 0, duration: 0.6, ease: MOTION.easeInOut, stagger: 0.12 }, 'row2+=0.8')
@@ -2673,20 +2664,14 @@
       .to({}, pause(1)));
     const langPill = $('.lang-pill', languages);
     const tabs = $$('.lang-tabs span', languages);
-    const hello = $('.hello-en', languages);
-    const konnichiwa = $('.hello-jp', languages);
-    loop(languages, () => gsap.timeline() // Hello. ↔ こんにちは。
+    loop(languages, () => gsap.timeline() // the language pill moves EN → JP and back
       .to(langPill, { x: () => tabs[1].offsetLeft - tabs[0].offsetLeft, duration: 0.45, ease: MOTION.easeInOut })
       .to(tabs[0], { color: '#A8A49A', duration: 0.3 }, '<0.05')
       .to(tabs[1], { color: '#FFFFFF', duration: 0.3 }, '<0.1')
-      .to(hello, { autoAlpha: 0, y: -12, duration: 0.3, ease: 'power2.in' }, '<')
-      .to(konnichiwa, { autoAlpha: 1, y: 0, duration: 0.4 }, '>-0.05')
       .to({}, pause(0.9))
       .to(langPill, { x: 0, duration: 0.45, ease: MOTION.easeInOut })
       .to(tabs[1], { color: '#A8A49A', duration: 0.3 }, '<0.05')
       .to(tabs[0], { color: '#FFFFFF', duration: 0.3 }, '<0.1')
-      .to(konnichiwa, { autoAlpha: 0, y: 12, duration: 0.3, ease: 'power2.in' }, '<')
-      .to(hello, { autoAlpha: 1, y: 0, duration: 0.4 }, '>-0.05')
       .to({}, pause(0.9)));
     const glow = $('.network-glow', scale);
     const placesOut = $$('.network-node', scale);

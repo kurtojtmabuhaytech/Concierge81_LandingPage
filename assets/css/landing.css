@@ -6155,14 +6155,6 @@ main > .blog-section:has(+ #contact) {
   margin-bottom: 2rem;
 }
 
-#values.is-staged .hello {
-  display: grid;
-  place-items: center;
-}
-#values.is-staged .hello > span {
-  grid-area: 1/1;
-}
-
 #industries.is-staged .industry-gallery {
   overflow: hidden;
   scroll-snap-type: none;
