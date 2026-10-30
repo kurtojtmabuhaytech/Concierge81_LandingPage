@@ -1199,7 +1199,7 @@
 
   /* 6–8. Team inbox (Figma recording 24–37s). Desktop: a scroll scene that slides up over the hero
      story. The visitor asks, the concierge answers; the inbox card darkens in, then on their own
-     the questions rain into a pile and two are lifted out and dropped back (drag demo), after
+     the questions rain into a pile and two are thrown out of the inbox (drag demo), after
      which the questions can be picked up; the next scroll moves the view down and "Let me handle
      the repeats." answers. The questions move by GSAP transforms (smoother
      than CSS variables) and can be picked up and dropped (setupPile). */
@@ -1333,6 +1333,10 @@
     const floatInPile = () => pile.offsetHeight * 0.55;
     inbox.floatRest = () => ({ y: floatInPile(), rotation: -6 });
     const openRest = inbox.rest(open);
+    // The demo's cursor also grabs "What time do you open?": a copy of the floating question's
+    const openCursor = floatCursor.cloneNode(true);
+    Object.assign(openCursor.style, { position: 'absolute', right: '-6px', bottom: '-14px', width: '18px', height: '18px' });
+    open.appendChild(openCursor);
     // Questions fall 480–800px (Figma prototype), each from its own height, with a slight spin
     const fallBy = i => 480 + ((i * 137) % 321);
     const spinFrom = i => ((i * 37) % 30) - 15;
@@ -1362,15 +1366,16 @@
       inbox.tosses.forEach(toss => toss.kill());
       inbox.moved.clear();
       tags.forEach((tag, i) => gsap.set(tag, { autoAlpha: 0, zIndex: '', x: 0, y: inbox.rest(tag).y - fallBy(i), rotation: spinFrom(i), scale: 1 }));
-      gsap.set(floatCursor, { opacity: 0 });
+      gsap.set([floatCursor, openCursor], { opacity: 0, scale: 1, transformOrigin: '20% 10%' });
       show?.invalidate();
       pile.classList.add('is-busy');
     };
     applyStart();
 
     // The rain (recording 28–30s): the questions fall into the pile from the bottom up and the
-    // glow rises under it. Then the drag demo (30.5–34s): "Where is the restroom?" is lifted out
-    // with the cursor, hovers, and drops back; then "What time do you open?" does the same.
+    // glow rises under it. Then the drag demo (Figma prototype): the cursor grabs "Where is the
+    // restroom?", lifts it and throws it out of the inbox to the right; then it grabs "What time
+    // do you open?" and throws it out to the left. The cursor presses (scales down) as it grabs.
     show = gsap.timeline({ paused: true, onComplete: () => pile.classList.remove('is-busy') })
       .to(pile, { '--pile-glow': 1, duration: 1.8, ease: 'none' }, 0);
     // Each one falls in 0.53–0.66s (ease-in), tilting as it goes, and lands with one small rebound
@@ -1388,15 +1393,19 @@
     });
     show.addLabel('demo', '+=0.3')
       .set(float, { zIndex: 20 }, 'demo')
-      .fromTo(float, { y: floatInPile, rotation: -6 }, { y: 0, rotation: 4, duration: 0.6, ease: MOTION.easeInOut, immediateRender: false }, 'demo')
       .to(floatCursor, { opacity: 1, duration: 0.2 }, 'demo')
-      .to(float, { y: -10, rotation: 2, duration: 0.4, ease: 'sine.inOut' }, 'demo+=0.6')
-      .to(float, { y: floatInPile, rotation: -6, duration: 0.9, ease: 'bounce.out' }, 'demo+=1.0')
-      .to(floatCursor, { opacity: 0, duration: 0.2 }, 'demo+=1.0')
-      .set(open, { zIndex: 20 }, 'demo+=1.6')
-      .fromTo(open, { x: 0, y: openRest.y, rotation: openRest.rotation }, { x: 40, y: -120, rotation: -14, duration: 0.5, ease: MOTION.easeInOut, immediateRender: false }, 'demo+=1.6')
-      .to(open, { y: -132, rotation: -11, duration: 0.4, ease: 'sine.inOut' }, 'demo+=2.1')
-      .to(open, { x: 0, y: openRest.y, rotation: openRest.rotation, duration: 0.9, ease: 'bounce.out' }, 'demo+=2.5');
+      .to(floatCursor, { scale: 0.86, duration: 0.12, ease: 'power2.out' }, 'demo+=0.2') // press
+      .fromTo(float, { y: floatInPile, rotation: -6 }, { y: 0, rotation: 4, duration: 0.6, ease: MOTION.easeInOut, immediateRender: false }, 'demo+=0.3')
+      .to(float, { y: -10, rotation: 2, duration: 0.3, ease: 'sine.inOut' }, 'demo+=0.9')
+      .to(float, { x: 900, y: -60, rotation: 28, duration: 0.55, ease: 'power2.in' }, 'demo+=1.2') // thrown out to the right
+      .to(floatCursor, { opacity: 0, duration: 0.2 }, 'demo+=1.4')
+      .set(open, { zIndex: 20 }, 'demo+=1.8')
+      .to(openCursor, { opacity: 1, duration: 0.2 }, 'demo+=1.8')
+      .to(openCursor, { scale: 0.86, duration: 0.12, ease: 'power2.out' }, 'demo+=2.0') // press
+      .fromTo(open, { x: 0, y: openRest.y, rotation: openRest.rotation }, { x: 40, y: -120, rotation: -14, duration: 0.5, ease: MOTION.easeInOut, immediateRender: false }, 'demo+=2.1')
+      .to(open, { y: -132, rotation: -11, duration: 0.3, ease: 'sine.inOut' }, 'demo+=2.6')
+      .to(open, { x: -1150, y: -80, rotation: -32, duration: 0.6, ease: 'power2.in' }, 'demo+=2.9') // thrown out to the left
+      .to(openCursor, { opacity: 0, duration: 0.2 }, 'demo+=3.1');
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     tl.addLabel('enter', 0);
@@ -1444,6 +1453,8 @@
     });
 
     return () => {
+      openCursor.remove();
+      gsap.set([float, open], { x: 0 }); // (the demo threw them out of the card)
       pile.classList.remove('is-busy');
       inbox.putBack();
       next.classList.remove('slides-over');
