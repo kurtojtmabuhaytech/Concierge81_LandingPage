@@ -710,11 +710,11 @@
 
   /* ---- 0–2. Opening screen → hero ---------------------------------------------------------
      Plays once per browser session, on the first open: as soon as the hero picture is ready, the
-     greeting pops in whole and flies into the hero. The page can't be scrolled while it plays, so
+     typing bubble grows into the greeting, which flies into the hero. The page can't be scrolled while it plays, so
      every first visitor watches it. A refresh in the same session, a #section link or reduced
      motion skip it. Runs once, outside matchMedia. */
   const OPENING_SLOW = 0.9; // the greeting's glide into the hero and the card building around it
-  const OPENING_TYPING = 0.9; // "concierge is typing..."
+  const OPENING_TYPING = 1.4; // "concierge is typing..." (the dots bounce about 1.4s, Figma)
   const OPENING_HOLD = 1.0; // the greeting on its own before it flies into the hero
   const runOpening = () => {
     const splash = $('.splash');
@@ -768,13 +768,12 @@
     tl = gsap.timeline({ paused: true, onComplete: finish })
       .fromTo(bubble, { scale: 0.6, transformOrigin: 'left bottom' }, { autoAlpha: 1, scale: 1, duration: MOTION.fast, ease: 'back.out(2)' })
       .to(caption, { autoAlpha: 1, duration: MOTION.fast }, '<0.1')
-      // a short "typing…", then the whole greeting pops in at once
+      // "typing…", then the bubble grows into the greeting and its text fades in (Figma prototype)
       .addLabel('greet', `+=${OPENING_TYPING}`)
-      .set(dots, { autoAlpha: 0 }, 'greet')
-      .set(bubble, full, 'greet')
-      .set(text, { autoAlpha: 1 }, 'greet')
+      .to(dots, { autoAlpha: 0, duration: 0.12, ease: 'none' }, 'greet')
+      .to(bubble, { ...full, duration: 0.44, ease: bezier(0.176, -0.007, 0.017, 0.993) }, 'greet')
+      .to(text, { autoAlpha: 1, duration: 0.64, ease: 'power1.out' }, 'greet+=0.12')
       .call(() => { caption.textContent = 'concierge81 · 9:12 PM'; }, null, 'greet')
-      .fromTo(bubble, { scale: 0.86 }, { scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', immediateRender: false }, 'greet')
       // hold, then hand the greeting to the hero while the card builds around it
       .addLabel('handoff', `greet+=${OPENING_HOLD}`)
       .to(splash, { backgroundColor: 'rgba(255, 255, 255, 0)', duration: OPENING_SLOW, ease: 'none' }, 'handoff')
