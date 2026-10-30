@@ -2949,8 +2949,22 @@
   let moved = false;
   ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach(type => addEventListener(type, () => { moved = true; }, { once: true, passive: true }));
   const loaded = new Promise(resolve => (document.readyState === 'complete' ? resolve() : addEventListener('load', resolve, { once: true })));
+  /* Arriving from another page's link to a section (index.html#pricing...): the browser's own jump
+     happens before the scenes have measured the page, so once they have, the page goes there,
+     the way an in-page link does (the scenes passed are shown finished). The story's step links
+     (#intro, #features) are placed by the story itself. */
+  const arrival = (() => {
+    if (!location.hash || location.hash === '#intro' || location.hash === '#features') return null;
+    try { return document.querySelector(location.hash); } catch (e) { return null; }
+  })();
+  const arrive = () => {
+    ScrollTrigger.refresh();
+    if (smoother) { glide(); smoother.scrollTo(arrival, false, 'top top'); }
+    else arrival.scrollIntoView();
+  };
   Promise.all([loaded, document.fonts?.ready]).then(() => {
-    if (moved) ScrollTrigger.refresh();
+    if (arrival && !moved) arrive();
+    else if (moved) ScrollTrigger.refresh();
     else restore();
     requestAnimationFrame(() => root.classList.remove('is-restoring')); // shown there, at last
   });
