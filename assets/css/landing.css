@@ -1074,6 +1074,15 @@ button.chip, a.chip {
     max-width: none;
     padding-inline: max(1.5rem, (100% - calc(1350 * var(--u))) / 2);
   }
+  body:not(.page-cream) .site-header {
+    padding-block: 0;
+  }
+  body:not(.page-cream) .site-header > .container {
+    min-height: calc(75 * var(--u));
+  }
+  .site-header .brand-logo {
+    font-size: calc(22 * var(--u));
+  }
   .story > .section > .container {
     max-width: calc(1350 * var(--u));
     padding-inline: 0;

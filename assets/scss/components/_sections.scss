@@ -462,6 +462,10 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   // Logo and menu line up with the story's edges (80px at 1512; on short wide screens the story
   // is sized by the height, so it's narrower than the screen)
   .site-header > .container { max-width: none; padding-inline: max(1.5rem, calc((100% - #{u(1350)}) / 2)); }
+  // Landing header bar 76 tall at 1512 (75 + the border) with the 22px logo, as in Figma (blog/news keep their 75)
+  body:not(.page-cream) .site-header { padding-block: 0; }
+  body:not(.page-cream) .site-header > .container { min-height: u(75); }
+  .site-header .brand-logo { font-size: u(22); }
 
   .story > .section > .container { max-width: u(1350); padding-inline: 0; }
 
