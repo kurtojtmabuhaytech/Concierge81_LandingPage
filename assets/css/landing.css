@@ -1264,6 +1264,9 @@ button.chip, a.chip {
     width: calc(24 * var(--u));
     height: calc(24 * var(--u));
   }
+  #problem .header-pill--ai {
+    max-width: calc(650 * var(--u));
+  }
 }
 /* =========================================
    Section 4: Problem (Team Inbox Pile)

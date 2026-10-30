@@ -516,6 +516,9 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   .feature-item h3 { font-size: u(20); margin-bottom: u(4); }
   .feature-item p { font-size: u(16); }
   .feature-icon { width: u(52); height: u(52); border-radius: u(14); svg { width: u(24); height: u(24); } }
+
+  // Inbox: the two-line headline bubble hugs its text (650 wide), not the 900 max
+  #problem .header-pill--ai { max-width: u(650); }
 }
 
 /* =========================================
