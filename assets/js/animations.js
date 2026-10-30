@@ -976,10 +976,11 @@
       const highest = headlineTop() + featuresHeadline.offsetHeight + innerHeight * 0.03;
       return Math.max(0, Math.min(top - (innerHeight - slot.height) / 2, top - highest));
     };
-    const towardKiosk = (i, el) => {
+    // Each feature starts at the kiosk's centre (behind it) and flies out to its place (Figma)
+    const fromKiosk = (el, axis) => {
       const k = featuresKiosk.getBoundingClientRect();
       const r = el.getBoundingClientRect();
-      return (k.left + k.width / 2 - (r.left + r.width / 2)) * 0.6;
+      return axis === 'x' ? k.left + k.width / 2 - (r.left + r.width / 2) : k.top + k.height / 2 - (r.top + r.height / 2);
     };
     const features = [...left, ...right];
 
@@ -1005,8 +1006,8 @@
       gsap.set(intro.rest[0], { y: 112 });
       gsap.set(intro.rest[1], { y: 12 });
       gsap.set(featuresStage, { y: 0 });
-      gsap.set(features, { autoAlpha: 0, x: 0 });
-      gsap.set(features, { x: towardKiosk });
+      gsap.set(features, { autoAlpha: 0, x: 0, y: 0 });
+      gsap.set(features, { x: (i, el) => fromKiosk(el, 'x'), y: (i, el) => fromKiosk(el, 'y') });
     };
     applyStart();
 
@@ -1077,9 +1078,10 @@
       .to(featuresStage, { y: () => -centreLift(), duration: 2.84, ease: rise }, 'features+=0.1')
       .to(traveller, { ...onSlot(featuresKiosk, centreLift), duration: 2.84, ease: rise }, 'features+=0.1')
       .addLabel('popOut', 'features+=0.7');
-    left.forEach((el, i) => {
-      tl.to([el, right[i]].filter(Boolean), { autoAlpha: 1, x: 0, duration: 0.7 }, `popOut+=${i * 0.3}`);
-    });
+    // row by row, 0.44s apart; on each row the left one first, the right one 0.22s later
+    const flyOut = { autoAlpha: 1, x: 0, y: 0, duration: 0.85, ease: bezier(0.22, 1, 0.36, 1) };
+    left.forEach((el, i) => tl.to(el, flyOut, `popOut+=${i * 0.44}`));
+    right.forEach((el, i) => tl.to(el, flyOut, `popOut+=${i * 0.44 + 0.22}`));
     tl.addLabel('fan');
 
     // The site header stays away for the rest of the page.
