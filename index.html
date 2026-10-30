@@ -83,6 +83,12 @@
       } catch (e) { /* storage blocked */ }
       setTimeout(() => root.classList.remove('is-restoring'), 2500);
       window.addEventListener('load', () => { if (!window.gsap) root.classList.remove('js-motion', 'is-restoring'); });
+      // A script error while the motion is set up: everything is shown, without motion, rather than hidden
+      window.addEventListener('error', (e) => {
+        if (!/animations\.js/.test(e.filename || '') || window.c81MotionReady) return;
+        root.classList.remove('js-motion', 'is-restoring', 'is-opening');
+        document.querySelector('.splash')?.remove();
+      });
     })();
   </script>
   <script src="assets/js/vendor/gsap/gsap.min.js" defer></script>

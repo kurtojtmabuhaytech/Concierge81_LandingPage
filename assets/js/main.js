@@ -223,19 +223,23 @@ document.addEventListener('DOMContentLoaded', () => {
   // Smooth scroll for in-page links (sections set scroll-margin-top for the sticky header).
   // On phones the form sits below the contact headline and steps: "contact" links go to the form.
   const phoneLayout = window.matchMedia('(max-width: 900px)');
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-      const href = this.getAttribute('href');
-      if (href === '#') return;
-      const target = (href === '#contact' && phoneLayout.matches && document.querySelector('#contact .footer-form-card'))
+  // (one listener for the page: links added later, like the hero chat's "Request a demo", too)
+  document.addEventListener('click', (e) => {
+    const anchor = e.target.closest?.('a[href^="#"]');
+    if (!anchor || e.defaultPrevented) return;
+    const href = anchor.getAttribute('href');
+    if (href === '#') return;
+    let target = null;
+    try {
+      target = (href === '#contact' && phoneLayout.matches && document.querySelector('#contact .footer-form-card'))
         || document.querySelector(href);
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: motionOK ? 'smooth' : 'auto' });
-        history.replaceState(null, '', href);
-        if (e.detail === 0) focusTarget(target); // keyboard: the focus goes there too (skip link, contents)
-      }
-    });
+    } catch (err) { return; } // (not a selector)
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: motionOK ? 'smooth' : 'auto' });
+      history.replaceState(null, '', href);
+      if (e.detail === 0) focusTarget(target); // keyboard: the focus goes there too (skip link, contents)
+    }
   });
 
   singleSelect(document.querySelector('.mode-toggle'));
@@ -362,12 +366,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Topics filter the suggestions still to ask
     let topic = 'all';
+    const allAsked = done.textContent;
     const showChips = () => {
       const left = chips.filter(chip => chip.isConnected && !chip.classList.contains('faq-ask'));
       left.forEach(chip => { chip.hidden = topic !== 'all' && !chip.dataset.cat.split(' ').includes(topic); });
       left.forEach(chip => chip.classList.toggle('is-first', chip === left.find(c => !c.hidden)));
-      done.hidden = left.length > 0;
-      suggested.hidden = left.length === 0;
+      const inTopic = left.filter(chip => !chip.hidden).length;
+      // (a topic asked out, with others left: says so, instead of the all-asked note)
+      done.textContent = left.length ? 'That’s all for this topic — pick another one, or ask our team.' : allAsked;
+      done.hidden = inTopic > 0;
+      suggested.hidden = inTopic === 0;
     };
     const filters = document.getElementById('faqFilters');
     singleSelect(filters);
@@ -441,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
         (next || thread).focus({ preventScroll: true });
       }
       chip.disabled = true;
-      queue = queue.then(() => ask(chip));
+      queue = queue.then(() => ask(chip)).catch((err) => { console.error(err); }); // (one failure never stops the next questions)
     });
   }
   setupListing({

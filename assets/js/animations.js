@@ -328,6 +328,8 @@
 
   // The page is re-measuring (a resize): scroll updates then are not the visitor's
   let measuring = false;
+  // The page-wide listeners of the scroll scenes: taken off when the motion is set up again
+  const sceneListeners = new Set();
   // When the visitor last scrolled the page themselves (wheel, keys, touch, pointer)
   let inputAt = -1;
   ['wheel', 'keydown', 'touchmove', 'pointerdown'].forEach(type => addEventListener(type, () => { inputAt = performance.now(); }, { capture: true, passive: true }));
@@ -632,12 +634,17 @@
       keptAt = performance.now();
     };
     ScrollTrigger.addEventListener('refreshInit', keepView);
-    // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
-    function kill() {
-      early?.kill();
+    const detach = () => {
       removeEventListener('scroll', watchView);
       ScrollTrigger.removeEventListener('refresh', watchView);
       ScrollTrigger.removeEventListener('refreshInit', keepView);
+      sceneListeners.delete(detach);
+    };
+    sceneListeners.add(detach);
+    // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
+    function kill() {
+      early?.kill();
+      detach();
       stopAll();
       steps.kill();
       tailTrigger?.kill();
@@ -2823,6 +2830,7 @@
       return () => {
         unlimit?.();
         cleanups.forEach(cleanup => cleanup());
+        [...sceneListeners].forEach(detach => detach()); // (the scenes' triggers go with the matchMedia)
         smoother?.kill();
         smoother = null;
         root.classList.remove('is-smooth');
@@ -2831,6 +2839,7 @@
   );
   if (keyboardMode) finishOpening();
   setUpMotion();
+  window.c81MotionReady = true; // (index.html: an error before this shows the page without motion)
 
   /* Keyboard mode. The landing reveals its sections as the visitor scrolls, so a control in a
      section that hasn't played yet is hidden, and Tab (or a screen reader) can't reach it. The
