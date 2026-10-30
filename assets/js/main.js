@@ -242,7 +242,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  singleSelect(document.querySelector('.mode-toggle'));
+  /* The hero's Avatar / Chat switch: "Chat" lets the chat have the card to itself, "Avatar" brings
+     the avatar back. (animations.js puts "Avatar" back before the opening moves the hero on.) */
+  const modeToggle = document.querySelector('.mode-toggle');
+  singleSelect(modeToggle);
+  const heroCard = modeToggle?.closest('.hero-card');
+  const setHeroMode = (mode, fade = true) => {
+    if (!heroCard || heroCard.classList.contains('is-chat-mode') === (mode === 'chat')) return;
+    heroCard.classList.toggle('is-chat-mode', mode === 'chat');
+    modeToggle.querySelectorAll('button').forEach((b) => {
+      const on = (b.textContent.trim().toLowerCase() === mode);
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on);
+    });
+    heroCard.classList.remove('is-mode-changing');
+    if (!fade) return;
+    void heroCard.offsetWidth; // (restart the fade)
+    heroCard.classList.add('is-mode-changing');
+  };
+  heroCard?.addEventListener('animationend', (e) => { if (e.target.matches('.hero-split-area')) heroCard.classList.remove('is-mode-changing'); });
+  modeToggle?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (btn) setHeroMode(btn.textContent.trim().toLowerCase());
+  });
+  window.c81SetHeroMode = setHeroMode;
 
   // "Was this article helpful?": a vote swaps the buttons for a thank-you (read out: the spot is a
   // live region); one vote per article for the browser session

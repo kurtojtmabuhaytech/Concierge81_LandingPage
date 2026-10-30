@@ -1076,7 +1076,10 @@
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       onUpdate: t => story.classList.toggle('is-at-hero', t < 0.001), // (the hero chat takes the wheel there)
-      beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
+      beforeMove: () => { // scrolling (or a reload restoring the scroll position) ends the opening first,
+        finishOpening();
+        window.c81SetHeroMode?.('avatar', false); // and the hero has its avatar again (at once), to move into the kiosk
+      },
       onRefresh: () => {
         fitTraveller();
         applyStart();

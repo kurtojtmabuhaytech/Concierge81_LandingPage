@@ -775,6 +775,33 @@ button.chip, a.chip {
   padding: clamp(0.5rem, 2vw, 1.5rem) 0 clamp(1rem, 2.5vw, 1.5rem);
 }
 
+.hero-card.is-chat-mode .hero-split-area {
+  grid-template-columns: 1fr;
+}
+.hero-card.is-chat-mode .hero-avatar {
+  display: none;
+}
+.hero-card.is-chat-mode .hero-chat-interface {
+  width: 100%;
+  max-width: 48rem;
+  justify-self: center;
+}
+
+.hero-card.is-mode-changing .hero-split-area {
+  animation: hero-mode-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes hero-mode-in {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-card.is-mode-changing .hero-split-area {
+    animation: none;
+  }
+}
 .chat-messages-area {
   display: flex;
   flex-direction: column;
@@ -1068,6 +1095,19 @@ button.chip, a.chip {
   }
   .hero-avatar img {
     width: calc(430 * var(--u));
+  }
+  .story.is-staged .hero-card.is-chat-mode .hero-split-area {
+    grid-template-columns: 1fr calc(672 * var(--u));
+  }
+  .story.is-staged .hero-card.is-chat-mode .hero-avatar {
+    display: flex;
+    grid-area: 1/1;
+    clip-path: inset(0 0 0 100%);
+  }
+  .story.is-staged .hero-card.is-chat-mode .hero-chat-interface {
+    grid-area: 1/1/2/-1;
+    width: calc(860 * var(--u));
+    max-width: 100%;
   }
   .hero-chat-interface {
     gap: calc(16 * var(--u));

@@ -336,6 +336,17 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
 }
 
 .hero-chat-interface { display: flex; flex-direction: column; gap: 0.9rem; padding: clamp(0.5rem, 2vw, 1.5rem) 0 clamp(1rem, 2.5vw, 1.5rem); }
+
+// "Chat" in the hero's Avatar / Chat switch (main.js): the avatar steps aside and the chat has the
+// card to itself, centred; "Avatar" brings her back
+.hero-card.is-chat-mode {
+  .hero-split-area { grid-template-columns: 1fr; }
+  .hero-avatar { display: none; }
+  .hero-chat-interface { width: 100%; max-width: 48rem; justify-self: center; }
+}
+.hero-card.is-mode-changing .hero-split-area { animation: hero-mode-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes hero-mode-in { from { opacity: 0; translate: 0 0.5rem; } }
+@media (prefers-reduced-motion: reduce) { .hero-card.is-mode-changing .hero-split-area { animation: none; } }
 .chat-messages-area { display: flex; flex-direction: column; gap: 1rem; }
 // Once the visitor chats in the hero (main.js), the messages scroll inside the same space
 .chat-messages-area.is-chatting { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
@@ -458,6 +469,13 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   .hero-card-tools .lang-btn { font-size: u(13); padding: u(6) u(14); }
   .hero-split-area { grid-template-columns: 1fr u(672); gap: 0; }
   .hero-avatar img { width: u(430); }
+  // In the pinned opening the avatar keeps its place unseen in "Chat" (the opening measures it there
+  // and morphs it into the kiosk; the switch goes back to "Avatar" as soon as the story moves on)
+  .story.is-staged .hero-card.is-chat-mode {
+    .hero-split-area { grid-template-columns: 1fr u(672); }
+    .hero-avatar { display: flex; grid-area: 1 / 1; clip-path: inset(0 0 0 100%); }
+    .hero-chat-interface { grid-area: 1 / 1 / 2 / -1; width: u(860); max-width: 100%; }
+  }
   .hero-chat-interface { gap: u(16); padding: u(30) 0 u(27); }
   .chat-messages-area { gap: u(14); }
   .hero-chat-interface .bubble { font-size: u(21); line-height: 1.333; padding: u(17) u(22); border-radius: u(20); max-width: 100%; }
