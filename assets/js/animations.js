@@ -1495,7 +1495,7 @@
     const applyStart = () => {
       gsap.set(content, { y: 0, autoAlpha: 1 });
       heading.start();
-      gsap.set(stepper, { '--line': 0 });
+      gsap.set(stepper, { '--line': 0, '--lit': 1 });
       gsap.set(dots, { autoAlpha: 0, scale: 0.6, '--on': 0 });
       gsap.set(cards, { autoAlpha: 0, y: 24 });
       gsap.set(icons, { scale: 0.85 });
@@ -1548,9 +1548,11 @@
       .to(answer, { morphSVG: how.check, duration: 0.5, ease: MOTION.easeInOut }, 'step2+=1.1')
       .addLabel('step3')
 
-      // Step 5 (45–50s): the steps settle, every dot back to neutral; card 3's icon switches back
-      // to the bubble and to the check once more
-      .to(dots, { '--on': 0, duration: 0.4 }, 'step3+=0.2')
+      // Step 5 (45–50s): the steps settle as in Figma (step 1 lit, the line grey); card 3's icon
+      // switches back to the bubble and to the check once more
+      .to([dots[1], dots[2]], { '--on': 0, duration: 0.4 }, 'step3+=0.2')
+      .to(dots[0], { '--on': 1, duration: 0.4 }, 'step3+=0.2')
+      .to(stepper, { '--lit': 0, duration: 0.4 }, 'step3+=0.2')
       .to(answer, { morphSVG: how.bubble, duration: 0.5, ease: MOTION.easeInOut }, 'step3+=0.9')
       .to(answer, { morphSVG: how.check, duration: 0.5, ease: MOTION.easeInOut }, 'step3+=1.9');
     tl.add(steps, 'steps').addLabel('built');

@@ -1785,7 +1785,7 @@ button.chip, a.chip {
   height: 2px;
   margin-top: -1px;
   border-radius: 2px;
-  background: rgba(39, 111, 248, 0.6);
+  background: color-mix(in srgb, rgba(39, 111, 248, 0.6) calc(var(--lit, 0) * 100%), #35342F);
   transform: scaleX(var(--line, 1));
   transform-origin: left center;
 }
@@ -1847,7 +1847,7 @@ button.chip, a.chip {
   position: relative;
   width: 10rem;
   height: 10rem;
-  margin: 0 auto 3.4rem;
+  margin: 0 auto 2.2rem;
 }
 .process-icon::before {
   content: "";

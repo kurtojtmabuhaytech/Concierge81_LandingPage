@@ -652,7 +652,8 @@ $q-pile: (
     content: '';
     position: absolute; top: 50%; left: calc(100% / 6); right: calc(100% / 6);
     height: 2px; margin-top: -1px; border-radius: 2px;
-    background: rgba($color-cobalt-bright, 0.6); // solid cobalt line joining all three steps
+    // the line joining the steps: cobalt while the animation draws it (--lit), grey at rest as in Figma
+    background: color-mix(in srgb, rgba($color-cobalt-bright, 0.6) calc(var(--lit, 0) * 100%), $neutral-700);
     transform: scaleX(var(--line, 1)); // drawn from step 1 to step 3 by the scroll animation
     transform-origin: left center;
   }
@@ -695,7 +696,7 @@ $q-pile: (
 // Illustration: soft cobalt glow behind a faint ring
 .process-icon {
   position: relative;
-  width: 10rem; height: 10rem; margin: 0 auto 3.4rem;
+  width: 10rem; height: 10rem; margin: 0 auto 2.2rem; // cards 436 × 426 as in Figma
   &::before {
     content: '';
     position: absolute; inset: -40%;
