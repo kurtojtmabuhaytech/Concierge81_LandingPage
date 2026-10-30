@@ -826,7 +826,7 @@
 
     // The inbox section slides up over the pinned story once its last step has played
     const next = $('#problem');
-    story.classList.add('is-staged');
+    story.classList.add('is-staged', 'is-at-hero');
     next.classList.add('slides-over');
     setHeaderHeight();
 
@@ -1042,6 +1042,7 @@
       canGoBack: () => !oneWay,
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
+      onUpdate: t => story.classList.toggle('is-at-hero', t < 0.001), // (the hero chat takes the wheel there)
       beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
       onRefresh: () => {
         fitTraveller();
@@ -1074,7 +1075,9 @@
     let furthest = scrollY;
     const remeasured = () => { furthest = scrollY; }; // positions change when the page re-measures
     const upKeys = ['ArrowUp', 'PageUp', 'Home'];
-    const onWheel = (e) => { if (e.deltaY < 0 && !jumping) e.preventDefault(); };
+    // (a box that scrolls itself, like the hero chat once the visitor has asked a few questions,
+    // still scrolls back through its messages: only the page is held)
+    const onWheel = (e) => { if (e.deltaY < 0 && !jumping && !scrollsItself(e)) e.preventDefault(); };
     const onKey = (e) => {
       if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
       if (upKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) e.preventDefault();

@@ -6023,6 +6023,9 @@ main > .blog-section:has(+ #contact) {
 .story.is-staged.is-built > #features .feature-item {
   pointer-events: auto;
 }
+.story.is-staged.is-at-hero > #hero .chat-messages-area.is-chatting {
+  pointer-events: auto;
+}
 .story.is-staged > .section > .container {
   width: 100%;
 }

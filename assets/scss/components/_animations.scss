@@ -90,6 +90,8 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   // the features, once the story has played to them, answer the pointer (their hover)
   &.is-built > #features .feature-item { pointer-events: auto; }
+  // the hero chat, once it scrolls (a few questions asked), takes the wheel while the hero is the step shown
+  &.is-at-hero > #hero .chat-messages-area.is-chatting { pointer-events: auto; }
   > .section {
     > .container { width: 100%; }
   }
