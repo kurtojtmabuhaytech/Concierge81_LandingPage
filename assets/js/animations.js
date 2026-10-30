@@ -1,4 +1,4 @@
-// Landing page motion (GSAP + ScrollTrigger, Flip, MorphSVG). Loaded on index.html only.
+// Landing page motion (GSAP + ScrollTrigger, ScrollSmoother, MorphSVG). Loaded on index.html only.
 // Choreography follows the Figma motion recording. Sections that GSAP animates carry data-motion;
 // main.js leaves those out of its simple scroll reveal. Elements marked data-anim start hidden
 // (see _animations.scss) until a scene reveals them with autoAlpha.
@@ -12,7 +12,7 @@
     return;
   }
 
-  gsap.registerPlugin(ScrollTrigger, Flip, MorphSVGPlugin, ...(window.ScrollSmoother ? [ScrollSmoother] : []));
+  gsap.registerPlugin(ScrollTrigger, MorphSVGPlugin, ...(window.ScrollSmoother ? [ScrollSmoother] : []));
 
   /* Once per browser session (sessionStorage):
      - the opening plays on the first open, and not again on a refresh;

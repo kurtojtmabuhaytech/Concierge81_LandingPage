@@ -3653,10 +3653,6 @@ button.chip, a.chip {
   border-radius: 12px;
 }
 
-.faq-chat-box [hidden] {
-  display: none !important;
-}
-
 .faq-day {
   align-self: center;
   font-size: 0.75rem;
