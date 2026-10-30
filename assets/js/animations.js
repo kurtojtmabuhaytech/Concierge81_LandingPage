@@ -716,6 +716,7 @@
   const OPENING_SLOW = 0.9; // the greeting's glide into the hero and the card building around it
   const OPENING_TYPING = 1.4; // "concierge is typing..." (the dots bounce about 1.4s, Figma)
   const OPENING_HOLD = 1.0; // the greeting on its own before it flies into the hero
+  const buildIn = bezier(0.397, 0, 0.024, 0.993); // the hero card and avatar zooming in (Figma)
   const runOpening = () => {
     const splash = $('.splash');
     let done = false;
@@ -782,18 +783,20 @@
         y: () => heroBubble.getBoundingClientRect().top - bubble.getBoundingClientRect().top,
         duration: OPENING_SLOW, ease: MOTION.easeInOut
       }, 'handoff')
-      .fromTo(hero.surface, { '--hero-surface': 0 }, { '--hero-surface': 1, duration: OPENING_SLOW }, 'handoff')
-      .fromTo(hero.avatar, { autoAlpha: 0, scale: 1.04, transformOrigin: '50% 100%' },
-        { autoAlpha: 1, scale: 1, duration: OPENING_SLOW, ease: MOTION.ease }, 'handoff+=0.2')
+      // the card and the avatar (with her halo) zoom in from 80% as they fade in (Figma prototype)
+      .fromTo(hero.surface, { '--hero-surface': 0 }, { '--hero-surface': 1, duration: 0.59, ease: buildIn }, 'handoff')
+      .fromTo(hero.avatar, { autoAlpha: 0, scale: 0.8, transformOrigin: '50% 100%' },
+        { autoAlpha: 1, scale: 1, duration: 0.59, ease: buildIn }, 'handoff')
       .fromTo(hero.top, { autoAlpha: 0 }, { autoAlpha: 1, duration: MOTION.base }, 'handoff+=0.3')
       // the greeting lands: the real hero bubble takes over from the splash copy
       .set(hero.greeting, { autoAlpha: 1 }, `handoff+=${OPENING_SLOW}`)
       .set(msg, { autoAlpha: 0 }, `handoff+=${OPENING_SLOW}`)
-      .fromTo(hero.composer, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: MOTION.ease })
-      .fromTo(hero.controls, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: MOTION.fast, ease: MOTION.ease, stagger: 0.1 }, '-=0.2')
-      // the visitor "sends" the suggested question: it pops in whole
-      .fromTo(hero.question, { autoAlpha: 0, scale: 0.86, transformOrigin: 'right bottom' },
-        { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, '+=0.3');
+      // the composer and its parts come down into place, one after another
+      .fromTo(hero.composer, { autoAlpha: 0, y: -12 }, { autoAlpha: 1, y: 0, duration: 0.48, ease: bezier(0.22, 1, 0.36, 1) })
+      .fromTo(hero.controls, { autoAlpha: 0, y: -12 }, { autoAlpha: 1, y: 0, duration: 0.48, ease: bezier(0.22, 1, 0.36, 1), stagger: 0.14 }, '-=0.34')
+      // the visitor "sends" the suggested question: it slides up into place
+      .fromTo(hero.question, { autoAlpha: 0, y: 50 },
+        { autoAlpha: 1, y: 0, duration: 0.61, ease: bezier(0.16, -0.01, 0, 1) }, '+=0.3');
 
     // Start as soon as the hero picture is ready to draw (and the fonts), so nothing pops in
     // half-drawn; the rest of the page goes on loading behind it (a slow network still starts it

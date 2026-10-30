@@ -696,6 +696,7 @@ button.chip, a.chip {
   border-radius: inherit;
   background: radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%);
   opacity: var(--hero-surface, 1);
+  scale: calc(0.8 + 0.2 * var(--hero-surface, 1));
 }
 
 .hero-card-top {
