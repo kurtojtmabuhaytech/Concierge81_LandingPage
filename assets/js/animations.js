@@ -2055,8 +2055,9 @@
   /* 13. Where would my concierge live? (Figma recording 1:38–2:01). Desktop: a scroll scene that
      slides up over Why concierge81?. The visitor asks and the concierge answers; then the device
      appears as a website screen, and each place joins the list in turn while the device turns into
-     it: kiosk, website, tablet, then phone. It is one live screen: the same avatar and chat move and
-     resize into each device's layout as it reshapes. All with the scroll. */
+     it: kiosk, website, phone, then a custom display (landscape, the full hero screen, as in the
+     Figma). It is one live screen: the same avatar and chat move and resize into each device's
+     layout as it reshapes. All with the scroll. */
   const deployment = {
     section: $('#deployment'),
     content: $('#deployment > .container'),
@@ -2085,8 +2086,8 @@
     const shapes = {
       website: { ratio: 1440 / 900, bezel: 4, radius: 15, wide: true },
       kiosk: { ratio: 720 / 1280, bezel: 10, radius: 22 },
-      tablet: { ratio: 834 / 1194, bezel: 12, radius: 26 },
-      mobile: { ratio: 393 / 852, bezel: 9, radius: 36 }
+      mobile: { ratio: 393 / 852, bezel: 9, radius: 36 },
+      custom: { ratio: 692 / 446, bezel: 9, radius: 18, wide: true } // a display of your own (Figma)
     };
     const shape = (name) => {
       const { ratio, bezel, radius, wide } = shapes[name];
@@ -2126,16 +2127,6 @@
         question: { right: '4%', top: '68.5%' },
         composer: { left: '4%', top: '79%', width: '92%', height: '17.5%' }
       },
-      tablet: {
-        screen: { '--fs': 2.63 },
-        logo: { left: '4.5%', top: '4%' },
-        toggle: { left: '62%', top: '3%' },
-        lang: { right: '4.5%', top: '3%' },
-        avatar: { left: '24%', top: '7%', width: '52%', height: '49%' },
-        greet: { left: '3.5%', top: '57.5%' },
-        question: { right: '4.5%', top: '65%' },
-        composer: { left: '3.5%', top: '76%', width: '92%', height: '20.5%' }
-      },
       mobile: {
         screen: { '--fs': 5.16 },
         logo: { left: '4%', top: '3.5%' },
@@ -2147,6 +2138,7 @@
         composer: { left: '4%', top: '66%', width: '91.5%', height: '30.5%' }
       }
     };
+    layouts.custom = layouts.website; // the full hero screen, landscape
     const layoutTo = (name, at) => Object.entries(layouts[name]).forEach(([key, props]) =>
       tl.to(key === 'screen' ? screen : ui[key], { ...props, duration: MORPH, ease: MOTION.easeInOut }, at));
     const setLayout = name => Object.entries(layouts[name]).forEach(([key, props]) =>

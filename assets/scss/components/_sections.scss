@@ -1186,7 +1186,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 }
 
 // One device, shaped as a website screen by default; the scroll scene morphs it into the
-// kiosk, tablet and phone (size, bezel and corners) as the list grows
+// kiosk, phone and a custom display (size, bezel and corners) as the list grows
 .device {
   width: 89%;
   padding: 4px;
