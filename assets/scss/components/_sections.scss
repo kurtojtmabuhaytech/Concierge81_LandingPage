@@ -19,7 +19,7 @@ main:focus { outline: none; } // the skip link's target
 
 // "Skip to content": the first stop for the keyboard, shown only when focused
 .skip-link {
-  position: fixed; top: 0.75rem; left: 0.75rem; z-index: 1000;
+  position: fixed; top: 0.75rem; left: 0.75rem; z-index: 1002; // (above the opening splash)
   padding: 0.6rem 1.1rem; border-radius: 999px;
   background: $color-white; color: $color-ink; font-weight: $font-weight-semibold; text-decoration: none;
   box-shadow: 0 6px 20px rgba(13, 15, 20, 0.18);

@@ -160,7 +160,7 @@ main:focus {
   position: fixed;
   top: 0.75rem;
   left: 0.75rem;
-  z-index: 1000;
+  z-index: 1002;
   padding: 0.6rem 1.1rem;
   border-radius: 999px;
   background: #FFFFFF;

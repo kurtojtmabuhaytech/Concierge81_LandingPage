@@ -86,7 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') setMenu(false);
+      if (e.key !== 'Escape' || !navMenu.classList.contains('active')) return;
+      setMenu(false);
+      mobileToggle.focus(); // (back to the button that opened it)
     });
 
     // Unlock scroll if the window is widened past the mobile breakpoint
@@ -211,6 +213,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
   }
 
+  // A link followed with the keyboard takes the focus along, so the next Tab carries on from there
+  const focusTarget = (target) => {
+    if (!target.matches('a[href], button, input, select, textarea, [tabindex]')) target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+  };
+  window.c81FocusTarget = focusTarget; // (animations.js glides the landing page's links itself)
+
   // Smooth scroll for in-page links (sections set scroll-margin-top for the sticky header).
   // On phones the form sits below the contact headline and steps: "contact" links go to the form.
   const phoneLayout = window.matchMedia('(max-width: 900px)');
@@ -224,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         target.scrollIntoView({ behavior: motionOK ? 'smooth' : 'auto' });
         history.replaceState(null, '', href);
+        if (e.detail === 0) focusTarget(target); // keyboard: the focus goes there too (skip link, contents)
       }
     });
   });
@@ -425,6 +435,11 @@ document.addEventListener('DOMContentLoaded', () => {
     faqBox.querySelector('.faq-suggestions').addEventListener('click', (e) => {
       const chip = e.target.closest('.faq-suggestion');
       if (!chip || chip.classList.contains('faq-ask')) return;
+      // the chip goes away once asked: the focus moves on to the next suggestion (or the chat)
+      if (document.activeElement === chip) {
+        const next = chips.find(c => c !== chip && c.isConnected && !c.hidden && !c.disabled && !c.classList.contains('faq-ask'));
+        (next || thread).focus({ preventScroll: true });
+      }
       chip.disabled = true;
       queue = queue.then(() => ask(chip));
     });
@@ -613,7 +628,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (toc) {
     const links = [...toc.querySelectorAll('a[href^="#"]')];
     const sections = links.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
-    const setActive = (id) => links.forEach(link => link.classList.toggle('is-active', link.getAttribute('href') === `#${id}`));
+    const setActive = (id) => links.forEach((link) => {
+      const on = link.getAttribute('href') === `#${id}`;
+      link.classList.toggle('is-active', on);
+      if (on) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current');
+    });
     let tocTicking = false;
     const pick = () => {
       tocTicking = false;
@@ -691,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const q = row('user', '<p class="bubble bubble--user"></p><span class="timestamp">You · 9:12 PM</span>');
         q.querySelector('p').textContent = question;
       }
-      const typing = row('ai', '<p class="bubble bubble--sand faq-dots" aria-label="concierge81 is typing"><i></i><i></i><i></i></p>');
+      const typing = row('ai', '<p class="bubble bubble--sand faq-dots" role="img" aria-label="concierge81 is typing"><i></i><i></i><i></i></p>');
       setTimeout(() => {
         typing.remove();
         const a = row('ai', '<p class="bubble bubble--ai"></p><span class="timestamp">concierge81 · 9:12 PM</span>');
@@ -719,15 +738,21 @@ document.addEventListener('DOMContentLoaded', () => {
   langMenu.hidden = true;
   langMenu.setAttribute('role', 'menu');
   langMenu.innerHTML = languages.map(([code, name]) => `<button type="button" role="menuitemradio" aria-checked="${code === 'EN'}" data-lang="${code}"><span>${code}</span>${name}</button>`).join('')
-    + '<p class="lang-note" aria-live="polite"></p>';
+    + '<div class="lang-note" role="none" aria-hidden="true"></div>';
   document.body.append(langMenu);
   const note = langMenu.querySelector('.lang-note');
+  // (read out from outside the menu: a live region that is always there)
+  const langSaid = document.createElement('p');
+  langSaid.className = 'visually-hidden';
+  langSaid.setAttribute('aria-live', 'polite');
+  document.body.append(langSaid);
   let langFrom = null;
   let langAt = 0; // the scroll position it opened at
   const closeLang = (refocus) => {
     if (langMenu.hidden) return;
     langMenu.hidden = true;
     note.textContent = '';
+    langSaid.textContent = '';
     langFrom?.setAttribute('aria-expanded', 'false');
     if (refocus) langFrom?.focus();
     langFrom = null;
@@ -757,13 +782,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (item.dataset.lang === 'EN') { closeLang(true); return; }
     const [, , english] = languages.find(([code]) => code === item.dataset.lang);
     note.textContent = `${english} is coming soon.`;
+    langSaid.textContent = note.textContent;
   });
   langMenu.addEventListener('keydown', (e) => {
     const items = [...langMenu.querySelectorAll('[data-lang]')];
     const i = items.indexOf(document.activeElement);
     if (e.key === 'Escape') closeLang(true);
+    else if (e.key === 'Tab') closeLang(true); // (the Tab then carries on from the language button)
     else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
   });
   document.addEventListener('click', (e) => { if (!langMenu.contains(e.target)) closeLang(); });
+  langMenu.addEventListener('focusout', (e) => { if (e.relatedTarget && !langMenu.contains(e.relatedTarget)) closeLang(); });
   window.addEventListener('scroll', () => { if (Math.abs(window.scrollY - langAt) > 40) closeLang(); }, { passive: true }); // (a real scroll, not a tap's nudge)
 });

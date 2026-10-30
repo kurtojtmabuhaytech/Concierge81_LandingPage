@@ -2832,7 +2832,8 @@
     if (keyboardMode || e.key !== 'Tab' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey || !smoother) return;
     const order = $$(FOCUSABLE).filter(el => el.getClientRects().length && !el.closest('[inert], [aria-hidden="true"], [hidden]'));
     const from = document.activeElement;
-    const next = order.find(el => from === document.body ? true : (from.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) && !from.contains(el));
+    // (the next one after it in the page, inside it included: Tab after the skip link goes into <main>)
+    const next = order.find(el => from === document.body ? true : !!(from.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING));
     if (!next || next.closest('.site-header, #hero, .skip-link')) return; // the top of the page works as it is
     e.preventDefault();
     enterKeyboardMode(next);
@@ -2893,9 +2894,13 @@
     if (!smoother || !target || e.defaultPrevented) return;
     e.preventDefault();
     e.stopPropagation(); // main.js would scroll natively instead
+    // "Skip to content": <main> starts with the hero, so only the focus moves there (a scroll would
+    // move the opening on, and the hero's controls with it)
+    if (link.classList.contains('skip-link')) { window.c81FocusTarget?.(target); return; }
     glide();
     smoother.scrollTo(target, true, 'top top');
     history.replaceState(null, '', href);
+    if (e.detail === 0) window.c81FocusTarget?.(target); // keyboard: the focus goes there too
   }, true);
 
   /* A resize keeps the visitor's place: the scrolling of a pinned scene scales with the window
