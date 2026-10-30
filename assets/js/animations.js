@@ -957,10 +957,9 @@
       const current = gsap.getProperty(el, axis);
       return axis === 'x' ? to.right - (from.right - current) : to.top - (from.top - current);
     };
-    // The features headline shrinks as it settles just below the top edge of the screen, wherever
-    // the (screen-centred) features block puts it, making room for the kiosk (as in the Figma)
+    // The features headline moves up (at full size, as in the Figma) to just below the top edge of
+    // the screen, wherever the (screen-centred) features block puts it, making room for the kiosk
     const headlineTop = () => innerHeight * 0.035;
-    const headlineScale = 0.6;
     const headlineToTop = () => {
       const top = featuresHeadline.getBoundingClientRect().top - gsap.getProperty(featuresHeadline, 'y');
       return Math.min(0, headlineTop() - top);
@@ -972,7 +971,7 @@
     const centreLift = () => {
       const slot = within(featuresKiosk);
       const top = siteHeader.offsetHeight + slot.y - gsap.getProperty(featuresStage, 'y');
-      const highest = headlineTop() + featuresHeadline.offsetHeight * headlineScale + innerHeight * 0.03;
+      const highest = headlineTop() + featuresHeadline.offsetHeight + innerHeight * 0.03;
       return Math.max(0, Math.min(top - (innerHeight - slot.height) / 2, top - highest));
     };
     const towardKiosk = (i, el) => {
@@ -1069,10 +1068,10 @@
     bubbleIn(tl, featuresHeadline, 'intro+=1.2')
       .addLabel('features')
 
-      // Step 4 (21–24s): everything moves up into the header's space: the headline shrinks to just
+      // Step 4 (21–24s): everything moves up into the header's space: the headline (full size) to just
       // below the top edge, and the kiosk and features rise to show the whole kiosk; once the kiosk is in
       // place the features slide out from behind it row by row
-      .to(featuresHeadline, { y: headlineToTop, scale: headlineScale, transformOrigin: 'left top', duration: 0.5, ease: MOTION.easeInOut }, 'features')
+      .to(featuresHeadline, { y: headlineToTop, duration: 0.5, ease: MOTION.easeInOut }, 'features')
       .to(featuresStage, { y: () => -centreLift(), duration: 2.84, ease: rise }, 'features+=0.1')
       .to(traveller, { ...onSlot(featuresKiosk, centreLift), duration: 2.84, ease: rise }, 'features+=0.1')
       .addLabel('popOut', 'features+=0.7');
