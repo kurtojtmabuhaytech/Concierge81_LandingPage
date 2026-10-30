@@ -3683,11 +3683,6 @@ button.chip, a.chip {
   line-height: 1.56;
   letter-spacing: -0.012em;
 }
-.faq-filters .filter-btn.is-active {
-  background: #0E1013;
-  border-color: #0E1013;
-  color: #F3F1EB;
-}
 
 .faq-chat-box {
   display: flex;

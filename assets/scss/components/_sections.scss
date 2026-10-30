@@ -1338,10 +1338,9 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   &:hover { border-color: $color-cobalt-bright; }
   &.is-active { background: $color-cobalt-bright; color: $color-white; border-color: $color-cobalt-bright; }
 }
-// FAQ topics (Figma: 136px chips, ink when active)
+// FAQ topics (Figma: 136px chips, blue when active)
 .faq-filters { gap: 8px; margin-bottom: 1.5rem;
-  .filter-btn { min-width: 8.5rem; padding: 10px 18px; font-size: 1rem; line-height: 1.56; letter-spacing: -0.012em;
-    &.is-active { background: $color-ink; border-color: $color-ink; color: #F3F1EB; } }
+  .filter-btn { min-width: 8.5rem; padding: 10px 18px; font-size: 1rem; line-height: 1.56; letter-spacing: -0.012em; }
 }
 
 .faq-chat-box {
@@ -1416,8 +1415,8 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   span { color: $neutral-500; }
   &:hover, &.is-first { background: rgba(0, 122, 255, 0.15); } // the first one shown is tinted (Figma; main.js)
 }
-// The demo question, asked in the thread above; shown as a suggestion only before the scroll
-// scene asks it (animations.js)
+// The demo questions, asked in the thread above; shown as suggestions only before the scroll
+// scene asks them (animations.js)
 .faq-ask { display: none; }
 
 /* =========================================

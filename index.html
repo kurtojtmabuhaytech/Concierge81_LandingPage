@@ -955,7 +955,7 @@
 
       <div class="faq-chat-box" data-anim>
         <!-- The conversation scrolls on its own; the visitor asks by tapping a suggestion (main.js).
-             "What is concierge81?" is asked by the scroll scene as a demo (animations.js). -->
+             "What is concierge81?" and "Will it replace my staff?" are asked by the scroll scene as a demo (animations.js). -->
         <div class="faq-thread" tabindex="0" role="log" aria-label="Conversation with concierge81">
           <span class="faq-day">Today</span>
           <div class="faq-pair" data-q="what">
@@ -963,14 +963,18 @@
             <div class="faq-a faq-typing" aria-hidden="true"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand faq-dots"><i></i><i></i><i></i></p></div>
             <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">I’m an AI concierge for your business. I answer the questions your team hears every day — by chat or voice — so customers get help instantly.</p></div>
           </div>
-          <div class="faq-pair" data-q="replace" hidden>
+          <div class="faq-pair" data-q="replace">
             <div class="faq-q"><p class="bubble bubble--user">Will it replace my staff?</p></div>
+            <div class="faq-a faq-typing" aria-hidden="true"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand faq-dots"><i></i><i></i><i></i></p></div>
             <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Not at all. I take care of routine questions so your team can focus on guests who need a personal touch. Anything complex goes straight to them, with the full conversation.</p></div>
+            <div class="helpful">Was this helpful? <span><button type="button">Yes</button><button type="button">No</button></span></div>
           </div>
+          <!-- Not in the Figma (QA-14): kept for later.
           <div class="faq-pair" data-q="talk" hidden>
             <div class="faq-q"><p class="bubble bubble--user">Can customers talk instead of typing?</p></div>
             <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Yes. They can type or simply ask out loud — I answer in natural speech and show the reply on screen.</p></div>
           </div>
+          -->
           <div class="faq-pair" data-q="languages" hidden>
             <div class="faq-q"><p class="bubble bubble--user">Which languages does it support?</p></div>
             <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">English, Japanese, Chinese and Korean. I reply in the language your guest uses.</p></div>
@@ -979,25 +983,23 @@
             <div class="faq-q"><p class="bubble bubble--user">How long does setup take?</p></div>
             <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Most teams go live the same week. Import the answers you already have, group them into topics, and you’re ready.</p></div>
           </div>
-          <!-- On hold until the design review approves them (not in the Figma): the answers for
-               "kinds", "handoff", "website" and "update". Restore together with their suggestions below.
+          <!-- In the Figma (QA-14): restored from the design review hold -->
           <div class="faq-pair" data-q="kinds" hidden>
-            <div class="faq-q"><p class="bubble bubble&#45;&#45;user">What kinds of questions can it answer?</p></div>
-            <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble&#45;&#45;sand">The everyday ones your team hears again and again — opening hours, directions, Wi-Fi, menus, check-in and checkout, prices and bookings. Every answer comes from your own business information.</p></div>
+            <div class="faq-q"><p class="bubble bubble--user">What kinds of questions can it answer?</p></div>
+            <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">The everyday ones your team hears again and again — opening hours, directions, Wi-Fi, menus, check-in and checkout, prices and bookings. Every answer comes from your own business information.</p></div>
           </div>
           <div class="faq-pair" data-q="handoff" hidden>
-            <div class="faq-q"><p class="bubble bubble&#45;&#45;user">Can it hand a conversation to a person?</p></div>
-            <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble&#45;&#45;sand">Yes. When a request needs a person, I pass it to your team with the whole conversation, so your guest never has to repeat themselves.</p></div>
+            <div class="faq-q"><p class="bubble bubble--user">Can it hand a conversation to a person?</p></div>
+            <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Yes. When a request needs a person, I pass it to your team with the whole conversation, so your guest never has to repeat themselves.</p></div>
           </div>
           <div class="faq-pair" data-q="website" hidden>
-            <div class="faq-q"><p class="bubble bubble&#45;&#45;user">Does it work on our website?</p></div>
-            <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble&#45;&#45;sand">Yes. I can sit on any page of your website as a chat window — and the same concierge runs on your kiosks, tablets and app.</p></div>
+            <div class="faq-q"><p class="bubble bubble--user">Does it work on our website?</p></div>
+            <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Yes. I can sit on any page of your website as a chat window — and the same concierge runs on your kiosks, tablets and app.</p></div>
           </div>
           <div class="faq-pair" data-q="update" hidden>
-            <div class="faq-q"><p class="bubble bubble&#45;&#45;user">How do I update its answers?</p></div>
-            <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble&#45;&#45;sand">Change your business information and I use it straight away. Update an answer once and it’s current everywhere I’m running.</p></div>
+            <div class="faq-q"><p class="bubble bubble--user">How do I update its answers?</p></div>
+            <div class="faq-a"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Change your business information and I use it straight away. Update an answer once and it’s current everywhere I’m running.</p></div>
           </div>
-          -->
           <div class="faq-a faq-anything"><span class="msg-avatar" aria-hidden="true"><img src="assets/images/concierge-avatar-160.webp" alt="" width="414" height="639" loading="lazy"></span><p class="bubble bubble--sand">Anything else I can help you with?</p></div>
         </div>
 
@@ -1005,15 +1007,15 @@
           <span class="faq-suggested-label">Suggested</span>
           <div class="faq-suggestions">
             <button type="button" class="faq-suggestion faq-ask" data-q="what" data-cat="general"><span aria-hidden="true">↳</span>What is concierge81?</button>
-            <button type="button" class="faq-suggestion" data-q="replace" data-cat="general support"><span aria-hidden="true">↳</span>Will it replace my staff?</button>
-            <button type="button" class="faq-suggestion" data-q="talk" data-cat="chat-voice"><span aria-hidden="true">↳</span>Can customers talk instead of typing?</button>
+            <button type="button" class="faq-suggestion faq-ask" data-q="replace" data-cat="general support"><span aria-hidden="true">↳</span>Will it replace my staff?</button>
+            <button type="button" class="faq-suggestion" data-q="kinds" data-cat="general"><span aria-hidden="true">↳</span>What kinds of questions can it answer?</button>
             <button type="button" class="faq-suggestion" data-q="languages" data-cat="languages"><span aria-hidden="true">↳</span>Which languages does it support?</button>
             <button type="button" class="faq-suggestion" data-q="setup" data-cat="setup"><span aria-hidden="true">↳</span>How long does setup take?</button>
-            <!-- On hold (see above):
-            <button type="button" class="faq-suggestion" data-q="kinds" data-cat="general"><span aria-hidden="true">↳</span>What kinds of questions can it answer?</button>
             <button type="button" class="faq-suggestion" data-q="handoff" data-cat="support chat-voice"><span aria-hidden="true">↳</span>Can it hand a conversation to a person?</button>
             <button type="button" class="faq-suggestion" data-q="website" data-cat="setup"><span aria-hidden="true">↳</span>Does it work on our website?</button>
             <button type="button" class="faq-suggestion" data-q="update" data-cat="setup support"><span aria-hidden="true">↳</span>How do I update its answers?</button>
+            <!-- Not in the Figma (QA-14):
+            <button type="button" class="faq-suggestion" data-q="talk" data-cat="chat-voice"><span aria-hidden="true">↳</span>Can customers talk instead of typing?</button>
             -->
           </div>
           <p class="faq-suggestions-done" hidden>That’s all my suggestions — our team is happy to answer anything else.</p>

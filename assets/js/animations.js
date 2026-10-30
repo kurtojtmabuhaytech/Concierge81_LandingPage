@@ -2365,10 +2365,11 @@
 
   /* 15. I still have a few questions. (Figma recording 2:16–2:45). Desktop: a scroll scene that
      slides up over the pricing. The visitor asks and the concierge answers; the topics and the chat
-     rise in with the suggested questions; then, as a demo, "What is concierge81?" is asked: its
-     suggestion leaves the list, the question pops in, the concierge types (•••) and the answer pops
-     in, then "Anything else I can help you with?". From there the visitor asks by tapping the
-     suggestions (main.js). On a further scroll "Can't find your answer?" arrives. */
+     rise in with the suggested questions; then, as a demo (Figma), "What is concierge81?" and
+     "Will it replace my staff?" are asked: each suggestion leaves the list, the question pops in,
+     the concierge types (•••) and the answer pops in; then "Was this helpful?" and "Anything else
+     I can help you with?". From there the visitor asks by tapping the suggestions (main.js). On a
+     further scroll "Can't find your answer?" arrives. */
   const faq = {
     section: $('#faq'),
     content: $('#faq > .container'),
@@ -2382,14 +2383,16 @@
     if (!isDesktop) return;
     const { section, content, header, filters, box, help } = faq;
     const heading = chatHeader(header, { pillFrom: { backgroundColor: '#A8A49A' } });
-    const chip = $('.faq-ask', box);
-    const demo = $(`.faq-pair[data-q="${chip.dataset.q}"]`, box);
-    const thread = {
-      question: $('.faq-q', demo), typing: $('.faq-typing', demo), answer: $('.faq-a:not(.faq-typing)', demo),
-      anything: $('.faq-anything', box)
-    };
-    const origin = el => (el === thread.question ? 'right bottom' : 'left bottom');
-    const gap = () => parseFloat(getComputedStyle(demo).rowGap) || 0;
+    const chips = $$('.faq-ask', box);
+    const demos = chips.map((chip) => {
+      const pair = $(`.faq-pair[data-q="${chip.dataset.q}"]`, box);
+      return { chip, question: $('.faq-q', pair), typing: $('.faq-typing', pair), answer: $('.faq-a:not(.faq-typing)', pair), helpful: $('.helpful', pair) };
+    });
+    const anything = $('.faq-anything', box);
+    const said = [...demos.flatMap(d => [d.question, d.typing, d.answer, d.helpful]), anything].filter(Boolean);
+    const typings = demos.map(d => d.typing);
+    const origin = el => (demos.some(d => d.question === el) ? 'right bottom' : 'left bottom');
+    const gap = () => parseFloat(getComputedStyle(demos[0].question.parentNode).rowGap) || 0;
     // A message pops into the thread: it makes its room, then springs up from its tail corner
     const closed = el => ({ height: 0, marginTop: -gap(), autoAlpha: 0, scale: 0.6, transformOrigin: origin(el), overflow: 'hidden' });
     const popIn = (el, at) => tl
@@ -2416,13 +2419,13 @@
       gsap.set([filters, box], { autoAlpha: 0, y: 24 });
       gsap.set(help, { autoAlpha: 0, scale: 0.85, transformOrigin: 'center bottom' });
       if (chatting()) {
-        gsap.set(Object.values(thread), { clearProps: 'height,marginTop,opacity,visibility,transform,overflow' });
-        gsap.set(thread.typing, closed(thread.typing));
-        gsap.set(chip, { display: 'none' });
+        gsap.set(said, { clearProps: 'height,marginTop,opacity,visibility,transform,overflow' });
+        typings.forEach(el => gsap.set(el, closed(el)));
+        gsap.set(chips, { display: 'none' });
         return;
       }
-      Object.values(thread).forEach(el => gsap.set(el, closed(el)));
-      gsap.set(chip, { display: 'inline-flex', autoAlpha: 1 });
+      said.forEach(el => gsap.set(el, closed(el)));
+      gsap.set(chips, { display: 'inline-flex', autoAlpha: 1, scale: 1 });
     };
     applyStart();
     box.classList.toggle('is-waiting', !chatting());
@@ -2438,19 +2441,25 @@
       // Step 2 (2:18–2:24): the view moves to the topics; they and the chat with its suggestions rise in
       .to(content, { y: follow(), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
       .to([filters, box], { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.15 }, 'ask+=0.3')
-      .addLabel('thread', 'ask+=1.0')
+      .addLabel('thread', 'ask+=1.0');
 
-      // Step 3 (2:24–2:27): the demo. "What is concierge81?" is tapped: it leaves the suggestions
-      // and pops into the chat, the concierge types, then the answer and "Anything else?" pop in
-      .to(chip, { autoAlpha: 0, scale: 0.9, duration: 0.25 }, 'thread')
-      .set(chip, { display: 'none' }, 'thread+=0.25');
-    popIn(thread.question, 'thread+=0.2');
-    popIn(thread.typing, 'thread+=0.75');
-    tl.to(thread.typing, { autoAlpha: 0, duration: 0.15 }, 'thread+=1.85')
-      .to(thread.typing, { height: 0, marginTop: () => -gap(), duration: 0.2, ease: MOTION.easeInOut }, 'thread+=1.9');
-    popIn(thread.answer, 'thread+=1.9');
-    popIn(thread.anything, 'thread+=2.6');
-    tl.addLabel('demo', 'thread+=3.1')
+    // Step 3 (2:24–2:31): the demo. Each question in turn is tapped: it leaves the suggestions
+    // and pops into the chat, the concierge types, then the answer pops in; then "Was this
+    // helpful?" and "Anything else?" (Figma)
+    demos.forEach(({ chip, question, typing, answer }, i) => {
+      const at = t => `thread+=${i * 2.5 + t}`;
+      tl.to(chip, { autoAlpha: 0, scale: 0.9, duration: 0.25 }, at(0))
+        .set(chip, { display: 'none' }, at(0.25));
+      popIn(question, at(0.2));
+      popIn(typing, at(0.75));
+      tl.to(typing, { autoAlpha: 0, duration: 0.15 }, at(1.85))
+        .to(typing, { height: 0, marginTop: () => -gap(), duration: 0.2, ease: MOTION.easeInOut }, at(1.9));
+      popIn(answer, at(1.9));
+    });
+    const after = (demos.length - 1) * 2.5 + 2.4;
+    demos.filter(d => d.helpful).forEach(d => popIn(d.helpful, `thread+=${after}`));
+    popIn(anything, `thread+=${after + 0.5}`);
+    tl.addLabel('demo', `thread+=${after + 1.0}`)
 
       // Step 4, on a further scroll: the view moves on and "Can't find your answer?" pops in
       .to(content, { y: follow(help), duration: 0.6, ease: MOTION.easeInOut }, 'demo')
@@ -2467,7 +2476,7 @@
       next.classList.remove('slides-over');
       section.classList.remove('is-staged');
       box.classList.remove('is-waiting');
-      gsap.set([...Object.values(thread), chip], { clearProps: 'all' });
+      gsap.set([...said, ...chips], { clearProps: 'all' });
     };
   });
 

@@ -355,7 +355,8 @@ document.addEventListener('DOMContentLoaded', () => {
      conversation scrolls on its own inside the chat (the page keeps scrolling outside it). Nothing
      already said disappears: after each answer the concierge asks "Anything else…" again. Asked
      questions leave the suggestions; the topics filter what is left. The conversation is kept for
-     the browser session. "What is concierge81?" is asked by the scroll scene (animations.js). */
+     the browser session. "What is concierge81?" and "Will it replace my staff?" are asked by the
+     scroll scene (animations.js). */
   const faqBox = document.querySelector('.faq-chat-box');
   if (faqBox) {
     const thread = faqBox.querySelector('.faq-thread');
@@ -386,6 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
       singleSelect(row.querySelector('span'));
       return row;
     };
+    thread.querySelectorAll('.helpful > span').forEach(span => singleSelect(span)); // (the demo's, in the page)
 
     // Topics filter the suggestions still to ask
     let topic = 'all';
