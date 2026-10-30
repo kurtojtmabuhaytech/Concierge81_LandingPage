@@ -710,12 +710,12 @@ $q-pile: (
 }
 .process-label { @extend %eyebrow; display: block; color: $color-text-accent-dark; margin-bottom: 0.75rem; }
 
-// Desktop: the How section sits in the 80px frame like the story, with a 56px headline
+// Desktop: the How section sits in the 80px frame like the story, with a 56px headline (Pricing keeps the 44px one)
 @media (min-width: 901px) {
   #how { background: $neutral-950; }
   #how > .container, #pricing > .container { max-width: calc(84.5rem + 10.582vw); padding-inline: max(1.5rem, 5.291vw); }
   #how .header-pill--user, #pricing .header-pill--user { background: #F6F6F3; }
-  #how .header-pill--ai, #pricing .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; }
+  #how .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; }
   #how .sub-pill-text { font-size: 1.375rem; padding: 0.68em 1.09em; }
   #how .stepper { margin-bottom: 1.75rem; }
 }

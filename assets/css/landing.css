@@ -1891,7 +1891,7 @@ button.chip, a.chip {
   #how .header-pill--user, #pricing .header-pill--user {
     background: #F6F6F3;
   }
-  #how .header-pill--ai, #pricing .header-pill--ai {
+  #how .header-pill--ai {
     font-size: clamp(2.1rem, 5.5vw, 3.5rem);
     line-height: 1.07;
     letter-spacing: -0.025em;
