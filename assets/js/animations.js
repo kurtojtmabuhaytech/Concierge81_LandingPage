@@ -894,13 +894,12 @@
       base: $('.kiosk-base', traveller),
       logo: $('.kiosk-logo', traveller)
     };
-    // One avatar at one size: the moving kiosk shows the hero artwork, and the intro kiosk's
-    // screen is sized to the hero avatar (--hero-avatar-w, see _animations.scss), so the avatar
-    // only moves during the morph; the kiosk then scales down a little as it glides to the features
+    // One avatar: the moving kiosk shows the hero artwork, framed the same way (same shape), so
+    // during the morph the hero avatar shrinks onto the kiosk's (the hero's is larger, as in Figma);
+    // the kiosk then grows a little as it glides to the features
     kioskBody.avatar.src = heroImg.currentSrc || heroImg.src;
     kioskBody.avatar.removeAttribute('loading');
     const fitTraveller = () => {
-      story.style.setProperty('--hero-avatar-w', `${heroImg.offsetWidth}px`);
       gsap.set(traveller, { width: introKiosk.offsetWidth, height: introKiosk.offsetHeight });
     };
     fitTraveller();
@@ -991,10 +990,10 @@
       const card = cardBox();
       gsap.set(traveller, { autoAlpha: 0, x: onSlot(introKiosk).x(), y: onSlot(introKiosk).y(), scale: onSlot(introKiosk).scale() });
       gsap.set(morph, {
-        autoAlpha: 0, ...clipTo(card, 28),
+        autoAlpha: 0, ...clipTo(card, 32),
         backgroundSize: `${card.width}px ${card.height}px`, backgroundPosition: `${card.x}px ${card.y}px`
       });
-      gsap.set(morphEdge, { autoAlpha: 0, ...clipTo(card, 28, 1) });
+      gsap.set(morphEdge, { autoAlpha: 0, ...clipTo(card, 32, 1) });
       gsap.set(heroImg, { '--avatar-clip-bottom': '0px' });
       // The kiosk body forms around the morphed screen: frame, stand and logo fade in over it
       gsap.set(traveller, { backgroundColor: 'rgba(14, 16, 19, 0)', boxShadow: '0 30px 60px rgba(11, 12, 14, 0)' });

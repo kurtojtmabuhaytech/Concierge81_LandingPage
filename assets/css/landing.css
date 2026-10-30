@@ -1090,7 +1090,7 @@ button.chip, a.chip {
   }
   .hero-card {
     padding: calc(36 * var(--u)) calc(39 * var(--u)) 0;
-    border-radius: calc(28 * var(--u));
+    border-radius: calc(32 * var(--u));
   }
   .hero-card-top .brand-logo {
     font-size: calc(22 * var(--u));
@@ -1108,7 +1108,7 @@ button.chip, a.chip {
     gap: 0;
   }
   .hero-avatar img {
-    width: calc(430 * var(--u));
+    width: calc(475 * var(--u));
   }
   .story.is-staged .hero-card.is-chat-mode .hero-split-area {
     grid-template-columns: 1fr calc(672 * var(--u));
@@ -6097,10 +6097,6 @@ main > .blog-section:has(+ #contact) {
 }
 .story.is-staged .kiosk-avatar {
   height: 100%;
-}
-.story.is-staged .intro-split .kiosk-device {
-  flex: 0 0 auto;
-  width: calc(var(--hero-avatar-w, 22.5rem) + 20px);
 }
 .story.is-staged #features .chat-section-header {
   margin-bottom: 1.5rem;

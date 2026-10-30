@@ -470,13 +470,13 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
 
   .story > .section > .container { max-width: u(1350); padding-inline: 0; }
 
-  // Hero card: 1350 × 687, avatar on the left, chat panel (672 wide) on the right
-  .hero-card { padding: u(36) u(39) 0; border-radius: u(28); }
+  // Hero card: 1350 × 689, radius 32, avatar (about 620 tall) on the left, chat panel (672 wide) on the right
+  .hero-card { padding: u(36) u(39) 0; border-radius: u(32); }
   .hero-card-top .brand-logo { font-size: u(22); }
   .mode-toggle button { font-size: u(13); padding: u(6) u(20); }
   .hero-card-tools .lang-btn { font-size: u(13); padding: u(6) u(14); }
   .hero-split-area { grid-template-columns: 1fr u(672); gap: 0; }
-  .hero-avatar img { width: u(430); }
+  .hero-avatar img { width: u(475); }
   // In the pinned opening the avatar keeps its place unseen in "Chat" (the opening measures it there
   // and morphs it into the kiosk; the switch goes back to "Avatar" as soon as the story moves on)
   .story.is-staged .hero-card.is-chat-mode {
