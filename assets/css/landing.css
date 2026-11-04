@@ -4020,7 +4020,10 @@ button.chip, a.chip {
 
 .cta-hero .kiosk-device {
   width: min(100%, 26.25rem, (100svh - 7rem) * 0.62);
-  margin: 0 auto -6rem;
+  margin: 0 auto -6rem; /* 420 at 1512 (Figma); the whole screen fits the screen's height */
+  border-radius: 36px 36px 14px 14px;
+  padding: 14px 14px 0;
+  border: 3px solid #35342F;
 }
 .cta-hero .kiosk-device .kiosk-screen {
   border-radius: 22px;

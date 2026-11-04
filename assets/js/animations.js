@@ -45,14 +45,16 @@
   // Smooth scrolling (desktop, created in the matchMedia below); a scroll helper for both cases
   let smoother = null;
   const scrollToY = (y, smooth = true) => {
-    if (smooth) glide();
+    if (smooth && Math.abs(y - scrollY) > 2) glide(); // (no move, no glide: nothing would end it)
     return smoother ? smoother.scrollTo(y, smooth) : scrollTo({ top: y, behavior: smooth ? 'smooth' : 'auto' });
   };
   // While a link glides the page, the scenes it passes are shown finished instead of holding it
   const glide = () => {
     jumping = true;
-    const done = () => { jumping = false; ScrollTrigger.removeEventListener('scrollEnd', done); };
+    let timer;
+    const done = () => { jumping = false; clearTimeout(timer); ScrollTrigger.removeEventListener('scrollEnd', done); };
     ScrollTrigger.addEventListener('scrollEnd', done);
+    timer = setTimeout(done, 4000); // (never left on: then scrolling would skip steps)
   };
 
   // Shared timing, read from the Figma motion recording (±0.25s)
@@ -307,7 +309,17 @@
   const onLimitKey = (e) => {
     if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
     if ((backKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) && !jumping && !measuring) goBack();
-    if (downKeys.includes(e.key) && !(e.key === ' ' && e.shiftKey) && atLimit()) e.preventDefault();
+    if (downKeys.includes(e.key) && !(e.key === ' ' && e.shiftKey) && !jumping) {
+      if (atLimit()) { e.preventDefault(); return; }
+      // a long jump down glides to where the step allows, like the wheel (a native jump would snap,
+      // and a section sliding in would appear at once); the arrow key's small step stays native
+      if (e.key === 'ArrowDown') return;
+      if (e.key === ' ' && e.target.closest?.('button, a, [role="button"]')) return; // (Space presses it)
+      e.preventDefault();
+      const target = e.key === 'End' ? document.documentElement.scrollHeight : scrollY + innerHeight * 0.85;
+      if (smoother) smoother.scrollTo(Math.min(target, scrollLimit()), true);
+      else scrollTo({ top: Math.min(target, scrollLimit()), behavior: 'smooth' });
+    }
   };
   // When the page puts itself back at the limit, that small move up is not the visitor scrolling
   // back up (it must not turn a finished section plain, see scrollScene)
@@ -594,6 +606,8 @@
         // the finished step at the scroll position
         const was = tl.time(); // (a scene run back part-way, or retracing: it keeps its place)
         const goal = follow ? followTo : null;
+        const wasPlaying = playing ? playingTo : null; // (a step under way plays on, see below)
+        const visited = seen > 0.001 || wasPlaying !== null;
         stopAll();
         builtAt = -1;
         views.length = 0;
@@ -611,13 +625,16 @@
         // before the visitor scrolled back up, keeps it); the view goes back to where it was
         tl.time(Math.min(seen, tl.duration()));
         noteView(tl.time());
-        if (followBack) {
+        if (followBack && visited) {
           // a re-measure (a section above turning plain, a resize) must not throw a scene run
-          // back part-way to its furthest step, nor cut short the retrace under way: it goes on
+          // back part-way to its furthest step, nor cut short the retrace or the step under way:
+          // they go on (a scene not visited yet, as on a refresh, shows the step at the scroll)
           if (was < tl.time() - 0.001) { tl.time(was); noteView(was); }
+          if (wasPlaying !== null && wasPlaying > tl.time() + 0.001) { requestAnimationFrame(() => { if (!plain && !killed) playOn(wasPlaying); }); return; }
           if (goal !== null && Math.abs(goal - tl.time()) > 0.001) { followTo = -1; followSeen(goal, goal < tl.time() ? -1 : 1); }
           return;
         }
+        if (followBack) return;
         if (keptView !== null && self.progress > 0 && self.progress < 1) gsap.set(content, { y: viewAt(Math.min(keptView, tl.duration())) });
         else if (content && seen > want + 0.001) gsap.set(content, { y: viewAt(Math.max(firstStep(), want)) });
       }
@@ -648,7 +665,10 @@
           if (!jumping && scrollY > scrollLimit() + 1) return; // a jump past the limit (it is put back)
           // reaching the tail: whatever is left plays on to the end at its own pace (never cut
           // short) as the next section slides over
-          if (tl.progress() < 0.999) playOn(tl.duration());
+          // (passed without the visitor scrolling, as when the page is put back after a refresh:
+          // shown finished, nothing plays)
+          if (gestureAt < 0) { seen = Infinity; show(tl.duration()); }
+          else if (tl.progress() < 0.999) playOn(tl.duration());
           else seen = Infinity;
           settleView(self.progress);
         },
@@ -683,7 +703,8 @@
       trigger,
       start: 'top 75%',
       onEnter: () => {
-        if (jumping || measuring || playing || seen >= firstStep() - 0.001) return;
+        // (only on the visitor's own scroll: not while the page is put back after a refresh)
+        if (jumping || measuring || playing || seen >= firstStep() - 0.001 || gestureAt < 0) return;
         playOn(firstStep());
       }
     });
@@ -1205,7 +1226,7 @@
     const onStepLink = (e) => {
       const link = e.target.closest('a[href^="#"]');
       const label = link ? stepLinks[link.getAttribute('href')] : undefined;
-      if (label === undefined) return; // not one of the story's links: leave the click alone
+      if (label === undefined || plain) return; // not one of the story's links (or the story is plain): leave the click alone
       e.preventDefault();
       e.stopPropagation(); // capture phase: main.js's smooth scroll would aim at the layer instead
       scrollToY(scene.scrub.labelToScroll(label));
@@ -1611,7 +1632,7 @@
 
       // The view moves to the steps; then they build (steps, below)
       .to(content, { y: showInStage(section, content, wrap), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
-      .addLabel('steps', 'ask+=0.4');
+      ;
 
     const steps = gsap.timeline({ defaults: { ease: MOTION.ease } })
       // Step 2 (40–42s): dot 1 lights up and card 1 rises in
@@ -1645,7 +1666,9 @@
       .to(stepper, { '--lit': 0, duration: 0.4 }, 'step3+=0.2')
       .to(answer, { morphSVG: how.bubble, duration: 0.5, ease: MOTION.easeInOut }, 'step3+=0.9')
       .to(answer, { morphSVG: how.check, duration: 0.5, ease: MOTION.easeInOut }, 'step3+=1.9');
-    tl.add(steps, 'steps').addLabel('built');
+    // (from 0.4s into the view's move; not a label, so the move and the build are one step and the
+    // page never rests on a half-moved view)
+    tl.add(steps, 'ask+=0.4').addLabel('built');
 
     scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
@@ -1731,7 +1754,7 @@
 
       // The view moves to the cards; then they play (cards, below)
       .to(content, { y: showInStage(section, content, grid), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
-      .addLabel('cards', 'ask+=0.4');
+      ;
 
     const cards = gsap.timeline({ defaults: { ease: MOTION.ease } })
       // Step 2 (53–55s): the chat card fades in, its heading and description, then the mini chat window rises
@@ -1761,7 +1784,8 @@
     popIn(cards, messages[2], said + 2.5);
     cards.to(chips, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)', stagger: 0.12 }, said + 3.0);
     // (the rings around the mic keep their own gentle CSS pulse, so "Listening…" looks alive)
-    tl.add(cards, 'cards').addLabel('played');
+    // (from 0.4s into the view's move; not a label: the move and the cards are one step)
+    tl.add(cards, 'ask+=0.4').addLabel('played');
     const next = $('#industries');
     next.classList.add('slides-over');
 
@@ -2370,28 +2394,31 @@
     heading.play(tl)
       .addLabel('ask')
       .to(content, { y: showInStage(section, content, header, help), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
-      .addLabel('tiers', 'ask+=0.2');
+      ;
+    // the tiers start 0.2s into the view's move (not a label: the move and the tiers are one step,
+    // so the page never rests on a view moved a quarter of the way)
+    const tiersAt = tl.labels.ask + 0.2;
 
     // Steps 2–5 (2:08–2:11): each tier arrives dark, lights up to its colour, then its graphic builds
     cards.forEach((card, i) => {
-      const at = `tiers+=${i * 0.8}`;
+      const at = tiersAt + i * 0.8;
       tl.to(card, { autoAlpha: 1, y: 0, duration: 0.4 }, at)
         .to(card, { filter: 'brightness(1) saturate(1)', duration: 0.5, ease: 'none' }, `${at}+=0.2`)
         .to(texts[i], { opacity: 1, duration: 0.4, stagger: 0.06 }, `${at}+=0.3`);
     });
-    tl.to(parts(basic, '.tier-dot, .tier-disc'), { scale: 1, duration: 0.5, ease: 'back.out(1.6)', stagger: 0.1 }, 'tiers+=0.4')
-      .to(parts(basic, '.tier-ring'), { scale: 1, opacity: 1, duration: 0.7, stagger: 0.15 }, 'tiers+=0.6')
-      .to(parts(capacity, '.tier-left, .tier-right'), { x: 0, duration: 0.7, ease: MOTION.easeInOut }, 'tiers+=1.2')
-      .to(parts(capacity, '.tier-overlap'), { opacity: 1, duration: 0.4 }, 'tiers+=1.7')
-      .to(parts(business, '.tier-orbit, .tier-ring'), { opacity: 1, duration: 0.4, stagger: 0.1 }, 'tiers+=2.0')
-      .to(parts(business, '.tier-disc'), { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.4)' }, 'tiers+=2.1')
-      .to(parts(business, '.tier-dot'), { rotation: 0, duration: 0.9, ease: MOTION.easeInOut }, 'tiers+=2.1')
-      .to(parts(enterprise, '.tier-ring'), { opacity: 1, duration: 0.4, stagger: 0.1 }, 'tiers+=2.8')
-      .to(parts(enterprise, '.tier-dot, .tier-disc'), { scale: 1, duration: 0.4, ease: 'back.out(1.6)', stagger: 0.08 }, 'tiers+=2.8')
-      .to(spokes, { strokeDashoffset: 0, duration: 0.45, ease: 'power1.inOut', stagger: 0.07 }, 'tiers+=3.0')
-      .to(parts(enterprise, '.tier-nodes circle'), { scale: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.07 }, 'tiers+=3.3')
+    tl.to(parts(basic, '.tier-dot, .tier-disc'), { scale: 1, duration: 0.5, ease: 'back.out(1.6)', stagger: 0.1 }, tiersAt + 0.4)
+      .to(parts(basic, '.tier-ring'), { scale: 1, opacity: 1, duration: 0.7, stagger: 0.15 }, tiersAt + 0.6)
+      .to(parts(capacity, '.tier-left, .tier-right'), { x: 0, duration: 0.7, ease: MOTION.easeInOut }, tiersAt + 1.2)
+      .to(parts(capacity, '.tier-overlap'), { opacity: 1, duration: 0.4 }, tiersAt + 1.7)
+      .to(parts(business, '.tier-orbit, .tier-ring'), { opacity: 1, duration: 0.4, stagger: 0.1 }, tiersAt + 2.0)
+      .to(parts(business, '.tier-disc'), { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.4)' }, tiersAt + 2.1)
+      .to(parts(business, '.tier-dot'), { rotation: 0, duration: 0.9, ease: MOTION.easeInOut }, tiersAt + 2.1)
+      .to(parts(enterprise, '.tier-ring'), { opacity: 1, duration: 0.4, stagger: 0.1 }, tiersAt + 2.8)
+      .to(parts(enterprise, '.tier-dot, .tier-disc'), { scale: 1, duration: 0.4, ease: 'back.out(1.6)', stagger: 0.08 }, tiersAt + 2.8)
+      .to(spokes, { strokeDashoffset: 0, duration: 0.45, ease: 'power1.inOut', stagger: 0.07 }, tiersAt + 3.0)
+      .to(parts(enterprise, '.tier-nodes circle'), { scale: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.07 }, tiersAt + 3.3)
 
-      .addLabel('help', 'tiers+=4.0') // after the last graphic has finished (a step never ends mid-pop)
+      .addLabel('help', tiersAt + 4.0) // after the last graphic has finished (a step never ends mid-pop)
 
       // Step 6 (2:11–2:13), only on a further scroll down: the view moves down to the tiers and
       // the visitor's follow-up pops in like a message
