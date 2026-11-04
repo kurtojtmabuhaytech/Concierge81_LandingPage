@@ -299,7 +299,7 @@
   // When the page puts itself back at the limit, that small move up is not the visitor scrolling
   // back up (it must not turn a finished section plain, see scrollScene)
   let clampedAt = -1e4;
-  const pulledBack = () => performance.now() - clampedAt < 400;
+  const pulledBack = () => performance.now() - clampedAt < 150;
   const onLimitScroll = () => {
     if (measuring || jumping) return;
     const max = scrollLimit();
@@ -337,7 +337,7 @@
   const movedSince = at => inputAt > at;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
   ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
-  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, canGoBack = () => true, hold = () => false, runs = () => [] }) => {
+  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, hold = () => false, runs = () => [] }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
@@ -413,20 +413,29 @@
       tl.time(built);
       builtAt = built;
     };
+    // How long `distance` seconds of the timeline take to play, starting at `from`: the section's
+    // chat (its first step) at its own pace so "•••" and the replies read, the steps after it
+    // quicker; far behind, they catch up. The same pace forwards, backwards and on a replay.
+    const paceOf = (distance, from) => {
+      const natural = distance / (from < firstStep() - 0.001 ? 1 : STEP_SPEED);
+      return natural <= CATCH_UP ? natural : CATCH_UP + (natural - CATCH_UP) * 0.35;
+    };
     // Over what was seen: follow the scroll
     const followSeen = (time, direction = 1) => {
       playing?.kill();
       playing = null;
       resting();
       if (followBack) {
-        // Only ever rests on a finished step: moves to the step at this scroll position with a
-        // short, smooth transition (never stops on a half-faded frame in between)
+        // Only ever rests on a finished step: runs to the step at this scroll position (back or
+        // forward) at the pace the steps first played, never stopping on a frame in between
         const step = stops().filter(t => t <= time + 0.001).at(-1) ?? 0;
         const goal = direction < 0 ? step : stepAfter(time);
-        if (Math.abs(goal - followTo) < 0.001 && (follow?.isActive() || Math.abs(tl.time() - goal) < 0.001)) return;
+        // (a tween just made isn't "active" until its first tick: checking that here restarted it on
+        // every frame of the smooth scroll, so nothing moved until the scroll had settled)
+        if (Math.abs(goal - followTo) < 0.001 && (follow || Math.abs(tl.time() - goal) < 0.001)) return;
         follow?.kill();
         followTo = goal;
-        follow = tl.tweenTo(goal, { duration: Math.min(0.9, 0.25 + Math.abs(goal - tl.time()) * 0.35), ease: 'power2.inOut' });
+        follow = tl.tweenTo(goal, { duration: paceOf(Math.abs(goal - tl.time()), Math.min(goal, tl.time())), ease: 'none', onComplete: () => { follow = null; } });
         return;
       }
       build();
@@ -454,10 +463,7 @@
       const distance = target - tl.time();
       if (distance <= 0) { playing = null; resting(); return; }
       trigger.classList.add('is-playing');
-      // (the section's chat, its first step, plays at its own pace so "•••" and the replies read;
-      // the steps after it play quicker)
-      const natural = distance / (tl.time() < firstStep() - 0.001 ? 1 : STEP_SPEED);
-      const duration = natural <= CATCH_UP ? natural : CATCH_UP + (natural - CATCH_UP) * 0.35;
+      const duration = paceOf(distance, tl.time());
       const passed = stops().filter(t => t > tl.time() + 0.001 && t <= target + 0.001);
       playing = tl.tweenTo(target, {
         duration,
@@ -523,7 +529,7 @@
         // the same pinned screen runs back with the scroll (only if it wasn't turned plain first).
         // It only runs back when the visitor scrolls back (not the page's own clamp-back or a
         // re-measure).
-        if (followBack && self.direction < 0 && (measuring || pulledBack() || !canGoBack())) return;
+        if (followBack && self.direction < 0 && (measuring || pulledBack())) return;
         if (plain) return;
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001 && !switching && !measuring) { // (see goPlain; never during a re-measure)
@@ -902,6 +908,12 @@
       gsap.set(traveller, { width: introKiosk.offsetWidth, height: introKiosk.offsetHeight });
     };
     fitTraveller();
+    // The traveller's height once it has grown the features kiosk's full stand: that kiosk's
+    // shape at the traveller's own width (it is scaled to the slot's width on arrival)
+    const tallKiosk = () => {
+      const slot = featuresKiosk.getBoundingClientRect();
+      return slot.height * traveller.offsetWidth / slot.width;
+    };
 
     // Positions inside the story, unaffected by scrolling or pinning
     const within = (el) => {
@@ -987,7 +999,7 @@
     // Re-applied on refresh (sizes and positions change with the window).
     const applyStart = () => {
       const card = cardBox();
-      gsap.set(traveller, { autoAlpha: 0, x: onSlot(introKiosk).x(), y: onSlot(introKiosk).y(), scale: onSlot(introKiosk).scale() });
+      gsap.set(traveller, { autoAlpha: 0, x: onSlot(introKiosk).x(), y: onSlot(introKiosk).y(), scale: onSlot(introKiosk).scale(), height: introKiosk.offsetHeight });
       gsap.set(morph, {
         autoAlpha: 0, ...clipTo(card, 32),
         backgroundSize: `${card.width}px ${card.height}px`, backgroundPosition: `${card.x}px ${card.y}px`
@@ -1065,7 +1077,9 @@
       // (so the features headline, which grows next, never sits under it)
       .to([intro.question, intro.headline, ...intro.rest], { autoAlpha: 0, y: -50, duration: 0.4, stagger: 0.05, ease: 'power2.in' }, 'intro')
       .to(siteHeader, { yPercent: -100, duration: 0.5, ease: MOTION.easeInOut }, 'intro+=0.3')
-      .to(traveller, { ...onSlot(featuresKiosk), duration: 1.5, ease: bezier(0.29, 0, 0, 1.09) }, 'intro+=0.5'); // a slight overshoot (Figma)
+      // the kiosk glides to the features with a slight overshoot (Figma); on the way its short stand
+      // extends to the full one of the features kiosk (the stand only grows as it moves)
+      .to(traveller, { ...onSlot(featuresKiosk), height: tallKiosk, duration: 1.5, ease: bezier(0.29, 0, 0, 1.09) }, 'intro+=0.5');
     bubbleIn(tl, featuresHeadline, 'intro+=1.2')
       .addLabel('features')
 

@@ -1191,16 +1191,20 @@ button.chip, a.chip {
     flex-wrap: nowrap;
   }
   .intro-split .kiosk-device {
-    --kiosk-h: min(calc(790 * var(--u)), calc(100svh - var(--header-h, calc(76 * var(--u))) - 4rem));
-    flex: 0 0 calc(var(--kiosk-h) * 447 / 790);
-    width: calc(var(--kiosk-h) * 447 / 790);
-    height: var(--kiosk-h);
+    --kiosk-w: min(calc(447 * var(--u)), calc((100svh - 10rem) * 447 / 882));
+    flex: 0 0 var(--kiosk-w);
+    width: var(--kiosk-w);
+    height: auto;
   }
   :is(.intro-split, .feature-stage) .kiosk-device {
     display: flex;
     flex-direction: column;
   }
-  :is(.intro-split, .feature-stage) .kiosk-base {
+  .intro-split .kiosk-base {
+    flex: 0 0 auto;
+    height: calc(90 * var(--u));
+  }
+  .feature-stage .kiosk-base {
     flex: 1 0 auto;
   }
   .intro-thread {

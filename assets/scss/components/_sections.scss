@@ -501,17 +501,19 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
 
   // Intro: kiosk (447 wide) then the thread (717 wide), 78 apart
   .intro-split { gap: u(78); flex-wrap: nowrap; }
-  // Kiosk 447 × 790 (Figma): the screen keeps its size and the black stand takes the rest. On a
-  // screen too short for that it shrinks (same shape) to fit under the site header with a margin,
-  // so the whole stand always shows
+  // Intro kiosk: 447 wide (Figma), narrower on a screen too short for the features kiosk it grows
+  // into (same shape as that one). At rest it is the screen plus a short stand; the full stand
+  // (Figma's 790) only extends as it glides to the features (animations.js), so it never waits
+  // on screen as a tall black block
   .intro-split .kiosk-device {
-    --kiosk-h: min(#{u(790)}, calc(100svh - var(--header-h, #{u(76)}) - 4rem));
-    flex: 0 0 calc(var(--kiosk-h) * 447 / 790);
-    width: calc(var(--kiosk-h) * 447 / 790);
-    height: var(--kiosk-h);
+    --kiosk-w: min(#{u(447)}, calc((100svh - 10rem) * 447 / 882));
+    flex: 0 0 var(--kiosk-w);
+    width: var(--kiosk-w);
+    height: auto;
   }
   :is(.intro-split, .feature-stage) .kiosk-device { display: flex; flex-direction: column; }
-  :is(.intro-split, .feature-stage) .kiosk-base { flex: 1 0 auto; }
+  .intro-split .kiosk-base { flex: 0 0 auto; height: u(90); }
+  .feature-stage .kiosk-base { flex: 1 0 auto; }
   .intro-thread { flex: 0 1 u(717); gap: u(12); }
   .intro-thread .msg-row--user { margin-bottom: u(26); }
   .intro-thread .bubble--user { font-size: u(22); line-height: 1.27; padding: u(18) u(26); border-radius: u(22) u(22) u(6) u(22); max-width: none; }
