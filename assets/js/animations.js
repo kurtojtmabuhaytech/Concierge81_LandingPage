@@ -291,7 +291,8 @@
   addEventListener('pointerup', () => { draggingBar = false; }, true);
   let barY = scrollY;
   addEventListener('scroll', () => {
-    if (draggingBar && scrollY < barY - 1 && !measuring && !jumping) goBack();
+    // (not the page's own hold-back while the bar is dragged down: that isn't the visitor going up)
+    if (draggingBar && scrollY < barY - 1 && !pulledBack() && !measuring && !jumping) goBack();
     barY = scrollY;
   }, { passive: true });
   const onLimitWheel = (e) => {
@@ -455,7 +456,11 @@
         if (Math.abs(goal - followTo) < 0.001 && (follow || Math.abs(tl.time() - goal) < 0.001)) return;
         follow?.kill();
         followTo = goal;
-        follow = tl.tweenTo(goal, { duration: paceOf(Math.abs(goal - tl.time()), Math.min(goal, tl.time())), ease: 'none', onComplete: () => { follow = null; } });
+        // already there: nothing to run (a zero-length tween completes before it is stored, and
+        // would then count as running for good, holding the scroll)
+        if (Math.abs(tl.time() - goal) < 0.001) { follow = null; return; }
+        // (a step run back or replayed ends the gesture like a step played: the next needs a new scroll)
+        follow = tl.tweenTo(goal, { duration: paceOf(Math.abs(goal - tl.time()), Math.min(goal, tl.time())), ease: 'none', onComplete: () => { follow = null; restedAt = performance.now(); } });
         return;
       }
       build();
@@ -476,7 +481,9 @@
           build();
           if (content) gsap.set(content, { y: viewAt(from) }); // the view where the seen part ended
         }
-        else if (Math.abs(tl.time() - from) > 0.001) tl.time(from);
+        // (a scene run back part-way plays on from where it is: the steps it replays are played,
+        // never snapped to their end)
+        else if (tl.time() > from + 0.001) tl.time(from);
       }
       playing?.kill();
       playingTo = target;
@@ -568,8 +575,11 @@
           const nextStop = Math.max(firstStep(), stops().find(t => t > here + 0.001) ?? tl.duration());
           if (nextStop > watched + 0.001) playOn(nextStop); else followSeen(nextStop, 1);
           // (at once, not a glide: inside the pinned screen the picture is the timeline's, so the
-          // move can't be seen, and a glide still under way would swallow a scroll back)
-          scrollToY(toScroll(nextStop), false);
+          // move can't be seen, and a glide still under way would swallow a scroll back). Done
+          // after this update, with the pins moved in the same frame: done inside it, the page
+          // moved a frame before the pinned screen did, and one frame showed it scrolled away.
+          const to = toScroll(nextStop);
+          if (Math.abs(scrollY - to) > 1) gsap.delayedCall(0, () => { scrollToY(to, false); ScrollTrigger.update(); });
           return;
         }
         // a step under way plays on (never cut short); in the story a scroll back reverses it from
@@ -652,12 +662,18 @@
     // How far down the visitor may scroll (see `limits`): to the end of the step under way, or of
     // the next one once it has finished; held at the current one while the scene's own animation
     // runs (`hold`: the inbox's rain and demo); no limit once the scene has been seen to its end
+    // Counted from where the scene is now (a scene run back part-way replays one step at a time
+    // too), not from the furthest point seen.
     limits.add(() => {
       if (plain || killed || !pin) return Infinity;
-      const done = Math.min(seen, tl.duration());
-      if (done >= tl.duration() - 0.001 && !playing && !hold()) return Infinity;
+      const at = playing ? playingTo : (follow ? followTo : tl.time());
+      // played to its end: held there until the visitor scrolls again (one scroll never finishes a
+      // section and starts the next), then free
+      if (at >= tl.duration() - 0.001 && !playing && !hold()) return newGesture() ? Infinity : toScroll(tl.duration());
+      if (playing || follow) return toScroll(Math.max(at, firstStep()));
       // (a step just ended: held at it until the visitor scrolls again, see newGesture)
-      const next = playing ? playingTo : (hold() || !newGesture() ? done : (stops().find(t => t > done + 0.001) ?? tl.duration()));
+      const here = stops().filter(t => t <= at + 0.001).at(-1) ?? 0;
+      const next = hold() || !newGesture() ? here : (stops().find(t => t > here + 0.001) ?? tl.duration());
       return toScroll(Math.max(next, firstStep()));
     });
     if (!followBack) finishedRanges.add(() => (!plain && !killed && pin && !playing && tl.progress() > 0.999 ? [pin.start, pin.end] : null));
