@@ -59,7 +59,7 @@
     base: 0.5,           // bubbles, cards fading in
     slow: 0.8,           // kiosk moves, section morphs
     stagger: 0.18,       // features, list items
-    typing: 1.4,         // "concierge is typing…" before a reply
+    typing: 1.4,         // "concierge81 is typing…" before a reply
     bubbleText: 0.4,     // text fading in after a bubble shape has grown
     pop: 0.32            // a message popping in whole
   };
@@ -714,7 +714,7 @@
      every first visitor watches it. A refresh in the same session, a #section link or reduced
      motion skip it. Runs once, outside matchMedia. */
   const OPENING_SLOW = 0.9; // the greeting's glide into the hero and the card building around it
-  const OPENING_TYPING = 1.4; // "concierge is typing..." (the dots bounce about 1.4s, Figma)
+  const OPENING_TYPING = 1.4; // "concierge81 is typing..." (the dots bounce about 1.4s, Figma)
   const OPENING_HOLD = 1.0; // the greeting on its own before it flies into the hero
   const buildIn = bezier(0.397, 0, 0.024, 0.993); // the hero card and avatar zooming in (Figma)
   const runOpening = () => {
