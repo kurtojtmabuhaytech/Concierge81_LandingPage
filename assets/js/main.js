@@ -732,6 +732,22 @@ document.addEventListener('DOMContentLoaded', () => {
       area.scrollTop = area.scrollHeight;
       return el;
     };
+    // After a resize the card's size is measured again: its first messages alone, as when the
+    // chat started (a size frozen at the first question was wrong on another window size)
+    let fitting = 0;
+    window.addEventListener('resize', () => {
+      if (!area.style.height) return;
+      cancelAnimationFrame(fitting);
+      fitting = requestAnimationFrame(() => {
+        const asked = [...area.querySelectorAll('.is-asked')];
+        asked.forEach((r) => { r.style.display = 'none'; });
+        area.style.height = '';
+        const h = area.offsetHeight;
+        asked.forEach((r) => { r.style.display = ''; });
+        area.style.height = `${h}px`;
+        area.scrollTop = area.scrollHeight;
+      });
+    });
     const say = (question, answer, withLink) => {
       if (busy) return;
       busy = true;

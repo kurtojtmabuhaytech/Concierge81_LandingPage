@@ -298,7 +298,7 @@
     barY = scrollY;
   }, { passive: true });
   const onLimitWheel = (e) => {
-    if (scrollsItself(e)) return;
+    if (scrollsItself(e) || e.ctrlKey) return; // (ctrl + wheel is the browser's zoom, not a scroll)
     if (e.deltaY < 0 && !jumping && !measuring) goBack();
     if (e.deltaY > 0 && atLimit()) { e.preventDefault(); return; }
     if (jumping || e.ctrlKey || !e.deltaY || !inFinished()) return;
@@ -369,7 +369,7 @@
   const movedSince = at => inputAt > at;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
   ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
-  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = true, ownPlain = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, hold = () => false, runs = () => [] }) => {
+  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = true, ownPlain = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, hold = () => false, runs = () => [], runBack = () => {} }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
@@ -775,7 +775,12 @@
         // the scene's own animation (the inbox's rain and demo) runs backwards on a scroll back and
         // plays again when the visitor comes down to its step (the steps themselves run back in
         // followSeen)
-        snap: () => { runs().forEach((run) => { if (run.progress() > 0 && !run.reversed()) run.reverse(); }); },
+        snap: () => {
+          const back = runs().filter(run => run.progress() > 0 && !run.reversed());
+          if (!back.length) return;
+          runBack(); // (the scene tidies up first, e.g. the inbox puts its questions back and locks them)
+          back.forEach(run => run.reverse());
+        },
         makePlain,
         isPlain: () => plain
       });
@@ -1523,7 +1528,10 @@
       onRefresh: applyStart,
       // the scroll waits for the rain and the demo, which pause while the visitor is away
       hold: () => tl.time() >= tl.labels.inbox - 0.001 && show.progress() < 1,
-      runs: () => [show]
+      runs: () => [show],
+      // running back: the questions the visitor moved go back to the pile, and none can be picked up
+      // until the rain has played again
+      runBack: () => { inbox.putBack(); pile.classList.add('is-busy'); }
     });
 
     return () => {
@@ -1900,6 +1908,7 @@
     };
     const onMove = (e) => {
       if (!drag) return;
+      if (!(e.buttons & 1)) { onUp(e); return; } // (released outside the gallery before it moved: no drag)
       const dx = e.clientX - drag.x;
       if (!drag.moved && Math.abs(dx) > 6) { drag.moved = true; slide?.kill(); gallery.setPointerCapture(drag.id); gallery.classList.add('is-dragging'); }
       if (drag.moved) gsap.set(track, { x: drag.start + dx });
@@ -1920,9 +1929,8 @@
 
     const applyStart = () => {
       slide?.kill();
-      index = 0;
-      measure();
-      gsap.set(track, { x: 0 });
+      measure(); // (the visitor's card is kept: a resize or a re-measure never moves the carousel back)
+      gsap.set(track, { x: -shiftAt(index) });
       gsap.set(content, { y: 0, autoAlpha: 1 });
       heading.start();
       gsap.set(all, { autoAlpha: 0, x: 0 });
@@ -2258,7 +2266,9 @@
         .to(device, { ...shapeTo(name), duration: MORPH, ease: MOTION.easeInOut }, `${at(i)}+=0.2`);
       layoutTo(name, `${at(i)}+=0.2`);
     });
-    tl.addLabel('built', `${at(cards.length - 1)}+=${MORPH + 0.4}`);
+    // (the timeline runs to this label: past its end, the scene never counted as built, and a pick
+    // made by the visitor was undone after a resize or a refresh, see keepChoice)
+    tl.addLabel('built', `${at(cards.length - 1)}+=${MORPH + 0.4}`).set({}, {}, 'built');
 
     // The device on show at a moment of the scene: the last place that has joined the list
     const showing = t => cards.filter((card, i) => t >= tl.labels.places + i * PLACE + 0.2 - 0.001).at(-1)?.dataset.device;

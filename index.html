@@ -81,7 +81,9 @@
       try {
         // (only to come back past the first page: there, the opening plays instead, see animations.js)
         const place = JSON.parse(sessionStorage.getItem('c81:place') || 'null');
-        if (!location.hash && place && place.id !== '.story') root.classList.add('is-restoring');
+        // (a refresh ignores a #link in the address, as animations.js does: the place is restored)
+        const reloaded = performance.getEntriesByType && performance.getEntriesByType('navigation')[0]?.type === 'reload';
+        if ((!location.hash || reloaded) && place && place.id !== '.story') root.classList.add('is-restoring');
       } catch (e) { /* storage blocked */ }
       setTimeout(() => root.classList.remove('is-restoring'), 2500);
       window.addEventListener('load', () => { if (!window.gsap) root.classList.remove('js-motion', 'is-restoring'); });
