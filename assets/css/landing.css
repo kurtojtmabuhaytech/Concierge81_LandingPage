@@ -2838,7 +2838,7 @@ button.chip, a.chip {
 }
 
 .info-branches {
-  width: 66%;
+  width: 76%;
   height: 3rem;
   overflow: visible;
 }
@@ -2850,8 +2850,9 @@ button.chip, a.chip {
 }
 
 .info-nodes {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  justify-items: center;
   width: 76%;
   font-size: 0.8125rem;
   color: #A8A49A;

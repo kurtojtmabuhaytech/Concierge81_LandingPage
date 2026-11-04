@@ -349,10 +349,22 @@
   // A gesture is a run of input without a GESTURE-long gap: a fling that goes on after a step has
   // ended doesn't move the page on, the visitor's next, separate scroll does
   let gestureAt = -1;
-  ['wheel', 'keydown', 'touchmove', 'pointerdown'].forEach(type => addEventListener(type, () => {
+  // The way the visitor's own input goes: 1 down, -1 up, 0 unknown (touch, the scrollbar). The
+  // scroll's own direction is fooled by the page's moves (the hold-back at a step nudges it up)
+  let inputDir = 0;
+  const dirOf = (e) => {
+    if (e.type === 'wheel') return Math.sign(e.deltaY);
+    if (e.type !== 'keydown') return 0;
+    if (e.key === ' ') return e.shiftKey ? -1 : 1;
+    if (['ArrowUp', 'PageUp', 'Home'].includes(e.key)) return -1;
+    if (['ArrowDown', 'PageDown', 'End'].includes(e.key)) return 1;
+    return inputDir;
+  };
+  ['wheel', 'keydown', 'touchmove', 'pointerdown'].forEach(type => addEventListener(type, (e) => {
     const now = performance.now();
     if (now - inputAt > GESTURE) gestureAt = now;
     inputAt = now;
+    inputDir = dirOf(e);
   }, { capture: true, passive: true }));
   const movedSince = at => inputAt > at;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
@@ -557,7 +569,9 @@
         // the same pinned screen runs back with the scroll (only if it wasn't turned plain first).
         // It only runs back when the visitor scrolls back (not the page's own clamp-back or a
         // re-measure).
-        if (followBack && self.direction < 0 && (measuring || pulledBack())) return;
+        // (a scene runs back only when the visitor scrolls back: not the page's own hold-back, a
+        // re-measure, or any nudge up while the visitor's input goes down)
+        if (followBack && self.direction < 0 && (measuring || pulledBack() || inputDir > 0)) return;
         if (plain) return;
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001 && !switching && !measuring) { // (see goPlain; never during a re-measure)
@@ -2003,7 +2017,7 @@
     const handoffPill = part('.handoff-pill');
     const team = part('.handoff-team');
     const infoBox = part('.info-box');
-    const branches = parts('.info-branches path');
+    const branchSvg = part('.info-branches'); // (drawn in by a wipe from the top: dashes don't work with its non-scaling stroke)
     const nodes = parts('.info-nodes > div');
     const langPill = part('.lang-pill');
     const tabs = parts('.lang-tabs span');
@@ -2014,7 +2028,6 @@
     const word = parts('.insight-copy > *');
     const bars = parts('.bar');
     const demo = part('.bento-card--cta');
-    branches.forEach(path => path.setAttribute('pathLength', '1'));
     // The places start on the hub and move out along their lines
     const fromHub = (el) => {
       const c = $('circle', el);
@@ -2036,7 +2049,7 @@
       gsap.set(handoffPill, { autoAlpha: 0, scale: 0.8 });
       gsap.set(team, { opacity: 0.35 });
       gsap.set(infoBox, { autoAlpha: 0, y: 14 });
-      gsap.set(branches, { strokeDasharray: 1, strokeDashoffset: 1 });
+      gsap.set(branchSvg, { clipPath: 'inset(0% 0% 100% 0%)' });
       gsap.set(nodes, { autoAlpha: 0, scale: 0.7 });
       gsap.set(langPill, { x: 0 });
       gsap.set(tabs, { color: '' });
@@ -2083,7 +2096,7 @@
       .to(rows[1].children, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.2 }, 'row1Done+=0.3')
       .addLabel('row2', 'row1Done+=1.25')
       .to(infoBox, { autoAlpha: 1, y: 0, duration: 0.4 }, 'row2')
-      .to(branches, { strokeDashoffset: 0, duration: 0.6, ease: 'power1.inOut', stagger: 0.1 }, 'row2+=0.4')
+      .to(branchSvg, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.7, ease: 'power1.inOut' }, 'row2+=0.4')
       .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, 'row2+=0.8')
       // EN → JP and back: the pill and the white label move (Hello. and こんにちは。 both stay, as in Figma)
       .to(langPill, { x: tabShift, duration: 0.45, ease: MOTION.easeInOut }, 'row2+=0.5')
@@ -2747,12 +2760,12 @@
       .fromTo(handoffPill, { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)' }, '-=0.1')
       .to(lines[1], { scaleX: 1, duration: 0.45, ease: 'power1.inOut' }, '-=0.15')
       .to({}, pause(1)));
-    const branches = $$('.info-branches path', accuracy);
+    const branchSvg = $('.info-branches', accuracy);
     const nodes = $$('.info-nodes > div', accuracy);
-    loop(accuracy, () => gsap.timeline() // the info branches out again
+    loop(accuracy, () => gsap.timeline() // the info branches out again (a wipe from the top, as in the scene)
       .to(nodes, { autoAlpha: 0, scale: 0.7, duration: 0.2 })
-      .set(branches, { strokeDashoffset: 1 })
-      .to(branches, { strokeDashoffset: 0, duration: 0.6, ease: 'power1.inOut', stagger: 0.1 })
+      .set(branchSvg, { clipPath: 'inset(0% 0% 100% 0%)' })
+      .to(branchSvg, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.7, ease: 'power1.inOut' })
       .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, '-=0.3')
       .to({}, pause(1)));
     const langPill = $('.lang-pill', languages);
