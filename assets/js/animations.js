@@ -2029,8 +2029,8 @@
   };
 
   /* The languages card: the tab pill moves to a language and the greeting turns into it (the scene
-     at its step, the hover loop, or the visitor clicking a tab). The big line greets in that
-     language; the blue line says こんにちは。, or Hello. once Japanese is on the big line. */
+     at its step, the hover loop, or the visitor clicking a tab). One greeting at a time, in the
+     same spot: Hello. with EN, こんにちは。 with JP (and the others' greetings in that blue style). */
   const greet = (() => {
     const tabsEl = $('.lang-tabs', values.section);
     if (!tabsEl) return null;
@@ -2042,12 +2042,14 @@
     let shown = 'EN';
     let swap = null;
     let chosen = null; // the visitor's pick (it stays; the hover loop leaves it alone)
+    // Only one greeting shows, in the same spot (Figma): Hello. (white) with EN; with any other tab,
+    // that language's greeting in the blue style of こんにちは。, and Hello. hidden
+    const lineOf = code => (code === 'EN' ? big : small);
     const write = (code) => {
+      if (code === 'EN') return;
       const [word, lang] = words[code];
-      big.textContent = word;
-      big.lang = lang;
-      small.textContent = code === 'JP' ? 'Hello.' : 'こんにちは。';
-      small.lang = code === 'JP' ? 'en' : 'ja';
+      small.textContent = word;
+      small.lang = lang;
     };
     const colors = i => k => (k === i ? '#FFFFFF' : '#A8A49A');
     const pillTo = (code, animate = !prefersReducedMotion) => {
@@ -2067,12 +2069,16 @@
       if (code === shown) return;
       shown = code;
       swap?.kill();
-      if (!animate) { swap = null; gsap.set([big, small], { autoAlpha: 1, y: 0 }); write(code); return; }
+      const line = lineOf(code);
+      const other = line === big ? small : big;
+      if (!animate) { swap = null; write(code); gsap.set(other, { autoAlpha: 0, y: 0 }); gsap.set(line, { autoAlpha: 1, y: 0 }); return; }
+      // the greeting on show goes (a small lift), then the new one comes in where it was
       swap = gsap.timeline({ onComplete: () => { swap = null; } })
-        .to([big, small], { autoAlpha: 0, y: -8, duration: 0.18, ease: 'power1.in' })
+        .to([big, small], { autoAlpha: 0, y: -8, duration: 0.2, ease: 'power1.in' })
         .call(() => write(code))
-        .fromTo([big, small], { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.3, ease: 'power2.out', stagger: 0.06 });
+        .fromTo(line, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.32, ease: 'power2.out' });
     };
+    gsap.set(small, { autoAlpha: 0 }); // (EN to start: Hello. alone)
     // a click (or Enter / Space) on a tab: the pill goes there and the greeting turns into it (on
     // the desktop scene, only once the card's step has played)
     tabs.forEach((tab) => { tab.setAttribute('role', 'button'); tab.tabIndex = 0; tab.setAttribute('aria-pressed', tab.classList.contains('is-active')); });
@@ -2184,7 +2190,8 @@
       .to(infoBox, { autoAlpha: 1, y: 0, duration: 0.4 }, 'row2')
       .to(branchSvg, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.7, ease: 'power1.inOut' }, 'row2+=0.4')
       .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, 'row2+=0.8')
-      // EN → JP and back: the pill and the white label move (Hello. and こんにちは。 both stay, as in Figma)
+      // EN → JP and back: the pill and the white label move; Hello. gives way to こんにちは。 and comes
+      // back (greetAt, below, follows the pill)
       .to(langPill, { x: tabShift, duration: 0.45, ease: MOTION.easeInOut }, 'row2+=0.5')
       .to(tabs[0], { color: '#A8A49A', duration: 0.3 }, 'row2+=0.55')
       .to(tabs[1], { color: '#FFFFFF', duration: 0.3 }, 'row2+=0.65')

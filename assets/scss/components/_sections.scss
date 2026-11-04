@@ -1105,7 +1105,12 @@ $q-pile: (
   }
 }
 .lang-pill { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 3px; width: 46px; border-radius: $radius-full; background: $color-cobalt-bright; }
-.hello { position: relative; display: flex; flex-direction: column; align-items: center; font-weight: $font-weight-semibold; line-height: 1.12; letter-spacing: -0.03em; }
+// One greeting at a time, in the same spot (Figma animation): Hello. with EN; with another tab it
+// gives way to that language's greeting (こんにちは。 with JP), in blue; animations.js swaps them
+.hello { position: relative; display: grid; place-items: center; font-weight: $font-weight-semibold; line-height: 1.12; letter-spacing: -0.03em;
+  > * { grid-area: 1 / 1; white-space: nowrap; }
+}
+.hello-jp { visibility: hidden; opacity: 0; }
 .hello-en { font-size: clamp(2.4rem, 3.6vw, 3.4rem); color: $color-white; }
 .hello-jp { font-size: clamp(2.2rem, 3.2vw, 3rem); font-weight: $font-weight-bold; letter-spacing: 0; color: $color-cobalt-bright; }
 .hello-alt { position: relative; margin-top: 0.4rem; font-size: 1rem; /* 16 (Figma) */ color: $neutral-500; text-align: center; }
