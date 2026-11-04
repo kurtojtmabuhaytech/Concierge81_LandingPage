@@ -83,28 +83,6 @@ code, kbd, samp, pre {
   padding-right: max(1.5rem, 6.614vw);
 }
 
-/* =========================================
-   Media & Image Placeholders
-   Labelled boxes that hold the place of artwork until the real files arrive
-   ========================================= */
-.placeholder-box {
-  background-color: #F3F1EB;
-  border: 2px dashed #E5E2D9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #8A867B;
-  font-weight: 500;
-  font-size: 0.9rem;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.placeholder-box span {
-  padding: 0.5rem;
-  text-align: center;
-}
-
 /* Fonts & Typography. Figma sets the page in SF Pro, which can't be served on the web: Inter on
    every system (QA-3, creative head, 30 Oct), loaded with its optical-size axis so large text uses
    Inter Display, which comes within a few percent of SF Pro's widths; the big headlines are
@@ -136,7 +114,7 @@ code, kbd, samp, pre {
   outline-offset: 3px;
 }
 
-:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card, .tier-card--featured) :focus-visible,
+:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card) :focus-visible,
 :is(.btn-primary, .theme-dark .btn):focus-visible {
   outline-color: #FFFFFF;
 }
@@ -480,13 +458,6 @@ main:focus {
   line-height: 1.136;
   max-width: min(100%, 56.25rem);
   margin: 0;
-}
-
-.header-pill--lg {
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
-  line-height: 1.14;
-  border-radius: 28px 28px 28px 8px;
-  max-width: min(100%, 40rem);
 }
 
 .header-pill--xl {
@@ -3871,12 +3842,6 @@ button.chip, a.chip {
   color: #6E6B63;
 }
 
-.msg-ai {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-}
-
 .msg-avatar {
   width: 30px;
   height: 30px;
@@ -4954,10 +4919,6 @@ main > .blog-section:has(+ #contact) {
   flex-shrink: 0;
   overflow: hidden;
   background: #E5E2D9;
-}
-.post-card-media.placeholder-box {
-  border: none;
-  border-radius: 0;
 }
 .post-card-media img {
   width: 100%;

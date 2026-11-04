@@ -14,12 +14,10 @@
 
   gsap.registerPlugin(ScrollTrigger, MorphSVGPlugin, ...(window.ScrollSmoother ? [ScrollSmoother] : []));
 
-  /* Once per browser session (sessionStorage):
-     - the opening plays on the first open, and not again on a refresh;
-     - a refresh comes back to where the visitor was (restored by us, after the scenes have
-       measured the page);
-     - once they have reached "Why would a business need this?" the intro story counts as done:
-       on later loads in the session it is shown finished, as a plain stack, and never replays. */
+  /* Per browser tab (sessionStorage), see savedPlace below:
+     - on the first page (or with nothing saved) every load and refresh plays the opening;
+     - past the first page a refresh comes back to where the visitor was (restored by us, after the
+       scenes have measured the page), with the story shown finished, as a plain stack. */
   const session = {
     get: key => { try { return sessionStorage.getItem(`c81:${key}`); } catch (e) { return null; } },
     set: (key, value) => { try { sessionStorage.setItem(`c81:${key}`, value); } catch (e) { /* storage blocked */ } }
@@ -218,11 +216,6 @@
   const scrollLimit = () => Math.min(Infinity, ...[...limits].map(limit => limit()));
   const downKeys = ['ArrowDown', 'PageDown', 'End', ' '];
   const atLimit = () => !jumping && scrollY >= scrollLimit() - 1;
-  // Through a section already seen to its end the wheel goes faster, both ways, so going back
-  // over it never feels stuck (it only shows what was built)
-  const finishedRanges = new Set();
-  const SEEN_SPEED = 2.5;
-  const inFinished = () => [...finishedRanges].some((range) => { const r = range(); return r && scrollY >= r[0] - 1 && scrollY <= r[1] + 1; });
   // A wheel over something that scrolls by itself (the FAQ chat) scrolls it, not the page
   const scrollsItself = (e) => {
     for (let el = e.target; el && el !== document.body; el = el.parentElement) {
@@ -300,11 +293,7 @@
   const onLimitWheel = (e) => {
     if (scrollsItself(e) || e.ctrlKey) return; // (ctrl + wheel is the browser's zoom, not a scroll)
     if (e.deltaY < 0 && !jumping && !measuring) goBack();
-    if (e.deltaY > 0 && atLimit()) { e.preventDefault(); return; }
-    if (jumping || e.ctrlKey || !e.deltaY || !inFinished()) return;
-    e.preventDefault();
-    const step = e.deltaY * (e.deltaMode === 1 ? 40 : 1) * SEEN_SPEED;
-    scrollTo(0, Math.max(0, Math.min(scrollY + step, scrollLimit())));
+    if (e.deltaY > 0 && atLimit()) e.preventDefault();
   };
   const onLimitKey = (e) => {
     if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
@@ -348,7 +337,6 @@
       plainables.length = 0;
       plainAtStart.length = 0;
       catchUps.clear();
-      finishedRanges.clear();
     };
   };
 
@@ -696,7 +684,6 @@
       const next = hold() || !newGesture() ? here : (stops().find(t => t > here + 0.001) ?? tl.duration());
       return toScroll(Math.max(next, firstStep()));
     });
-    if (!followBack) finishedRanges.add(() => (!plain && !killed && pin && !playing && tl.progress() > 0.999 ? [pin.start, pin.end] : null));
     // The first step (the visitor's question and the answer) starts as the section slides up
     // into view, so it never arrives as an empty panel
     const early = startShown ? null : ScrollTrigger.create({
@@ -1211,8 +1198,6 @@
       anchor: () => ({ el: next, at: next.getBoundingClientRect().top }),
       makePlain: () => {
         if (plain) return;
-        session.set('introDone', '1'); // (a refresh shows it plain too)
-        removeEventListener('scroll', onScroll);
         scene.kill();
         unstage();
         plain = plainStory();
@@ -1220,11 +1205,6 @@
       isPlain: () => !!plain
     });
 
-    // (a refresh once the visitor has reached the inbox shows the opening plain)
-    const onScroll = () => {
-      if (!measuring && scrollY >= topOf(next) - innerHeight * 0.5) session.set('introDone', '1');
-    };
-    addEventListener('scroll', onScroll, { passive: true });
 
     // In-page links to the intro and features land on their step inside the pinned story
     const stepLinks = { '#intro': 'intro', '#features': 'fan' };
@@ -1251,7 +1231,6 @@
 
     return () => {
       document.removeEventListener('click', onStepLink, true);
-      removeEventListener('scroll', onScroll);
       if (plain) plain();
       else unstage();
     };
@@ -3090,7 +3069,6 @@
     const y = scrollY;
     const id = [...places].reverse().find(sel => topOf(sel) <= y + 1) || places[0];
     session.set('place', JSON.stringify({ id, offset: y - topOf(id) }));
-    if (y >= topOf('#problem') - 1) session.set('introDone', '1');
   };
   ScrollTrigger.addEventListener('scrollEnd', savePlace);
   addEventListener('pagehide', savePlace);

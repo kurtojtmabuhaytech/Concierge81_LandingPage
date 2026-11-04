@@ -10,7 +10,7 @@
 
 // Keyboard focus is always visible: a cobalt ring, white on dark and blue surfaces
 :focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 3px; }
-:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card, .tier-card--featured) :focus-visible,
+:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card) :focus-visible,
 :is(.btn-primary, .theme-dark .btn):focus-visible { outline-color: $color-white; }
 main:focus { outline: none; } // the skip link's target
 // Read by screen readers, not shown (e.g. the newsroom's "Showing 8 of 12 stories", not in the Figma)
@@ -176,7 +176,6 @@ main:focus { outline: none; } // the skip link's target
   margin: 0;
 }
 
-.header-pill--lg { font-size: $type-message; line-height: 1.14; border-radius: 28px 28px 28px 8px; max-width: min(100%, 40rem); } // contact "Leave your email."
 .header-pill--xl { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.04em; border-radius: 28px 28px 28px 8px; max-width: min(100%, 40rem); text-wrap: balance; } // intro h1 (two even lines: "I'm concierge81, / your AI concierge.", as in Figma)
 
 // Secondary concierge bubble: Regular 21/31, 16 × 24 padding
@@ -1408,7 +1407,6 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 // Until the scroll has asked the demo question, the suggestions wait (desktop scene)
 .faq-chat-box.is-waiting .faq-suggestion { pointer-events: none; }
 .faq-suggestions-done { margin: 0; font-size: $type-caption; color: #6E6B63; }
-.msg-ai { display: flex; align-items: flex-end; gap: 0.5rem; }
 .msg-avatar { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; }
 .helpful { display: flex; align-items: center; gap: 8px; padding-left: 40px; font-size: $type-caption; color: #6E6B63;
   button { background: none; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 4px 12px; font: inherit; font-size: $type-caption; color: $color-text-secondary; cursor: pointer; transition: scale 0.12s ease-out;
