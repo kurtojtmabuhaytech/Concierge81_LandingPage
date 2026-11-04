@@ -75,6 +75,7 @@ $color-text-secondary: $neutral-600;
 $color-text-secondary-dark: $neutral-300;
 $color-text-accent-dark: $cobalt-300;
 $color-critical: #FB3B3E;
+$color-critical-text: #C8292C;     // error text on paper (5:1 on #F6F6F3; the brighter red is 3.4:1)
 $color-success: #22C55E;           // online / current-page dot
 $color-screen-tint: #F5F7FF;       // light lavender of kiosk screens and the hero card
 $gradient-brand: linear-gradient(135deg, $cobalt-500, $cobalt-300);

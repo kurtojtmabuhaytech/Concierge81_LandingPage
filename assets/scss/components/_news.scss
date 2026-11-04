@@ -46,7 +46,9 @@
   margin-top: -1px;
   border-top: 1px solid $neutral-200;
   color: $color-ink;
-  &:hover { color: $color-ink; .news-row-title { color: $color-cobalt-bright; } .news-row-arrow { transform: translateX(3px); } }
+  &:hover, &:focus-visible { color: $color-ink; .news-row-title { color: $color-cobalt-bright; } .news-row-arrow { transform: translateX(3px); } }
+  &:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: -2px; border-radius: 12px; }
+  &:active { .news-row-title { color: $cobalt-600; } .news-row-arrow { transform: translateX(6px); } } // pressed
 }
 .news-row-date { font-size: 0.875rem; line-height: 1.57; color: #6E6B63; }
 .news-row .badge { justify-self: start; }

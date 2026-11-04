@@ -32,6 +32,8 @@
     if (!introSeen || location.hash) return null;
     try { return JSON.parse(session.get('place')); } catch (e) { return null; }
   })();
+  // The page's sections, top to bottom, as places to come back to
+  const places = ['.story', '#problem', '#how', '#interaction', '#industries', '#values', '#deployment', '#pricing', '#faq', '#cta', '#contact'];
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   ScrollTrigger.clearScrollMemory('manual');
   if (!location.hash) scrollTo(0, 0);
@@ -105,66 +107,344 @@
     .set(el, { color: '#FFFFFF' }, at)
     .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, at);
 
+  // A message popping in like a messaging app: it springs up from its tail corner
+  const popIn = (tl, el, at) => tl.to(el, { autoAlpha: 1, scale: 1, duration: MOTION.pop + 0.08, ease: 'back.out(1.8)' }, at);
+
+  // "•••" while the concierge types (the FAQ's): laid over the spot where `anchor` (the reply,
+  // still hidden) will appear, so nothing around it moves. One per reply, made once.
+  const dotsFor = new WeakMap();
+  const typingDots = (anchor, size = '') => {
+    if (dotsFor.has(anchor)) return dotsFor.get(anchor);
+    const dots = document.createElement('span');
+    dots.className = `typing-dots bubble bubble--sand faq-dots ${size}`;
+    dots.setAttribute('aria-hidden', 'true');
+    dots.innerHTML = '<i></i><i></i><i></i>';
+    const parent = anchor.parentElement;
+    if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+    parent.appendChild(dots);
+    dotsFor.set(anchor, dots);
+    return dots;
+  };
+  // (placed again on every re-measure: where the reply's top-left corner is)
+  const placeDots = (dots, anchor) => gsap.set(dots, { left: anchor.offsetLeft, top: anchor.offsetTop, autoAlpha: 0, scale: 0.6, transformOrigin: 'left bottom' });
+  // In a stepped timeline: the dots pop in at `at`, type for a moment, then give way to the reply
+  const typeIn = (tl, dots, at, typing = 0.55) => tl
+    .to(dots, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, at)
+    .to(dots, { autoAlpha: 0, scale: 0.8, duration: 0.15 }, at + typing);
+
+  /* A section's chat header, the same in every scene (desktop): the visitor's question pops up
+     from its corner and turns from grey to sent, "•••" types where the answer will appear, then
+     the answer pops in whole and the sub-bubble after it. `start()` sets the starting state (on
+     every re-measure); `play(tl, at)` adds the step to the scene's timeline. */
+  const chatHeader = (header, { pillFrom = { backgroundColor: '#A8A49A' }, pillTo } = {}) => {
+    const user = $('.chat-header-row.right', header);
+    const pill = user && $('.header-pill--user', user);
+    const reply = $('.header-pill--ai', header);
+    const sub = $('.sub-pill-text', header);
+    const dots = typingDots(reply);
+    const sent = pill && (pillTo || Object.fromEntries(Object.keys(pillFrom).map(key => [key, getComputedStyle(pill)[key]])));
+    const start = () => {
+      if (user) gsap.set(user, { autoAlpha: 0, y: 0, scale: 0.6, transformOrigin: 'right bottom' });
+      if (pill) gsap.set(pill, pillFrom);
+      gsap.set(reply, { autoAlpha: 0, scale: 0.6, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      placeDots(dots, reply);
+      if (sub) gsap.set(sub, { autoAlpha: 0, y: 0, scale: 0.85, transformOrigin: 'left top' });
+    };
+    const play = (tl, at = 0) => {
+      let typing = at;
+      if (user) {
+        popIn(tl, user, at + 0.01).to(pill, { ...sent, duration: 0.4, ease: 'none' }, at + 0.3);
+        typing = at + 0.45;
+      }
+      typeIn(tl, dots, typing);
+      bubbleIn(tl, reply, typing + 0.6);
+      if (sub) popIn(tl, sub, typing + 0.85);
+      return tl;
+    };
+    return { user, pill, reply, sub, start, play };
+  };
+
   // Pinned scenes sit right under the sticky header (--header-h feeds --stage-h in the CSS)
   const siteHeader = $('.site-header');
   const setHeaderHeight = () => root.style.setProperty('--header-h', `${siteHeader.offsetHeight}px`);
 
-  /* Scroll scene: pins `trigger` and plays `tl` one step at a time as the visitor scrolls down.
-     The steps are the timeline's labels.
-     - Down, into a new step: the step plays at its own speed, and the scroll holds at that step
-       until it has finished, so a hard flick can't skip anything; then the next step can start.
-     - Up: the scene shows each step as it was when the visitor saw it (its finished frame), held
-       still; nothing plays backwards.
-     - Down again through steps already seen: shown straight away, finished; only new steps play.
-     Each second of the timeline gets PACE of a screen of scrolling; `tail` keeps the scene pinned
-     after its last step (the next section can slide up over it). `seen` starts the scene as
-     already watched (the intro, after a refresh past it); `startShown` says its first frame is
-     already a full page (the story's hero). `beforeMove` runs before the timeline
-     first moves (the story finishes the opening there); `top` is where it pins; `onUpdate` gets
-     the timeline's time as it changes. An optional `exit` follows the scroll over the tail. */
-  const PACE = 0.65; // screen heights of scrolling per second of animation
-  const STEP_SPEED = 0.9; // steps play a touch slower than the timeline, so they read calmly
-  let jumping = false; // an in-page link is gliding past scenes: show them finished, don't hold
-  const scrollScene = ({ trigger, tl, exit, seen: seenAll = false, startShown = false, top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {} }) => {
+  /* Scroll scene: pins `trigger` and plays `tl` as the visitor scrolls. The steps are the
+     timeline's labels.
+     - Down, into steps not seen yet: they play in order at their own speed, and the scroll can't
+       get more than a step ahead of them (see `limits`), so none is skipped or left half built.
+     - Back up: the page stays the same kind of page, pinned sections and slide-overs, both ways.
+       What was built stays (nothing rewinds, disappears or replays); the view inside follows the
+       scroll back through the positions seen at each step, and the section that slid over it
+       slides back down. A step under way carries on while in view and pauses while the visitor
+       is away from it. The story (layers of one screen) is the one exception: it retraces its
+       steps with the scroll (`followBack`), and can't be scrolled back before it has been seen
+       to the end (its one-way lock).
+     New steps only ever play on the way down, the first time. Each second of the timeline gets
+     PACE of a screen of scrolling; `tail` keeps the scene pinned after its last step (the next
+     section can slide up over it). `seen` starts the scene as already watched; `startShown` says
+     its first frame is already a full page (the story's hero). `beforeMove` runs before the
+     timeline first moves (the story finishes the opening there); `top` is where it pins;
+     `onUpdate` gets the timeline's time as it changes. With `drift`, the view drifts up a little
+     over the tail as the next section covers it. `hold` keeps the scroll at the current step while the scene's own animation runs,
+     and `runs` are such animations, paused with the step while the visitor is away. */
+  const PACE = 0.25; // screen heights of scrolling per second of animation
+  const STEP_SPEED = 1.9; // new steps play quicker than the timeline (the whole page in about 40 s), still easy to read
+  const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
+  let jumping = false; // an in-page link is gliding past scenes: show them finished
+  /* The scroll follows the animation (desktop): the visitor can scroll down as far as the end of
+     the step that is playing (or, once it has finished, of the next one, which starts as they
+     scroll into it), and no further, so a section is never left half built while the next one
+     slides in. Each scene says how far it allows (`limits`); the smallest applies. Wheel, trackpad
+     and keys stop there, a dragged scrollbar is held there; in-page links glide past freely. */
+  const limits = new Set();
+  const catchUps = new Set(); // each scene's check, run whenever a step finishes
+  const scrollLimit = () => Math.min(Infinity, ...[...limits].map(limit => limit()));
+  const downKeys = ['ArrowDown', 'PageDown', 'End', ' '];
+  const atLimit = () => !jumping && scrollY >= scrollLimit() - 1;
+  // Through a section already seen to its end the wheel goes faster, both ways, so going back
+  // over it never feels stuck (it only shows what was built)
+  const finishedRanges = new Set();
+  const SEEN_SPEED = 2.5;
+  const inFinished = () => [...finishedRanges].some((range) => { const r = range(); return r && scrollY >= r[0] - 1 && scrollY <= r[1] + 1; });
+  // A wheel over something that scrolls by itself (the FAQ chat) scrolls it, not the page
+  const scrollsItself = (e) => {
+    for (let el = e.target; el && el !== document.body; el = el.parentElement) {
+      if (el.scrollHeight <= el.clientHeight + 1 || !/(auto|scroll)/.test(getComputedStyle(el).overflowY)) continue;
+      if (e.deltaY < 0 ? el.scrollTop > 0 : el.scrollTop + el.clientHeight < el.scrollHeight - 1) return true;
+    }
+    return false;
+  };
+  /* The way back. Once a section has been seen to its end, the first scroll back up makes it a
+     plain section for good: laid out in full, no pin, no slide-over, nothing replays (only its
+     hover animations still play). Every section seen to its end turns plain at once, before the
+     page moves, with the scroll put so that what is on screen stays exactly where it is. A section
+     still playing its steps finishes first: the scroll back waits until it has played to its end. */
+  const plainables = []; // each scene: { id, done(), inView(), finish(), makePlain(), isPlain() }
+  const plainAtStart = []; // scenes seen this session, plain from the start (after a refresh)
+  const plainSaved = (() => { try { return JSON.parse(session.get('plain')) || []; } catch (e) { return []; } })();
+  // something on screen to keep in place while the sections around it turn plain
+  const anchorOnScreen = () => $$('.chat-section-header > *, [data-anim], .bento-row, .industry-card, .tier-card, .faq-chat-box, h2, h3')
+    .find((el) => { const box = el.getBoundingClientRect(); return box.height > 0 && box.top >= 0 && box.top < innerHeight * 0.8; });
+  // While the page re-measures for that switch, the scroll still points where it was in the
+  // longer page: the scenes below must not take that as the visitor having reached them
+  let switching = false;
+  const goPlain = () => {
+    if (measuring || jumping) return;
+    const due = plainables.filter(p => !p.isPlain() && p.done());
+    if (!due.length) return;
+    const anchor = anchorOnScreen();
+    const at = anchor?.getBoundingClientRect().top;
+    due.forEach(p => p.makePlain());
+    session.set('plain', JSON.stringify(plainables.filter(p => p.isPlain()).map(p => p.id)));
+    smoother?.paused(true); // (so it doesn't ease on from where it was)
+    switching = true;
+    try {
+      ScrollTrigger.refresh();
+      smoother?.paused(false);
+      if (anchor) scrollToY(Math.max(0, topOf(anchor) - at), false);
+      ScrollTrigger.update();
+    } finally { switching = false; }
+  };
+  // A scroll back while a section on screen hasn't played to its end: it plays on, and the scroll waits
+  const holdBack = () => {
+    const unfinished = plainables.filter(p => !p.isPlain() && p.inView() && !p.done());
+    unfinished.forEach(p => p.finish());
+    return unfinished.length > 0;
+  };
+  const backKeys = ['ArrowUp', 'PageUp', 'Home'];
+  const onLimitWheel = (e) => {
+    if (scrollsItself(e)) return;
+    if (e.deltaY < 0 && !jumping && !measuring) {
+      if (holdBack()) { e.preventDefault(); return; }
+      goPlain();
+    }
+    if (e.deltaY > 0 && atLimit()) { e.preventDefault(); return; }
+    if (jumping || e.ctrlKey || !e.deltaY || !inFinished()) return;
+    e.preventDefault();
+    const step = e.deltaY * (e.deltaMode === 1 ? 40 : 1) * SEEN_SPEED;
+    scrollTo(0, Math.max(0, Math.min(scrollY + step, scrollLimit())));
+  };
+  const onLimitKey = (e) => {
+    if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    if ((backKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) && !jumping && !measuring) {
+      if (holdBack()) { e.preventDefault(); return; }
+      goPlain();
+    }
+    if (downKeys.includes(e.key) && !(e.key === ' ' && e.shiftKey) && atLimit()) e.preventDefault();
+  };
+  // When the page puts itself back at the limit, that small move up is not the visitor scrolling
+  // back up (it must not turn a finished section plain, see scrollScene)
+  let clampedAt = -1e4;
+  const pulledBack = () => performance.now() - clampedAt < 400;
+  const onLimitScroll = () => {
+    if (measuring || jumping) return;
+    const max = scrollLimit();
+    if (scrollY > max + 1) {
+      clampedAt = performance.now();
+      scrollToY(max, false);
+    }
+  };
+  const catchUpAll = () => catchUps.forEach(fn => fn());
+  const limitScroll = () => {
+    ScrollTrigger.addEventListener('scrollEnd', catchUpAll); // (and whenever the scroll comes to rest)
+    addEventListener('wheel', onLimitWheel, { capture: true, passive: false });
+    addEventListener('keydown', onLimitKey, { capture: true });
+    addEventListener('scroll', onLimitScroll, { passive: true });
+    return () => {
+      removeEventListener('wheel', onLimitWheel, { capture: true });
+      removeEventListener('keydown', onLimitKey, { capture: true });
+      removeEventListener('scroll', onLimitScroll);
+      ScrollTrigger.removeEventListener('scrollEnd', catchUpAll);
+      limits.clear();
+      plainables.length = 0;
+      plainAtStart.length = 0;
+      catchUps.clear();
+      finishedRanges.clear();
+    };
+  };
+
+  // The page is re-measuring (a resize): scroll updates then are not the visitor's
+  let measuring = false;
+  ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
+  ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
+  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, canGoBack = () => true, hold = () => false, runs = () => [] }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
-    const stepAfter = time => stops().find(t => t >= time - 0.001) ?? tl.duration();
-    const nextStop = time => stops().find(t => t > time + 0.001) ?? tl.duration();
+    // (a position within a few pixels past a step counts as that step: the scroll limit stops the
+    // visitor right on it, and re-measuring after a refresh can land a hair beyond)
+    const stepAfter = time => stops().find(t => t >= time - 0.02) ?? tl.duration();
     // The scene's first moment worth showing: its start when that is already a full page (the story
     // opens on the hero), otherwise its first step (before it, most scenes are still empty)
     const firstStep = () => (startShown ? 0 : stops()[1] ?? tl.duration());
-    let seen = seenAll ? Infinity : 0; // the furthest step the visitor has watched
-    let playing = null; // the step under way
-    let hold = null;    // scroll position the visitor is held at until that step finishes
+    let seen = seenAll ? Infinity : 0; // the furthest point the visitor has watched
+    let playing = null; // new steps under way
+    let playingTo = 0;
+    let follow = null;  // the scene easing after the scroll over what was seen
+    let followTo = -1;
+    let viewMove = null; // the view easing after the scroll (other scenes, over what was seen)
     let pin;
-    const toScroll = time => pin.start + (time / tl.duration()) * span();
+    let plain = false; // turned into a plain section on the way back (makePlain)
 
-    // Show a step's finished frame straight away (no animation)
-    const show = (time) => {
+    // The view inside the pinned screen at each point the visitor has watched (time → y), so going
+    // back retraces it
+    const views = [[0, 0]];
+    const noteView = (time) => {
+      if (!content) return;
+      const y = gsap.getProperty(content, 'y');
+      const i = views.findIndex(([t]) => Math.abs(t - time) < 0.001);
+      if (i >= 0) views[i][1] = y; else views.push([time, y]);
+      views.sort((a, c) => a[0] - c[0]);
+    };
+    const viewAt = (time) => {
+      let i = views.findIndex(([t]) => t >= time);
+      if (i < 0) return views.at(-1)[1];
+      if (i === 0) return views[0][1];
+      const [t0, y0] = views[i - 1];
+      const [t1, y1] = views[i];
+      return y0 + (y1 - y0) * ((time - t0) / Math.max(0.001, t1 - t0));
+    };
+
+    // .is-playing: new steps are under way (hover loops and card lifts wait for the step to finish)
+    const resting = () => trigger.classList.remove('is-playing');
+    const stopAll = () => {
       playing?.kill();
       playing = null;
-      hold = null;
-      tl.time(time);
+      resting();
+      follow?.kill();
+      follow = null;
+      viewMove?.kill();
+      viewMove = null;
     };
-    // Play the next unseen step, holding the scroll at it until it has finished
-    const playNext = () => {
+    // Show a step's finished frame straight away (no animation)
+    const show = (time) => {
+      stopAll();
+      tl.time(time);
+      noteView(time);
+    };
+    // Built = everything seen so far is on screen (the other scenes, over what was seen)
+    let builtAt = -1;
+    const build = () => {
+      const built = Math.min(seen, tl.duration());
+      if (Math.abs(builtAt - built) < 0.001 && Math.abs(tl.time() - built) < 0.001) return;
+      viewMove?.kill();
+      tl.time(built);
+      builtAt = built;
+    };
+    // Over what was seen: follow the scroll
+    const followSeen = (time, direction = 1) => {
+      playing?.kill();
+      playing = null;
+      resting();
+      if (followBack) {
+        // Only ever rests on a finished step: moves to the step at this scroll position with a
+        // short, smooth transition (never stops on a half-faded frame in between)
+        const step = stops().filter(t => t <= time + 0.001).at(-1) ?? 0;
+        const goal = direction < 0 ? step : stepAfter(time);
+        if (Math.abs(goal - followTo) < 0.001 && (follow?.isActive() || Math.abs(tl.time() - goal) < 0.001)) return;
+        follow?.kill();
+        followTo = goal;
+        follow = tl.tweenTo(goal, { duration: Math.min(0.9, 0.25 + Math.abs(goal - tl.time()) * 0.35), ease: 'power2.inOut' });
+        return;
+      }
+      build();
+      if (!content) return;
+      viewMove?.kill();
+      viewMove = gsap.to(content, { y: viewAt(time), duration: 0.35, ease: 'power2.out', overwrite: false });
+    };
+    // New steps: play on from what was seen up to `target`, in order, catching up if far behind
+    const playOn = (target) => {
+      if (playing && Math.abs(target - playingTo) < 0.001) return;
+      follow?.kill();
+      follow = null;
+      viewMove?.kill();
+      viewMove = null;
       const from = Math.min(seen, tl.duration());
-      if (from >= tl.duration()) return;
-      if (tl.time() < from) tl.time(from);
-      const to = nextStop(from);
-      hold = toScroll(to);
-      playing = tl.tweenTo(to, {
-        duration: (to - from) / STEP_SPEED,
+      if (!playing) {
+        if (!followBack) {
+          build();
+          if (content) gsap.set(content, { y: viewAt(from) }); // the view where the seen part ended
+        }
+        else if (Math.abs(tl.time() - from) > 0.001) tl.time(from);
+      }
+      playing?.kill();
+      playingTo = target;
+      const distance = target - tl.time();
+      if (distance <= 0) { playing = null; resting(); return; }
+      trigger.classList.add('is-playing');
+      const natural = distance / STEP_SPEED;
+      const duration = natural <= CATCH_UP ? natural : CATCH_UP + (natural - CATCH_UP) * 0.35;
+      const passed = stops().filter(t => t > tl.time() + 0.001 && t <= target + 0.001);
+      playing = tl.tweenTo(target, {
+        duration,
         ease: 'none',
+        onUpdate: () => {
+          // each step reached counts as seen, with the view it had
+          while (passed.length && tl.time() >= passed[0] - 0.001) {
+            seen = Math.max(seen, passed[0]);
+            noteView(passed.shift());
+          }
+        },
         onComplete: () => {
           playing = null;
-          hold = null;
-          seen = Math.max(seen, to);
-          steps.update(); // the visitor may have scrolled on: carry on from where they are
+          resting();
+          seen = Math.max(seen, target);
+          noteView(target);
+          builtAt = Math.min(seen, tl.duration());
+          requestAnimationFrame(catchUpAll); // (this may have been holding a scene below)
         }
       });
     };
+    // The visitor may have scrolled on into the next step while a step played (here, or in a scene
+    // above that was holding this one): it starts now, so what is on screen always matches the
+    // scroll position (and a refresh brings back the same)
+    const catchUp = () => {
+      if (playing || measuring || jumping || !steps?.isActive) return;
+      const allowed = gsap.utils.clamp(0, 1, (scrollLimit() - steps.start) / Math.max(1, steps.end - steps.start));
+      const want = Math.max(firstStep(), stepAfter(Math.min(steps.progress, allowed) * tl.duration()));
+      if (want > Math.min(seen, tl.duration()) + 0.001) playOn(want);
+    };
+    catchUps.add(catchUp);
 
     pin = ScrollTrigger.create({
       trigger,
@@ -181,66 +461,166 @@
       end: () => pin.start + span(),
       onUpdate: (self) => {
         if (self.progress > 0) beforeMove();
-        const at = self.progress * tl.duration();
+        // (a jump past the scroll limit, e.g. a dragged scrollbar, counts as being at the limit:
+        // nothing ahead of it plays while the page is put back there; a scene below it waits)
+        if (!jumping && scrollLimit() < self.start + 1) return;
+        const allowed = jumping ? 1 : gsap.utils.clamp(0, 1, (scrollLimit() - self.start) / Math.max(1, self.end - self.start));
+        const at = Math.min(self.progress, allowed) * tl.duration();
         const want = Math.max(firstStep(), stepAfter(at)); // the step at this scroll position
         if (jumping) { // gliding past (a link): everything on the way counts as seen
           seen = Math.max(seen, want);
           show(want);
           return;
         }
-        if (playing) {
-          // A step is under way: going further down waits for it
-          if (self.direction > 0 && hold !== null && self.scroll() > hold + 2) scrollToY(hold, false);
+        // Back up: the page stays the same kind of page. A scene keeps what was built (nothing
+        // rewinds, disappears or replays) and its view follows the scroll back (followSeen); a
+        // step under way carries on while in view and pauses once the visitor has scrolled away
+        // (watchView). The story, layers of one screen, retraces its steps instead (followBack):
+        // the same pinned screen runs back with the scroll, so there is no break on the way up.
+        // It only runs back when the visitor scrolls back (not the page's own clamp-back, a
+        // re-measure, or a held scroll while it is still one-way: `canGoBack`).
+        if (followBack && self.direction < 0 && (measuring || pulledBack() || !canGoBack())) return;
+        if (self.direction < 0 && !measuring && !pulledBack()) goPlain(); // (a dragged scrollbar: the wheel and keys did it already)
+        if (plain) return;
+        const watched = Math.min(seen, tl.duration());
+        if (self.direction > 0 && want > watched + 0.001 && !switching) { // (see goPlain)
+          playOn(want);
           return;
         }
-        if (want <= seen) {
-          if (Math.abs(tl.time() - want) > 0.001) show(want); // seen before: its finished frame
-          return;
-        }
-        if (self.direction < 0) return;
-        playNext();
-        if (self.scroll() > hold + 2) scrollToY(hold, false);
+        if (playing) return; // a step under way plays on (never cut short)
+        followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(at, watched)), self.direction);
       },
       onRefresh: (self) => {
-        // Rewind with the old measurements (the exit first: it ran last), re-measure the starting
-        // state, then show (no replay) the finished step at the scroll position
-        playing?.kill();
-        playing = null;
-        hold = null;
-        exit?.progress(0);
+        // Rewind with the old measurements, re-measure the starting state, then show (no replay)
+        // the finished step at the scroll position
+        stopAll();
+        builtAt = -1;
+        views.length = 0;
+        views.push([0, 0]);
         tl.progress(0);
         setHeaderHeight();
         onRefresh();
         tl.invalidate();
         if (self.progress > 0) beforeMove();
         const want = self.progress > 0 ? Math.max(firstStep(), stepAfter(self.progress * tl.duration())) : 0;
-        seen = Math.max(seen === Infinity ? Infinity : seen, want);
-        tl.time(Math.min(seen, want));
-        exit?.invalidate();
+        if (!switching) seen = Math.max(seen, want); // (see goPlain)
+        // the views seen, re-measured at each step (going back over the seen part retraces them)
+        stops().filter(t => t > 0 && t <= Math.min(seen, tl.duration()) + 0.001).forEach((t) => { tl.time(t); noteView(t); });
+        // what was built stays built, wherever the visitor is (a scene below the screen, seen
+        // before the visitor scrolled back up, keeps it); the view goes back to where it was
+        tl.time(Math.min(seen, tl.duration()));
+        noteView(tl.time());
+        if (content && seen > want + 0.001) gsap.set(content, { y: viewAt(Math.max(firstStep(), want)) });
       }
     });
-    tl.eventCallback('onUpdate', () => onUpdate(tl.time()));
-    // The exit runs over the tail. It starts from wherever things are when the visitor gets there
-    // (questions may have been moved by hand), so it re-measures each time it is entered from above.
-    if (exit) {
-      ScrollTrigger.create({
+    // .is-built: the scene has played to its end (e.g. the device list can be picked from)
+    tl.eventCallback('onUpdate', () => {
+      onUpdate(tl.time());
+      trigger.classList.toggle('is-built', tl.progress() > 0.999);
+    });
+    // Over the tail, as the next section slides up over it, the view rests on the finished one
+    // (the last step's) and only drifts up a little as it is covered (`drift`). It always eases
+    // there from wherever the view is, so a quick pass back down never leaves an earlier part of
+    // the section on screen under the next one.
+    const DRIFT = 40;
+    let tailTrigger = null;
+    if (drift) {
+      const settleView = (progress, ease = true) => {
+        if (!content || playing) return;
+        viewMove?.kill();
+        const y = viewAt(tl.duration()) - DRIFT * progress;
+        viewMove = ease ? gsap.to(content, { y, duration: 0.35, ease: 'power2.out', overwrite: false }) : gsap.set(content, { y });
+      };
+      tailTrigger = ScrollTrigger.create({
         trigger,
         start: () => pin.start + span(),
         end: () => pin.start + span() + tail(),
-        animation: exit,
-        scrub: 0.6,
-        onEnter: () => {
-          // reaching the tail means every step has been seen (finish one still under way)
-          if (playing) { playing.progress(1); }
-          seen = Infinity;
-          exit.invalidate();
+        onEnter: (self) => {
+          if (!jumping && scrollY > scrollLimit() + 1) return; // a jump past the limit (it is put back)
+          // reaching the tail: whatever is left plays on to the end at its own pace (never cut
+          // short) as the next section slides over
+          if (tl.progress() < 0.999) playOn(tl.duration());
+          else seen = Infinity;
+          settleView(self.progress);
         },
-        onRefresh: (self) => exit.progress(self.progress)
+        onUpdate: self => settleView(self.progress),
+        onRefresh: (self) => { if (self.progress > 0) settleView(self.progress, false); }
       });
     }
     // Scroll position of a step (in-page links to a step)
+    const toScroll = time => pin.start + (time / tl.duration()) * span(); // where a moment of the timeline is
     const labelToScroll = label => toScroll(tl.labels[label]);
-    return { pin, scrub: { labelToScroll }, steps };
+    // How far down the visitor may scroll (see `limits`): to the end of the step under way, or of
+    // the next one once it has finished; held at the current one while the scene's own animation
+    // runs (`hold`: the inbox's rain and demo); no limit once the scene has been seen to its end
+    limits.add(() => {
+      if (plain || !pin) return Infinity;
+      const done = Math.min(seen, tl.duration());
+      if (done >= tl.duration() - 0.001 && !playing && !hold()) return Infinity;
+      const next = playing ? playingTo : (hold() ? done : (stops().find(t => t > done + 0.001) ?? tl.duration()));
+      return toScroll(Math.max(next, firstStep()));
+    });
+    if (!followBack) finishedRanges.add(() => (!plain && pin && !playing && tl.progress() > 0.999 ? [pin.start, pin.end] : null));
+    // The first step (the visitor's question and the answer) starts as the section slides up
+    // into view, so it never arrives as an empty panel
+    const early = startShown ? null : ScrollTrigger.create({
+      trigger,
+      start: 'top 75%',
+      onEnter: () => {
+        if (jumping || measuring || playing || seen >= firstStep() - 0.001) return;
+        playOn(firstStep());
+      }
+    });
+
+    // What is playing pauses while the scene is out of view (the visitor has scrolled up away from
+    // it) and carries on when they come back, so they see all of it
+    const watchView = () => {
+      const r = trigger.getBoundingClientRect();
+      const away = r.bottom <= 0 || r.top >= innerHeight;
+      playing?.paused(away);
+      runs().forEach((run) => { if (run.progress() > 0 && run.progress() < 1) run.paused(away); });
+    };
+    addEventListener('scroll', watchView, { passive: true });
+    ScrollTrigger.addEventListener('refresh', watchView); // (positions change when the page re-measures)
+    // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
+    function kill() {
+      early?.kill();
+      removeEventListener('scroll', watchView);
+      ScrollTrigger.removeEventListener('refresh', watchView);
+      stopAll();
+      steps.kill();
+      tailTrigger?.kill();
+      tl.pause();
+      pin.kill(true);
+    }
+    // A plain section for good (see goPlain): laid out in full, no pin, the next section no longer
+    // slides over it; everything shown as built, and it scrolls like the rest of the page
+    const makePlain = () => {
+      if (plain) return;
+      plain = true;
+      seen = Infinity;
+      kill();
+      if (content) {
+        tl.getTweensOf(content).forEach(tween => tween.kill()); // (the view moves belonged to the pinned screen)
+        gsap.set(content, { y: 0 });
+      }
+      trigger.classList.add('is-plain');
+      $$('.slides-over').find(el => trigger.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)?.classList.remove('slides-over');
+      resting();
+      tl.progress(1);
+    };
+    if (!followBack) {
+      plainables.push({
+        id: `#${trigger.id}`,
+        done: () => plain || (tl.progress() > 0.999 && !playing && !hold()),
+        inView: () => !!pin?.isActive,
+        finish: () => { if (!playing || playingTo < tl.duration() - 0.001) playOn(tl.duration()); },
+        makePlain,
+        isPlain: () => plain
+      });
+      if (plainSaved.includes(`#${trigger.id}`)) plainAtStart.push(makePlain);
+    }
+    return { pin, scrub: { labelToScroll }, steps, kill };
   };
 
   const hero = {
@@ -256,11 +636,13 @@
   let finishOpening = () => {};
 
   /* ---- 0–2. Opening screen → hero ---------------------------------------------------------
-     Plays once per browser session, on the first open: it waits until the page (avatar, photos)
-     has loaded, then the greeting pops in whole and flies into the hero. The page can't be
-     scrolled while it plays, so every first visitor sees it. A refresh in the same session, a
-     #section link or reduced motion skip it. Runs once, outside matchMedia. */
-  const OPENING_SLOW = 1.2; // the greeting's glide into the hero and the card building around it
+     Plays once per browser session, on the first open: as soon as the hero picture is ready, the
+     greeting pops in whole and flies into the hero. The page can't be scrolled while it plays, so
+     every first visitor watches it. A refresh in the same session, a #section link or reduced
+     motion skip it. Runs once, outside matchMedia. */
+  const OPENING_SLOW = 0.9; // the greeting's glide into the hero and the card building around it
+  const OPENING_TYPING = 0.9; // "concierge81 is typing…"
+  const OPENING_HOLD = 1.0; // the greeting on its own before it flies into the hero
   const runOpening = () => {
     const splash = $('.splash');
     let done = false;
@@ -314,14 +696,14 @@
       .fromTo(bubble, { scale: 0.6, transformOrigin: 'left bottom' }, { autoAlpha: 1, scale: 1, duration: MOTION.fast, ease: 'back.out(2)' })
       .to(caption, { autoAlpha: 1, duration: MOTION.fast }, '<0.1')
       // a short "typing…", then the whole greeting pops in at once
-      .addLabel('greet', `+=${MOTION.typing}`)
+      .addLabel('greet', `+=${OPENING_TYPING}`)
       .set(dots, { autoAlpha: 0 }, 'greet')
       .set(bubble, full, 'greet')
       .set(text, { autoAlpha: 1 }, 'greet')
-      .call(() => { caption.textContent = 'concierge · 9:12 AM'; }, null, 'greet')
+      .call(() => { caption.textContent = 'concierge81 · 9:12 PM'; }, null, 'greet')
       .fromTo(bubble, { scale: 0.86 }, { scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)', immediateRender: false }, 'greet')
       // hold, then hand the greeting to the hero while the card builds around it
-      .addLabel('handoff', 'greet+=1.8')
+      .addLabel('handoff', `greet+=${OPENING_HOLD}`)
       .to(splash, { backgroundColor: 'rgba(255, 255, 255, 0)', duration: OPENING_SLOW, ease: 'none' }, 'handoff')
       .to(msg, {
         x: () => heroBubble.getBoundingClientRect().left - bubble.getBoundingClientRect().left,
@@ -335,25 +717,61 @@
       // the greeting lands: the real hero bubble takes over from the splash copy
       .set(hero.greeting, { autoAlpha: 1 }, `handoff+=${OPENING_SLOW}`)
       .set(msg, { autoAlpha: 0 }, `handoff+=${OPENING_SLOW}`)
-      .fromTo(hero.composer, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.7, ease: MOTION.ease })
-      .fromTo(hero.controls, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: MOTION.fast, ease: MOTION.ease, stagger: 0.16 })
+      .fromTo(hero.composer, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: MOTION.ease })
+      .fromTo(hero.controls, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: MOTION.fast, ease: MOTION.ease, stagger: 0.1 }, '-=0.2')
       // the visitor "sends" the suggested question: it pops in whole
       .fromTo(hero.question, { autoAlpha: 0, scale: 0.86, transformOrigin: 'right bottom' },
-        { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, '+=0.6');
+        { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, '+=0.3');
 
-    // Start once everything has loaded, so nothing pops in half-drawn (a slow network still
-    // starts it after a few seconds)
+    // Start as soon as the hero picture is ready to draw (and the fonts), so nothing pops in
+    // half-drawn; the rest of the page goes on loading behind it (a slow network still starts it
+    // after a couple of seconds)
     let started = false;
-    const start = () => { if (!started) { started = true; tl.play(); } };
-    if (document.readyState === 'complete') start();
-    else {
-      addEventListener('load', start, { once: true });
-      setTimeout(start, 4000);
-    }
+    const start = () => {
+      if (started || done) return;
+      started = true;
+      tl.play();
+      // never leaves the page locked: if the browser stalls its frames, the opening ends anyway
+      setTimeout(finish, (tl.duration() + 4) * 1000);
+    };
+    const picture = $('img', hero.avatar);
+    Promise.all([picture?.decode?.().catch(() => {}), document.fonts?.ready]).then(start);
+    setTimeout(start, 2500);
+
   };
 
   /* ---- Scenes: each is ({ isDesktop, isMobile }) => cleanup?, rebuilt when the breakpoint changes ---- */
   const scenes = [];
+
+  // The intro story as plain sections (hero, intro, features stacked, everything shown, nothing
+  // pinned): once the visitor scrolls back up into it, and on later loads in the session. The
+  // site header slides away as the inbox comes in (as it does in the story) and back above it.
+  const STORY_PROPS = 'transform,opacity,visibility,color,backgroundColor,boxShadow,--avatar-clip-bottom,--avatar-glow';
+  const plainStory = () => {
+    const story = $('.story');
+    const hidden = $$('[data-anim], .hero-card-top, .chat-composer', story).filter(el => +getComputedStyle(el).opacity < 0.5);
+    gsap.set([story, ...$$('*', story)], { clearProps: STORY_PROPS });
+    gsap.set($$('[data-anim]', story), { autoAlpha: 1 });
+    // what was hidden at that moment (the hero card's top bar and composer after the first step)
+    // fades back in rather than snapping
+    // (it ends set visible: clearing it would hand data-anim parts back to the CSS that hides them)
+    gsap.fromTo(hidden, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, ease: 'power1.out' });
+    gsap.set(hero.surface, { '--hero-surface': 1 });
+    gsap.set(siteHeader, { clearProps: 'transform' });
+    root.classList.add('story-plain');
+    const header = ScrollTrigger.create({
+      trigger: '#problem',
+      start: 'top 60%',
+      onEnter: () => gsap.to(siteHeader, { yPercent: -100, duration: 0.4, ease: MOTION.easeInOut }),
+      onLeaveBack: () => gsap.to(siteHeader, { yPercent: 0, duration: 0.4, ease: MOTION.easeInOut }),
+      onRefresh: self => gsap.set(siteHeader, { yPercent: self.progress > 0 || scrollY > self.start ? -100 : 0 })
+    });
+    return () => {
+      header.kill();
+      root.classList.remove('story-plain');
+      gsap.set(siteHeader, { clearProps: 'transform' });
+    };
+  };
 
   /* 3–5. Desktop story (Figma recording 11–25s): hero, intro and features share one pinned screen.
      The kiosk stays still while the chat changes around it, and only moves at set steps.
@@ -361,6 +779,7 @@
      Only transforms and opacity animate. */
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
+    if (introDone) return plainStory(); // already watched this session: never replayed
     const story = $('.story');
     const introKiosk = $('#intro .kiosk-device');
     const featuresKiosk = $('#features .kiosk-device');
@@ -581,13 +1000,17 @@
     });
     tl.addLabel('fan');
 
-    // The site header stays away for the rest of the page; it comes back only when the visitor
-    // scrolls back up to the intro step (the header tween above runs back)
+    // The site header stays away for the rest of the page.
+    // On the way back (see goPlain) the story becomes plain sections, like every section seen:
+    // the switch happens while the inbox covers the whole screen, so it can't be seen.
+    let oneWay = true; // until the inbox has slid half way up (see below)
+    let plain = null;
     const scene = scrollScene({
       trigger: story,
       tl,
-      seen: introDone, // already watched this session: shown finished, never replayed
       startShown: true, // its start is the hero, a full page
+      followBack: true, // on the way back it retraces its steps with the scroll
+      canGoBack: () => !oneWay,
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       beforeMove: () => finishOpening(), // scrolling (or a reload restoring the scroll position) ends the opening first
@@ -596,6 +1019,54 @@
         applyStart();
       }
     });
+    plainables.push({
+      id: '.story',
+      done: () => !!plain || (!oneWay && tl.progress() > 0.999),
+      inView: () => false, // (its one-way lock already keeps the visitor going until it has played)
+      finish: () => {},
+      makePlain: () => {
+        if (plain) return;
+        scene.kill();
+        unstage();
+        plain = plainStory();
+      },
+      isPlain: () => !!plain
+    });
+
+    /* One way through the opening: until the visitor reaches the team inbox, the page doesn't
+       scroll back up (wheel, trackpad, keys; a dragged scrollbar is held at the furthest point
+       reached), so the story is always watched through, never rewound or cut. Scrolling down
+       and in-page links work as usual. Once the inbox has slid half way up over it, it unlocks
+       for good (the session remembers), and the story retraces its steps on the way back. */
+    let furthest = scrollY;
+    const remeasured = () => { furthest = scrollY; }; // positions change when the page re-measures
+    const upKeys = ['ArrowUp', 'PageUp', 'Home'];
+    const onWheel = (e) => { if (e.deltaY < 0 && !jumping) e.preventDefault(); };
+    const onKey = (e) => {
+      if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+      if (upKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) e.preventDefault();
+    };
+    const onScroll = () => {
+      if (measuring) return;
+      if (scrollY >= topOf(next) - innerHeight * 0.5) { // the inbox has slid half way up: free from now on
+        session.set('introDone', '1');
+        unlock();
+        return;
+      }
+      if (jumping || scrollY >= furthest) furthest = scrollY;
+      else if (scrollY < furthest - 1) scrollToY(furthest, false);
+    };
+    const unlock = () => {
+      oneWay = false;
+      removeEventListener('wheel', onWheel, { capture: true });
+      removeEventListener('keydown', onKey, { capture: true });
+      removeEventListener('scroll', onScroll);
+      ScrollTrigger.removeEventListener('refresh', remeasured);
+    };
+    addEventListener('wheel', onWheel, { capture: true, passive: false });
+    addEventListener('keydown', onKey, { capture: true });
+    addEventListener('scroll', onScroll, { passive: true });
+    ScrollTrigger.addEventListener('refresh', remeasured);
 
     // In-page links to the intro and features land on their step inside the pinned story
     const stepLinks = { '#intro': 'intro', '#features': 'fan' };
@@ -611,14 +1082,20 @@
     document.addEventListener('click', onStepLink, true);
     if (location.hash in stepLinks) requestAnimationFrame(() => scrollToY(scene.scrub.labelToScroll(stepLinks[location.hash]), false));
 
-    return () => {
-      document.removeEventListener('click', onStepLink, true);
+    function unstage() {
       gsap.set(siteHeader, { clearProps: 'transform' });
       traveller.remove();
       morph.remove();
       morphEdge.remove();
       story.classList.remove('is-staged');
       next.classList.remove('slides-over');
+    }
+
+    return () => {
+      document.removeEventListener('click', onStepLink, true);
+      unlock();
+      if (plain) plain();
+      else unstage();
     };
   });
 
@@ -632,9 +1109,10 @@
   });
 
   /* 6–8. Team inbox (Figma recording 24–37s). Desktop: a scroll scene that slides up over the hero
-     story. The visitor asks, the concierge answers; the inbox card darkens in and the questions
-     rain into a pile; two are lifted out and dropped back (drag demo); then the view moves down
-     and "Let me handle the repeats." answers. The questions move by GSAP transforms (smoother
+     story. The visitor asks, the concierge answers; the inbox card darkens in, then on their own
+     the questions rain into a pile and two are lifted out and dropped back (drag demo), after
+     which the questions can be picked up; the next scroll moves the view down and "Let me handle
+     the repeats." answers. The questions move by GSAP transforms (smoother
      than CSS variables) and can be picked up and dropped (setupPile). */
   const inbox = {
     section: $('#problem'),
@@ -758,12 +1236,8 @@
     if (!isDesktop) return;
     const { section, content, card, head, pile, tags, float, floatCursor, open } = inbox;
     const [ask, closing] = inbox.headers;
-    const askUser = $('.chat-header-row.right', ask);
-    const askPill = $('.header-pill--user', askUser);
-    const askReply = $('.header-pill--ai', ask);
-    const askSub = $('.sub-pill-text', ask);
-    const closingReply = $('.header-pill--ai', closing);
-    const closingSub = $('.sub-pill-text', closing);
+    const asking = chatHeader(ask, { pillTo: { backgroundColor: '#0E1013' } });
+    const closingHeading = chatHeader(closing);
     section.classList.add('is-staged');
 
     // The floating "Where is the restroom?" rests down in the pile until the demo lifts it out
@@ -782,15 +1256,18 @@
 
     // The pinned screen shows part of the content; moving it works like scrolling
     const offsetIn = el => el.getBoundingClientRect().top - content.getBoundingClientRect().top;
-    const showCard = () => -gsap.utils.clamp(0, offsetIn(card) - 16, offsetIn(card) + card.offsetHeight + 24 - innerHeight);
-    const showClosing = () => -Math.max(0, content.offsetHeight - innerHeight); // down to the section's end
+    const showCard = showInStage(section, content, card);
+    const showClosing = () => -uncut(content, Math.max(0, content.offsetHeight - innerHeight), offsetIn(closing)); // down to the section's end
 
+    // The rain and the drag demo play on their own, at their own pace, once the visitor has
+    // reached the card (they don't need the scroll, and the scroll never waits for them); then
+    // the questions can be picked up. Built below; reset with the scene.
+    let show = null;
     const applyStart = () => {
+      show?.pause(0);
       gsap.set(content, { y: 0 });
-      gsap.set(askUser, { autoAlpha: 0, y: 12 });
-      gsap.set(askPill, { backgroundColor: '#A8A49A' });
-      gsap.set([askReply, closingReply], { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set([askSub, closingSub], { autoAlpha: 0, y: 16 });
+      asking.start();
+      closingHeading.start();
       gsap.set(card, { autoAlpha: 0, backgroundColor: '#CFCBC0' });
       gsap.set(head, { autoAlpha: 0 });
       gsap.set(pile, { '--pile-glow': 0 });
@@ -798,95 +1275,78 @@
       inbox.moved.clear();
       tags.forEach((tag, i) => gsap.set(tag, { autoAlpha: 0, zIndex: '', x: 0, y: dropFrom(i), rotation: spinFrom(i), scale: 1 }));
       gsap.set(floatCursor, { opacity: 0 });
+      show?.invalidate();
+      pile.classList.add('is-busy');
     };
     applyStart();
 
-    // The rain: once the whole card is in view, the questions fall into the pile from the bottom
-    // up as the visitor scrolls, and the glow rises under it (nested in the scene's timeline below)
-    const rain = gsap.timeline()
+    // The rain (recording 28–30s): the questions fall into the pile from the bottom up and the
+    // glow rises under it. Then the drag demo (30.5–34s): "Where is the restroom?" is lifted out
+    // with the cursor, hovers, and drops back; then "What time do you open?" does the same.
+    show = gsap.timeline({ paused: true, onComplete: () => pile.classList.remove('is-busy') })
       .to(pile, { '--pile-glow': 1, duration: 1.8, ease: 'none' }, 0);
     tags.forEach((tag, i) => {
       const at = fallDelay(i) * 2;
       const rest = inbox.rest(tag);
-      rain.to(tag, { autoAlpha: 1, duration: 0.2, ease: 'none' }, at)
+      show.to(tag, { autoAlpha: 1, duration: 0.2, ease: 'none' }, at)
         .to(tag, { y: rest.y, duration: 1.4, ease: 'bounce.out' }, at)
         .to(tag, { rotation: rest.rotation, duration: 1.4, ease: 'back.out(1.7)' }, at);
     });
+    show.addLabel('demo', '+=0.3')
+      .set(float, { zIndex: 20 }, 'demo')
+      .fromTo(float, { y: floatInPile, rotation: -6 }, { y: 0, rotation: 4, duration: 0.6, ease: MOTION.easeInOut, immediateRender: false }, 'demo')
+      .to(floatCursor, { opacity: 1, duration: 0.2 }, 'demo')
+      .to(float, { y: -10, rotation: 2, duration: 0.4, ease: 'sine.inOut' }, 'demo+=0.6')
+      .to(float, { y: floatInPile, rotation: -6, duration: 0.9, ease: 'bounce.out' }, 'demo+=1.0')
+      .to(floatCursor, { opacity: 0, duration: 0.2 }, 'demo+=1.0')
+      .set(open, { zIndex: 20 }, 'demo+=1.6')
+      .fromTo(open, { x: 0, y: openRest.y, rotation: openRest.rotation }, { x: 40, y: -120, rotation: -14, duration: 0.5, ease: MOTION.easeInOut, immediateRender: false }, 'demo+=1.6')
+      .to(open, { y: -132, rotation: -11, duration: 0.4, ease: 'sine.inOut' }, 'demo+=2.1')
+      .to(open, { x: 0, y: openRest.y, rotation: openRest.rotation, duration: 0.9, ease: 'bounce.out' }, 'demo+=2.5');
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (26–28s): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
-      .to(askUser, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(askPill, { backgroundColor: '#0E1013', duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, askReply, 0.6)
-      .to(askSub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (26–28s): the visitor's question pops up and is sent (grey → black), "•••" types,
+    // then the answer pops in and the sub-bubble after it
+    asking.play(tl)
       .addLabel('ask')
 
       // Step 2 (28–30s): the view moves to the inbox and the card darkens in; once the whole card
-      // is in view the questions rain into the pile
+      // is in view the rain and the demo play on their own (show)
       .to(content, { y: showCard, duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
       .to(card, { autoAlpha: 1, duration: 0.3, ease: 'none' }, 'ask+=0.1')
       .to(card, { backgroundColor: '#0E1013', duration: 0.6, ease: 'none' }, 'ask+=0.25')
       .to(head, { autoAlpha: 1, duration: 0.4 }, 'ask+=0.55')
-      .addLabel('rain', 'ask+=0.95')
-      .add(rain, 'rain')
-      .addLabel('inbox')
+      .addLabel('inbox', 'ask+=0.95')
 
-      // Step 3 (30.5–34s): drag demo. "Where is the restroom?" is lifted out with the cursor,
-      // hovers, and drops back; then "What time do you open?" does the same.
-      .set(float, { zIndex: 20 }, 'inbox')
-      .fromTo(float, { y: floatInPile, rotation: -6 }, { y: 0, rotation: 4, duration: 0.6, ease: MOTION.easeInOut, immediateRender: false }, 'inbox')
-      .to(floatCursor, { opacity: 1, duration: 0.2 }, 'inbox')
-      .to(float, { y: -10, rotation: 2, duration: 0.4, ease: 'sine.inOut' }, 'inbox+=0.6')
-      .to(float, { y: floatInPile, rotation: -6, duration: 0.9, ease: 'bounce.out' }, 'inbox+=1.0')
-      .to(floatCursor, { opacity: 0, duration: 0.2 }, 'inbox+=1.0')
-      .set(open, { zIndex: 20 }, 'inbox+=1.6')
-      .fromTo(open, { x: 0, y: openRest.y, rotation: openRest.rotation }, { x: 40, y: -120, rotation: -14, duration: 0.5, ease: MOTION.easeInOut, immediateRender: false }, 'inbox+=1.6')
-      .to(open, { y: -132, rotation: -11, duration: 0.4, ease: 'sine.inOut' }, 'inbox+=2.1')
-      .to(open, { x: 0, y: openRest.y, rotation: openRest.rotation, duration: 0.9, ease: 'bounce.out' }, 'inbox+=2.5')
-      .addLabel('demo')
-
-      // Step 4 (34.5–36s): the view moves down; "Let me handle the repeats." grows, then the sub-bubble
-      .to(content, { y: showClosing, duration: MOTION.slow, ease: MOTION.easeInOut }, 'demo');
-    bubbleIn(tl, closingReply, 'demo+=0.6')
-      .to(closingSub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+      // Step 3 (34.5–36s), on the next scroll: the view moves down; "•••" types, then "Let me
+      // handle the repeats." pops in and the sub-bubble after it
+      .to(content, { y: showClosing, duration: MOTION.slow, ease: MOTION.easeInOut }, 'inbox');
+    closingHeading.play(tl, tl.labels.inbox + 0.2)
       .addLabel('repeats');
 
-    // Leaving, as the How section slides up over the inbox (the tail): the questions rise back up
-    // out of the card (the fall in reverse) from wherever they rest and fade away with the glow,
-    // then the card and messages fade out. All with the scroll; the exit re-measures where the
-    // questions rest each time it is entered from above (some may have been moved by hand).
-    const riseDelay = i => (((i * 7) % tags.length) / tags.length) * 1.0;
-    const exit = gsap.timeline({ paused: true })
-      .to(tags, {
-        y: i => `-=${pile.offsetHeight + 160 + (i % 6) * 45}`, rotation: i => `+=${((i * 37) % 30) - 15}`,
-        duration: 2.0, ease: 'power2.in', stagger: riseDelay
-      }, 0)
-      .to(tags, { autoAlpha: 0, duration: 0.7, ease: 'none', stagger: riseDelay }, 1.3)
-      .to(pile, { '--pile-glow': 0, duration: 2.0, ease: 'none' }, 0.4)
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 1.2, ease: 'power1.in' }, 1.6);
+    // The card in full view starts the show. When the page is only re-measuring (a refresh past
+    // it, a resize), or a link glides past, it is shown finished instead: it never replays.
+    const startShow = (time) => {
+      if (time < tl.labels.inbox - 0.001 || show.progress() > 0) return;
+      if (measuring || jumping) show.progress(1);
+      else show.play();
+    };
+
     const next = $('#how');
     next.classList.add('slides-over');
-
-    // The questions can be picked up once the demo is over, until the exit starts. Scrolling back
-    // into the demo or the rain puts moved questions back in their places first (the demo
-    // animates its two, the rain all of them), so the scroll and a drop never fight over one.
-    const updatePile = () => {
-      const time = tl.time();
-      pile.classList.toggle('is-busy', time < tl.labels.demo || exit.progress() > 0);
-      if (time < tl.labels.inbox) inbox.putBack();
-      else if (time < tl.labels.demo) inbox.putBack([float, open]);
-    };
-    exit.eventCallback('onUpdate', updatePile);
 
     scrollScene({
       trigger: section,
       tl,
-      exit,
+      drift: true, // the content drifts up a little as the next section covers it
       tail: () => section.offsetHeight, // the How section slides up over the inbox
-      onUpdate: updatePile,
-      onRefresh: applyStart
+      onUpdate: startShow,
+      onRefresh: applyStart,
+      // the scroll waits for the rain and the demo, which pause while the visitor is away
+      hold: () => tl.time() >= tl.labels.inbox - 0.001 && show.progress() < 1,
+      runs: () => [show]
     });
 
     return () => {
@@ -912,12 +1372,26 @@
 
   // Moving the content inside a pinned screen works like scrolling: the shift that brings an
   // element (or everything from `el` down to `last`) fully into view, top first if it is taller
-  // than the screen
+  // than the screen. It never stops part-way through a chat bubble (or a CTA line) above it: that
+  // one moves fully out of view, or stays whole if moving it out would cut `el`.
+  const aboveParts = '.chat-section-header > *, .status-line, .cta-title, .cta-sub, .cta-actions';
+  const uncut = (content, shift, top) => {
+    const box = content.getBoundingClientRect();
+    $$(aboveParts, content).forEach((part) => {
+      const b = part.getBoundingClientRect();
+      const partTop = b.top - box.top;
+      const partBottom = b.bottom - box.top;
+      if (shift <= partTop + 1 || shift >= partBottom - 1) return; // not cut
+      shift = partBottom + 12 <= top - 16 ? partBottom + 12 : Math.max(0, partTop - 12);
+    });
+    return shift;
+  };
   const showInStage = (section, content, el, last = el) => () => {
-    const top = el.getBoundingClientRect().top - content.getBoundingClientRect().top;
-    const bottom = last.getBoundingClientRect().bottom - content.getBoundingClientRect().top;
+    const box = content.getBoundingClientRect();
+    const top = el.getBoundingClientRect().top - box.top;
+    const bottom = last.getBoundingClientRect().bottom - box.top;
     const stageH = innerHeight; // the pinned screen (the section can measure taller while ScrollTrigger re-measures)
-    return -gsap.utils.clamp(0, top - 16, bottom + 24 - stageH);
+    return -uncut(content, gsap.utils.clamp(0, top - 16, bottom + 24 - stageH), top);
   };
 
   /* 9. How it works (Figma recording 37–50s). Desktop: a scroll scene that slides up over the
@@ -942,25 +1416,17 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, wrap, stepper, dots, cards, answer } = how;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#5B5F66', color: 'rgba(255, 255, 255, 0.7)' } });
     const icons = cards.map(card => $('.process-icon', card));
     const texts = cards.map(card => $$('.process-label, h3, p', card));
     const dial = $('.process-glyph--round', cards[1]); // its tick ring turns with --dial
-    const pillColor = getComputedStyle(pill).backgroundColor;
-    const pillText = getComputedStyle(pill).color;
     const next = $('#interaction');
     section.classList.add('is-staged');
     next.classList.add('slides-over');
 
     const applyStart = () => {
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#5B5F66', color: 'rgba(255, 255, 255, 0.7)' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set(stepper, { '--line': 0 });
       gsap.set(dots, { autoAlpha: 0, scale: 0.6, '--on': 0 });
       gsap.set(cards, { autoAlpha: 0, y: 24 });
@@ -978,13 +1444,11 @@
       .to(texts[i], { opacity: 1, duration: 0.4, stagger: 0.1 }, '<0.25');
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (37–40s): the visitor asks, the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, color: pillText, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (37–40s): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // The view moves to the steps; then they build (steps, below)
@@ -1023,12 +1487,7 @@
       .to(answer, { morphSVG: how.check, duration: 0.5, ease: MOTION.easeInOut }, 'step3+=1.9');
     tl.add(steps, 'steps').addLabel('built');
 
-    // Leaving, as the next section slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       next.classList.remove('slides-over');
@@ -1066,37 +1525,32 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, grid, chat, voice } = modes;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#A8A49A' } });
     const titles = [chat, voice].map(card => $$('.mode-tag, h3', card));
     const words = [chat, voice].map(card => $$('.word', card));
     const mini = $('.mini-chat', chat);
     const messages = $$('.msg-row', mini);
     const question = $('.bubble', messages[0]);
     const chips = $$('.chip', mini);
+    const miniDots = typingDots(messages[1], 'is-sm');
     const stage = $('.voice-stage', voice);
     const listening = $('.listening', voice);
-    const pillColor = getComputedStyle(pill).backgroundColor;
     const questionColor = getComputedStyle(question).backgroundColor;
     const voiceColor = getComputedStyle(voice).backgroundColor;
     section.classList.add('is-staged');
 
     const applyStart = () => {
       gsap.set(content, { y: 0 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#A8A49A' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set([chat, voice], { autoAlpha: 0, y: 24 });
       gsap.set(voice, { backgroundColor: '#5B5D61' });
       gsap.set(titles.flat(), { opacity: 0 });
       gsap.set(words.flat(), { opacity: 0 });
       gsap.set(mini, { autoAlpha: 0, y: 40 });
-      gsap.set(messages, { autoAlpha: 0, y: 10 });
+      gsap.set(messages, { autoAlpha: 0, y: 0, scale: 0.6, transformOrigin: i => (messages[i].matches('.msg-row--user') ? 'right bottom' : 'left bottom') });
       gsap.set(question, { backgroundColor: '#C9C6BE' });
-      gsap.set(chips, { autoAlpha: 0, y: 8 });
+      placeDots(miniDots, messages[1]);
+      gsap.set(chips, { autoAlpha: 0, y: 0, scale: 0.8 });
       gsap.set(stage, { autoAlpha: 0, scale: 0.8 });
       gsap.set(listening, { autoAlpha: 0 });
     };
@@ -1108,13 +1562,11 @@
       .to(words[i], { opacity: 1, duration: 0.25, stagger: 0.05 }, '<0.3');
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (50–53s): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (50–53s): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // The view moves to the cards; then they play (cards, below)
@@ -1137,25 +1589,23 @@
       .to(stage, { autoAlpha: 1, scale: 1, duration: 0.9 }, 'chat+=0.7')
       .addLabel('voice')
 
-      // Step 4 (57–60s): the mini chat plays: the question (grey → black), the answer, the
-      // follow-up, then the chips; the voice card starts listening
-      .to(messages[0], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice')
+      // Step 4 (57–60s): the mini chat plays like a messaging app: the question pops up (grey →
+      // black), "•••" types, the answer and the follow-up pop in, then the chips; the voice card
+      // starts listening
       .to(question, { backgroundColor: questionColor, duration: 0.3, ease: 'none' }, 'voice+=0.25')
-      .to(listening, { autoAlpha: 1, duration: 0.4 }, 'voice+=0.3')
-      .to(messages[1], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice+=0.6')
-      .to(messages[2], { autoAlpha: 1, y: 0, duration: 0.4 }, 'voice+=1.0')
-      .to(chips, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.12 }, 'voice+=1.4');
+      .to(listening, { autoAlpha: 1, duration: 0.4 }, 'voice+=0.3');
+    const said = cards.labels.voice;
+    popIn(cards, messages[0], said);
+    typeIn(cards, miniDots, said + 0.45);
+    popIn(cards, messages[1], said + 1.05);
+    popIn(cards, messages[2], said + 1.4);
+    cards.to(chips, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)', stagger: 0.12 }, said + 1.75);
     // (the rings around the mic keep their own gentle CSS pulse, so "Listening…" looks alive)
     tl.add(cards, 'cards').addLabel('played');
     const next = $('#industries');
     next.classList.add('slides-over');
 
-    // Leaving, as the industries section slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.8, ease: 'power1.in' }, 0.15)
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       next.classList.remove('slides-over');
@@ -1165,9 +1615,9 @@
 
   /* 11. Industries (Figma recording 1:02–1:15). Desktop: a scroll scene that slides up over Type
      or talk. The visitor asks and the concierge answers with the scroll; once the view reaches the
-     gallery the cards come in (the first fades in, the rest slide in from the right), then the
-     row moves along until "Built for yours, too." reaches the right edge. All with the scroll; the
-     arrows, dots, sideways swipes and drags move it one card at a time too. */
+     gallery the cards come in (the first fades in, the rest slide in from the right). The row is
+     the visitor's to move, one card at a time: arrows, dots, sideways swipes and drags (scrolling
+     down doesn't move it). */
   const industries = {
     section: $('#industries'),
     content: $('#industries > .container'),
@@ -1180,16 +1630,15 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, gallery, cards, controls } = industries;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#A8A49A' } });
+    // Each card's little chat: the guest's question, then the concierge's answer (after "•••")
+    const chats = cards.map(card => $$('.industry-chat .bubble:not(.typing-dots)', card)).filter(pair => pair.length === 2)
+      .map(([question, answer]) => ({ question, answer, dots: typingDots(answer, 'is-sm') }));
     section.classList.add('is-staged');
 
     // Desktop carousel: the cards sit on a track that moves one card per step until "Built for
-    // yours, too." reaches the right edge (the last step may be shorter), so the row always stays
-    // full. There is one dot per position (the extra dots hide), and the arrows dim at the ends.
+    // yours, too." is whole on screen. Every stop is a whole card, so the row never ends with a
+    // card cut off on the left. There is one dot per position (the extra dots hide), and the arrows dim at the ends.
     // Arrows, dots, horizontal swipes and drags step it.
     const dots = $$('.gallery-dots span', controls);
     const [prevBtn, nextBtn] = $$('[data-gallery]', controls);
@@ -1208,7 +1657,8 @@
       const end = cards[cards.length - 1].offsetLeft + cards[cards.length - 1].offsetWidth;
       return Math.max(0, end - (gallery.clientWidth - parseFloat(getComputedStyle(gallery).paddingRight)));
     };
-    const shiftAt = i => Math.min(i * step(), maxShift());
+    const lastAt = () => Math.max(0, Math.ceil(maxShift() / step() - 0.05)); // the last whole-card stop
+    const shiftAt = i => Math.min(i, lastAt()) * step();
     const showDot = () => {
       dots.forEach((dot, i) => {
         dot.hidden = i > last;
@@ -1218,7 +1668,7 @@
       nextBtn.disabled = index === last;
     };
     const measure = () => {
-      last = Math.min(dots.length - 1, Math.ceil(maxShift() / step() - 0.05));
+      last = Math.min(dots.length - 1, lastAt());
       index = Math.min(index, last);
       showDot();
     };
@@ -1283,12 +1733,6 @@
     gallery.addEventListener('pointermove', onMove);
     gallery.addEventListener('pointerup', onUp);
     gallery.addEventListener('pointercancel', onUp);
-    // The dots and arrows follow the row as the scroll moves it
-    const syncDots = () => {
-      const pos = -gsap.getProperty(track, 'x');
-      index = pos >= maxShift() - 2 && pos > 0 ? last : gsap.utils.clamp(0, last, Math.round(pos / step()));
-      showDot();
-    };
 
     const applyStart = () => {
       slide?.kill();
@@ -1296,24 +1740,24 @@
       measure();
       gsap.set(track, { x: 0 });
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#A8A49A' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set(all, { autoAlpha: 0, x: 0 });
       gsap.set(all.slice(1), { x: () => innerWidth * 0.35 });
       gsap.set(controls, { autoAlpha: 0 });
+      chats.forEach(({ question, answer, dots }) => {
+        gsap.set(question, { autoAlpha: 0, scale: 0.6, transformOrigin: 'right bottom' });
+        gsap.set(answer, { autoAlpha: 0, scale: 0.6, transformOrigin: 'left bottom' });
+        placeDots(dots, answer);
+      });
     };
     applyStart();
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (1:02–1:05): the visitor asks (grey → black), the answer grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (1:02–1:05): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // The view moves to the gallery; once it has settled on the gallery and its controls:
@@ -1323,19 +1767,22 @@
       // Step 2 (1:05–1:07): the first card fades in, the rest slide in from the right one by one
       .to(all[0], { autoAlpha: 1, duration: MOTION.base }, 'cards')
       .to(all.slice(1), { autoAlpha: 1, x: 0, duration: 0.9, ease: 'power3.out', stagger: 0.12 }, 'cards+=0.25')
-      .to(controls, { autoAlpha: 1, duration: 0.4 }, 'cards+=0.9')
-      .addLabel('shown')
+      .to(controls, { autoAlpha: 1, duration: 0.4 }, 'cards+=0.9');
+    // as the cards settle, each card's chat plays: the question pops up, "•••", the answer pops in
+    chats.forEach(({ question, answer, dots }, i) => {
+      const asked = tl.labels.cards + 0.6 + i * 0.12;
+      popIn(tl, question, asked);
+      typeIn(tl, dots, asked + 0.35, 0.45);
+      popIn(tl, answer, asked + 0.85);
+    });
+    tl.addLabel('shown');
+    // (the row itself is the visitor's to move: arrows, dots, swipes and drags; scrolling down
+    // doesn't move it, and the page goes on without waiting for the last card)
 
-      // Step 3 (1:07–1:14): the row moves along until "Built for yours, too." reaches the right edge
-      .to(track, { x: () => -maxShift(), duration: 2.4, ease: 'none', onUpdate: syncDots }, 'shown+=0.3')
-      .addLabel('moved');
-
-    // Leaving: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.8, ease: 'power1.in' }, 0.15)
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => innerHeight * 0.5, onRefresh: applyStart });
+    // Why concierge81? slides up over it, as every section does over the one before
+    const next = $('#values');
+    next.classList.add('slides-over');
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       slide?.kill();
@@ -1350,6 +1797,7 @@
       track.remove();
       gsap.set(cards, { clearProps: 'transform' });
       showDotFirst();
+      next.classList.remove('slides-over');
       section.classList.remove('is-staged');
     };
   });
@@ -1373,11 +1821,7 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, rows, cards } = values;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#5B5F66' } });
     const part = selector => $(selector, section);
     const parts = selector => $$(selector, section);
     const timeline = part('.timeline');
@@ -1414,10 +1858,7 @@
 
     const applyStart = () => {
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#5B5F66' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set(cards, { autoAlpha: 0, y: 30 });
       gsap.set(timeline, { '--at': '0%' });
       gsap.set(fill, { scaleX: 0 });
@@ -1444,20 +1885,18 @@
     applyStart();
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (1:15–1:19): the visitor asks (grey → white), the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (1:15–1:19): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // Step 2 (1:19–1:25): the view moves to row 1; its two cards rise in. The dot travels the day,
       // the answer label appears as it passes 2:14 AM; the hand-off line draws to the team
       .to(content, { y: showInStage(section, content, rows[0]), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
       .to(rows[0].children, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.2 }, 'ask+=0.4')
-      .addLabel('row1', 'ask+=0.9')
+      .addLabel('row1', 'ask+=1.15') // after both cards have risen in (a step never ends mid-fade)
       .to(timeline, { '--at': '9.3%', duration: 0.5, ease: 'power1.inOut' }, 'row1')
       .to(fill, { scaleX: 0.093, duration: 0.5, ease: 'power1.inOut' }, 'row1')
       .to(tip, { autoAlpha: 1, y: 0, duration: 0.3 }, 'row1+=0.4')
@@ -1475,7 +1914,7 @@
       // spread out from the hub along their lines and get their names
       .to(content, { y: showInStage(section, content, rows[1]), duration: MOTION.slow, ease: MOTION.easeInOut }, 'row1Done')
       .to(rows[1].children, { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.2 }, 'row1Done+=0.3')
-      .addLabel('row2', 'row1Done+=0.9')
+      .addLabel('row2', 'row1Done+=1.25')
       .to(infoBox, { autoAlpha: 1, y: 0, duration: 0.4 }, 'row2')
       .to(branches, { strokeDashoffset: 0, duration: 0.6, ease: 'power1.inOut', stagger: 0.1 }, 'row2+=0.4')
       .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, 'row2+=0.8')
@@ -1495,24 +1934,19 @@
       .to(network, { opacity: 1, duration: 0.4, stagger: 0.1 }, 'row2+=0.8')
       .to(places, { autoAlpha: 1, x: 0, y: 0, duration: 0.6, ease: MOTION.easeInOut, stagger: 0.12 }, 'row2+=0.8')
       .to(tags, { autoAlpha: 1, y: 0, duration: 0.3, stagger: 0.12 }, 'row2+=1.3')
-      .addLabel('row2Done', 'row2+=2.4')
+      .addLabel('row2Done', 'row2+=2.55')
 
       // Step 4 (1:32–1:37): on to row 3. Parking and its quote appear, the week's bars grow (the
       // last, today, lit), then the demo card rises in
       .to(content, { y: showInStage(section, content, rows[2]), duration: MOTION.slow, ease: MOTION.easeInOut }, 'row2Done')
       .to(rows[2].children[0], { autoAlpha: 1, y: 0, duration: MOTION.base }, 'row2Done+=0.3')
-      .addLabel('row3', 'row2Done+=0.7')
+      .addLabel('row3', 'row2Done+=0.85')
       .to(word, { autoAlpha: 1, y: 0, duration: 0.35, stagger: 0.12 }, 'row3')
       .to(bars, { '--grow': 1, duration: 0.5, ease: 'power2.out', stagger: 0.1 }, 'row3+=0.3')
       .to(demo, { autoAlpha: 1, y: 0, duration: 0.6 }, 'row3+=0.6')
       .addLabel('built', 'row3+=1.6');
 
-    // Leaving, as the deployment section slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       next.classList.remove('slides-over');
@@ -1538,15 +1972,13 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, split, stage, device, cards } = deployment;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#A8A49A' } });
     const screen = $('.device-screen', device);
     const ui = Object.fromEntries(['logo', 'toggle', 'lang', 'avatar', 'greet', 'question', 'composer']
       .map(key => [key, $(`.ds-${key}`, screen)]));
     $('img', ui.avatar).removeAttribute('loading'); // shown before the scene starts
+    const MORPH = 1.6; // seconds of timeline for the device to turn into the next one
+    const PLACE = 2.2; // seconds of timeline per place (its card, then the morph)
     section.classList.add('is-staged');
     stage.classList.add('is-shaping');
 
@@ -1618,16 +2050,13 @@
       }
     };
     const layoutTo = (name, at) => Object.entries(layouts[name]).forEach(([key, props]) =>
-      tl.to(key === 'screen' ? screen : ui[key], { ...props, duration: 0.8, ease: MOTION.easeInOut }, at));
+      tl.to(key === 'screen' ? screen : ui[key], { ...props, duration: MORPH, ease: MOTION.easeInOut }, at));
     const setLayout = name => Object.entries(layouts[name]).forEach(([key, props]) =>
       gsap.set(key === 'screen' ? screen : ui[key], props));
 
     const applyStart = () => {
       gsap.set(content, { y: 0 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#A8A49A' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set(stage, { autoAlpha: 0, y: 30 });
       gsap.set(device, { ...shape('website'), scale: 0.92 });
       setLayout('website');
@@ -1636,13 +2065,11 @@
     applyStart();
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (1:38–1:41): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (1:38–1:41): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
       // Step 2 (1:41–1:43): the view moves to the stage; the device rises in as a website screen
@@ -1651,29 +2078,85 @@
       .to(device, { scale: 1, duration: MOTION.base }, 'ask+=0.4')
       .addLabel('places', 'ask+=1.1');
 
-    // Steps 3–6 (1:43–2:00): each place joins the list and the device turns into it (on short
-    // screens the view moves down just enough to keep the new card in sight)
+    // Steps 3–6 (1:43–2:00), one per place: it joins the list and the device turns into it, slowly
+    // enough to watch the whole change (on short screens the view moves down just enough to keep
+    // the new card in sight)
+    const at = i => `places+=${i * PLACE}`;
     cards.forEach((card, i) => {
-      const at = `places+=${i * 1.4}`;
       const name = card.dataset.device;
       const keepInView = () => Math.min(showInStage(section, content, split)(), showInStage(section, content, card)());
-      tl.to(content, { y: keepInView, duration: 0.5, ease: MOTION.easeInOut }, at)
-        .to(card, { autoAlpha: 1, x: 0, duration: MOTION.base }, at)
-        .to(device, { ...shapeTo(name), duration: 0.8, ease: MOTION.easeInOut }, `${at}+=0.2`);
-      layoutTo(name, `${at}+=0.2`);
+      if (i) tl.addLabel(`place${i}`, at(i));
+      tl.to(content, { y: keepInView, duration: 0.5, ease: MOTION.easeInOut }, at(i))
+        .to(card, { autoAlpha: 1, x: 0, duration: MOTION.base }, at(i))
+        .to(device, { ...shapeTo(name), duration: MORPH, ease: MOTION.easeInOut }, `${at(i)}+=0.2`);
+      layoutTo(name, `${at(i)}+=0.2`);
     });
-    tl.addLabel('built', `places+=${cards.length * 1.4}`);
+    tl.addLabel('built', `${at(cards.length - 1)}+=${MORPH + 0.4}`);
+
+    // The device on show at a moment of the scene: the last place that has joined the list
+    const showing = t => cards.filter((card, i) => t >= tl.labels.places + i * PLACE + 0.2 - 0.001).at(-1)?.dataset.device;
+    // Once the list is built the visitor can pick a place: the screen turns into that device. The
+    // choice stays (scrolling back, or the page re-measuring, keeps it).
+    let chosen = null;
+    const mark = name => cards.forEach((card) => {
+      card.classList.toggle('is-active', card.dataset.device === name);
+      card.setAttribute('aria-pressed', card.dataset.device === name);
+    });
+    let morphs = []; // the visitor's own morph (a new pick takes over from it, never from the scene)
+    const morphTo = (name, duration = 1.2) => {
+      morphs.forEach(tween => tween.kill());
+      morphs = [
+        gsap.to(device, { ...shape(name), duration, ease: MOTION.easeInOut }),
+        ...Object.entries(layouts[name]).map(([key, props]) =>
+          gsap.to(key === 'screen' ? screen : ui[key], { ...props, duration, ease: MOTION.easeInOut }))
+      ];
+    };
+    const choose = (card) => {
+      if (!section.classList.contains('is-built')) return;
+      chosen = card.dataset.device;
+      mark(chosen);
+      morphTo(chosen);
+    };
+    const onClick = e => { const card = e.target.closest('.platform-card'); if (card) choose(card); };
+    const onKey = (e) => {
+      const card = e.target.closest('.platform-card');
+      if (!card || (e.key !== 'Enter' && e.key !== ' ')) return;
+      e.preventDefault();
+      choose(card);
+    };
+    const list = cards[0].parentElement;
+    list.addEventListener('click', onClick);
+    list.addEventListener('keydown', onKey);
+    cards.forEach((card) => {
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
+    });
+    // When the scene shows its finished frame again (the page re-measuring), the choice comes back
+    const keepChoice = (t) => {
+      if (!chosen || t < tl.labels.built - 0.001 || morphs.some(tween => tween.isActive())) return;
+      gsap.set(device, shape(chosen));
+      setLayout(chosen);
+    };
 
     // Leaving, as the pricing section slides up over it: the content fades out
     const next = $('#pricing');
     next.classList.add('slides-over');
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
-      .set({}, {}, 1);
 
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({
+      trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart,
+      onUpdate: (t) => {
+        mark(chosen || showing(t));
+        keepChoice(t);
+      }
+    });
 
     return () => {
+      list.removeEventListener('click', onClick);
+      list.removeEventListener('keydown', onKey);
+      cards.forEach((card) => {
+        card.classList.remove('is-active');
+        ['role', 'tabindex', 'aria-label', 'aria-pressed'].forEach(attr => card.removeAttribute(attr));
+      });
       next.classList.remove('slides-over');
       section.classList.remove('is-staged');
       stage.classList.remove('is-shaping');
@@ -1701,10 +2184,7 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, cards, help } = pricing;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#5B5F66' } });
     const [basic, capacity, business, enterprise] = cards;
     const texts = cards.map(card => $$('.tier-label, h3, p, .btn', card));
     const parts = (card, selector) => $$(selector, card);
@@ -1716,9 +2196,7 @@
 
     const applyStart = () => {
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#5B5F66' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
+      heading.start();
       gsap.set(cards, { autoAlpha: 0, y: 24, filter: 'brightness(0.35) saturate(0.6)' });
       gsap.set(texts.flat(), { opacity: 0.4 });
       // basic: the dot and its disc, the rings drawn in towards it
@@ -1737,17 +2215,16 @@
       gsap.set(parts(enterprise, '.tier-nodes circle'), { scale: 0, transformOrigin: '50% 50%' });
       gsap.set(parts(enterprise, '.tier-dot, .tier-disc'), { scale: 0, svgOrigin: '245 114' });
       gsap.set(parts(enterprise, '.tier-ring'), { opacity: 0 });
-      gsap.set(help, { autoAlpha: 0, y: 16 });
+      gsap.set(help, { autoAlpha: 0, scale: 0.85, transformOrigin: 'center bottom' });
     };
     applyStart();
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (2:06–2:08): the visitor asks (grey → white), then the concierge bubble grows
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
+    // Step 1 (2:06–2:08): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
       .to(content, { y: showInStage(section, content, header, help), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
       .addLabel('tiers', 'ask+=0.2');
@@ -1771,17 +2248,15 @@
       .to(spokes, { strokeDashoffset: 0, duration: 0.45, ease: 'power1.inOut', stagger: 0.07 }, 'tiers+=3.0')
       .to(parts(enterprise, '.tier-nodes circle'), { scale: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.07 }, 'tiers+=3.3')
 
-      // Step 6 (2:11–2:13): the view moves down to the tiers and the visitor's follow-up arrives
-      .to(content, { y: showInStage(section, content, cards[0], help), duration: MOTION.slow, ease: MOTION.easeInOut }, 'tiers+=3.7')
-      .to(help, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'tiers+=3.9')
-      .addLabel('built', 'tiers+=4.6');
+      .addLabel('help', 'tiers+=4.0') // after the last graphic has finished (a step never ends mid-pop)
 
-    // Leaving, as the FAQ section slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
-      .set({}, {}, 1);
+      // Step 6 (2:11–2:13), only on a further scroll down: the view moves down to the tiers and
+      // the visitor's follow-up pops in like a message
+      .to(content, { y: showInStage(section, content, cards[0], help), duration: MOTION.slow, ease: MOTION.easeInOut }, 'help')
+      .to(help, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, 'help+=0.45')
+      .addLabel('built', 'help+=0.9');
 
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
 
     return () => {
       next.classList.remove('slides-over');
@@ -1791,11 +2266,11 @@
   });
 
   /* 15. I still have a few questions. (Figma recording 2:16–2:45). Desktop: a scroll scene that
-     slides up over the pricing. The visitor asks and the concierge answers; the topics and an
-     empty thread appear with the suggested questions; then the visitor asks two of them in turn:
-     each question opens into the thread (its suggestion leaves the list), the concierge types and
-     answers, pushing the suggestions down; then "Was this helpful?", "Anything else I can help you
-     with?" and "Can't find your answer?". All with the scroll. */
+     slides up over the pricing. The visitor asks and the concierge answers; the topics and the chat
+     rise in with the suggested questions; then, as a demo, "What is concierge81?" is asked: its
+     suggestion leaves the list, the question pops in, the concierge types (•••) and the answer pops
+     in, then "Anything else I can help you with?". From there the visitor asks by tapping the
+     suggestions (main.js). On a further scroll "Can't find your answer?" arrives. */
   const faq = {
     section: $('#faq'),
     content: $('#faq > .container'),
@@ -1808,103 +2283,93 @@
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, filters, box, help } = faq;
-    const user = $('.chat-header-row.right', header);
-    const pill = $('.header-pill--user', user);
-    const reply = $('.header-pill--ai', header);
-    const sub = $('.sub-pill-text', header);
-    const pillColor = getComputedStyle(pill).backgroundColor;
-    const [first, second] = $$('.faq-pair:not([hidden])', box);
-    const asks = $$('.faq-ask', box);
+    const heading = chatHeader(header, { pillFrom: { backgroundColor: '#A8A49A' } });
+    const chip = $('.faq-ask', box);
+    const demo = $(`.faq-pair[data-q="${chip.dataset.q}"]`, box);
     const thread = {
-      q1: $('.faq-q', first), a1: $('.faq-a', first),
-      q2: $('.faq-q', second), typing: $('.faq-typing', second), a2: $('.faq-a', second),
-      helpful: $('.helpful', second), anything: $('.faq-anything', box)
+      question: $('.faq-q', demo), typing: $('.faq-typing', demo), answer: $('.faq-a:not(.faq-typing)', demo),
+      anything: $('.faq-anything', box)
     };
-    const gap = () => parseFloat(getComputedStyle(box).rowGap) || 0;
-    // A message opens into the thread: from no height (its gap taken back) to its own
-    const closed = () => ({ height: 0, marginTop: -gap(), autoAlpha: 0, overflow: 'hidden' });
-    const open = { height: 'auto', marginTop: 0, autoAlpha: 1, duration: 0.45, ease: MOTION.easeInOut };
-    // The view follows the thread like a chat: the topics stay at the top while everything fits,
-    // and scroll off when the newest message (or `el`) would fall below the screen
+    const origin = el => (el === thread.question ? 'right bottom' : 'left bottom');
+    const gap = () => parseFloat(getComputedStyle(demo).rowGap) || 0;
+    // A message pops into the thread: it makes its room, then springs up from its tail corner
+    const closed = el => ({ height: 0, marginTop: -gap(), autoAlpha: 0, scale: 0.6, transformOrigin: origin(el), overflow: 'hidden' });
+    const popIn = (el, at) => tl
+      .to(el, { height: 'auto', marginTop: 0, duration: 0.3, ease: MOTION.easeInOut }, at)
+      .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.pop + 0.08, ease: 'back.out(1.8)' }, `${at}+=0.05`)
+      .set(el, { overflow: 'visible' }, `${at}+=0.3`);
+    // The view follows the chat: the topics stay at the top while everything fits, and scroll off
+    // when the chat (or `el`) would fall below the screen
     const follow = (el = box) => () => {
       const top = content.getBoundingClientRect().top;
       const from = filters.getBoundingClientRect().top - top - 16;
       const to = el.getBoundingClientRect().bottom - top + 24 - innerHeight;
       return -Math.max(0, from, to);
     };
-    const followTo = (at, el) => tl.to(content, { y: follow(el), duration: 0.5, ease: MOTION.easeInOut }, at);
+    // Already chatting this session: the demo is shown as asked (it never replays above it)
+    const chatting = () => !!$('.faq-pair.is-asked', box) || (() => { try { return JSON.parse(session.get('faq')).length > 0; } catch (e) { return false; } })();
     const next = $('#cta');
     section.classList.add('is-staged');
     next.classList.add('slides-over');
 
     const applyStart = () => {
       gsap.set(content, { y: 0, autoAlpha: 1 });
-      gsap.set(user, { autoAlpha: 0, y: 12 });
-      gsap.set(pill, { backgroundColor: '#A8A49A' });
-      gsap.set(reply, { autoAlpha: 0, scale: 0.9, transformOrigin: 'left bottom', color: 'rgba(255, 255, 255, 0)' });
-      gsap.set(sub, { autoAlpha: 0, y: 16 });
+      heading.start();
       gsap.set([filters, box], { autoAlpha: 0, y: 24 });
-      gsap.set([first, second], { marginTop: -gap() }); // the empty pairs take no room
-      gsap.set(Object.values(thread), closed());
-      gsap.set(asks, { display: 'inline-flex', autoAlpha: 1 });
-      gsap.set(help, { autoAlpha: 0, y: 16 });
+      gsap.set(help, { autoAlpha: 0, scale: 0.85, transformOrigin: 'center bottom' });
+      if (chatting()) {
+        gsap.set(Object.values(thread), { clearProps: 'height,marginTop,opacity,visibility,transform,overflow' });
+        gsap.set(thread.typing, closed(thread.typing));
+        gsap.set(chip, { display: 'none' });
+        return;
+      }
+      Object.values(thread).forEach(el => gsap.set(el, closed(el)));
+      gsap.set(chip, { display: 'inline-flex', autoAlpha: 1 });
     };
     applyStart();
-
-    // The visitor taps a suggestion: it leaves the list and the question opens in the thread
-    const ask = (chip, pair, question, at) => tl
-      .to(chip, { autoAlpha: 0, duration: 0.25 }, at)
-      .set(chip, { display: 'none' }, `${at}+=0.25`)
-      .to(pair, { marginTop: 0, duration: 0.45, ease: MOTION.easeInOut }, `${at}+=0.2`)
-      .to(question, open, `${at}+=0.2`);
+    box.classList.toggle('is-waiting', !chatting());
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
-    tl.addLabel('enter', 0)
+    tl.addLabel('enter', 0);
 
-      // Step 1 (2:16–2:18): the visitor asks (grey → black), the concierge bubble grows, then the sub-bubble
-      .to(user, { autoAlpha: 1, y: 0, duration: MOTION.base }, 0.01)
-      .to(pill, { backgroundColor: pillColor, duration: 0.4, ease: 'none' }, 0.3);
-    bubbleIn(tl, reply, 0.6)
-      .to(sub, { autoAlpha: 1, y: 0, duration: MOTION.base }, '-=0.1')
+    // Step 1 (2:16–2:18): the visitor's question pops up and is sent, "•••" types, then the answer
+    // pops in (and the sub-bubble after it)
+    heading.play(tl)
       .addLabel('ask')
 
-      // Step 2 (2:18–2:24): the view moves to the topics; they and the empty thread with its
-      // suggestions rise in
+      // Step 2 (2:18–2:24): the view moves to the topics; they and the chat with its suggestions rise in
       .to(content, { y: follow(), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
       .to([filters, box], { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.15 }, 'ask+=0.3')
-      .addLabel('thread', 'ask+=1.0');
+      .addLabel('thread', 'ask+=1.0')
 
-    // Step 3 (2:24–2:27): "What is Concierge81?", then its answer
-    ask(asks[0], first, thread.q1, 'thread');
-    tl.to(thread.a1, open, 'thread+=0.8');
-    followTo('thread+=1.3');
-    tl.addLabel('second', 'thread+=1.9');
+      // Step 3 (2:24–2:27): the demo. "What is concierge81?" is tapped: it leaves the suggestions
+      // and pops into the chat, the concierge types, then the answer and "Anything else?" pop in
+      .to(chip, { autoAlpha: 0, scale: 0.9, duration: 0.25 }, 'thread')
+      .set(chip, { display: 'none' }, 'thread+=0.25');
+    popIn(thread.question, 'thread+=0.2');
+    popIn(thread.typing, 'thread+=0.75');
+    tl.to(thread.typing, { autoAlpha: 0, duration: 0.15 }, 'thread+=1.85')
+      .to(thread.typing, { height: 0, marginTop: () => -gap(), duration: 0.2, ease: MOTION.easeInOut }, 'thread+=1.9');
+    popIn(thread.answer, 'thread+=1.9');
+    popIn(thread.anything, 'thread+=2.6');
+    tl.addLabel('demo', 'thread+=3.1')
 
-    // Step 4 (2:27–2:34): "Will it replace my staff?", the concierge types, then answers
-    ask(asks[1], second, thread.q2, 'second');
-    tl.to(thread.typing, open, 'second+=0.6')
-      .to(thread.typing, closed(), 'second+=1.3')
-      .to(thread.a2, open, 'second+=1.3')
-      .to(thread.helpful, open, 'second+=1.9')
-      .to(thread.anything, open, 'second+=2.3');
-    followTo('second+=2.8');
+      // Step 4, on a further scroll: the view moves on and "Can't find your answer?" pops in
+      .to(content, { y: follow(help), duration: 0.6, ease: MOTION.easeInOut }, 'demo')
+      .to(help, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, 'demo+=0.4')
+      .addLabel('built', 'demo+=0.9');
 
-    // Step 5 (2:34–2:38): the view moves on to the thread's end and "Can't find your answer?" arrives
-    followTo('second+=3.4', help);
-    tl.to(help, { autoAlpha: 1, y: 0, duration: MOTION.base }, 'second+=3.6')
-      .addLabel('built', 'second+=4.3');
-
-    // Leaving, as the final call to action slides up over it: the content fades out
-    const exit = gsap.timeline({ paused: true })
-      .to(content, { autoAlpha: 0, y: '-=40', duration: 0.85, ease: 'power1.in' }, 0.1)
-      .set({}, {}, 1);
-
-    scrollScene({ trigger: section, tl, exit, tail: () => section.offsetHeight, onRefresh: applyStart });
+    scrollScene({
+      trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart,
+      // the suggestions can be tapped once the demo has been asked
+      onUpdate: t => box.classList.toggle('is-waiting', t < tl.labels.demo - 0.001 && !chatting())
+    });
 
     return () => {
       next.classList.remove('slides-over');
       section.classList.remove('is-staged');
-      gsap.set([first, second, ...Object.values(thread), ...asks], { clearProps: 'all' });
+      box.classList.remove('is-waiting');
+      gsap.set([...Object.values(thread), chip], { clearProps: 'all' });
     };
   });
 
@@ -1960,8 +2425,12 @@
   });
 
   // The contact section (every screen size): the chat, then the steps and the form
-  scenes.push(() => {
-    chatThread(contact.header);
+  scenes.push(({ isDesktop }) => {
+    if (isDesktop) { // the chat pops in like the other sections' (it is not pinned: it plays as it scrolls in)
+      const heading = chatHeader(contact.header, { pillFrom: { backgroundColor: '#5B5F66' } });
+      heading.start();
+      heading.play(gsap.timeline({ defaults: { ease: MOTION.ease }, scrollTrigger: { trigger: contact.header, start: 'top 80%', toggleActions: PLAY } }));
+    } else chatThread(contact.header);
     scrollReveal(contact.steps, contact.steps, { autoAlpha: 0, y: 30 });
     scrollReveal(contact.form, contact.form, { autoAlpha: 0, y: 40 });
   });
@@ -1982,41 +2451,360 @@
     $$('#how .process-card, #interaction .mode-card').forEach(card => scrollReveal(card, card, { autoAlpha: 0, y: 30 }));
   });
 
+  /* Hover loops (desktop, with a mouse): once the whole section has played (its scene built, and
+     not replaying a step), hovering a part plays a short round of that part's animation, again and again while the pointer stays.
+     Moving away lets the round finish quickly; every round ends on the finished frame, so the page
+     is always left as the scene built it. `round()` builds one round (a fresh timeline each time). */
+  const finished = section => section.classList.contains('is-built') && !section.classList.contains('is-playing');
+  const shownWhole = el => +getComputedStyle(el).opacity > 0.99 && getComputedStyle(el).visibility !== 'hidden';
+  const hoverLoop = (el, round, { section = el.closest('section'), stopOn = [], ready = () => finished(section) && shownWhole(el) } = {}) => {
+    let current = null;
+    let over = false;
+    const next = () => {
+      current = round();
+      current.eventCallback('onComplete', () => {
+        if (over && ready()) next();
+        else current = null;
+      });
+    };
+    const enter = () => {
+      over = true;
+      if (current) current.timeScale(1);
+      else if (ready()) next();
+    };
+    const leave = () => {
+      over = false;
+      current?.timeScale(2.5); // finishes its round quickly
+    };
+    const stop = () => { // straight to the finished frame (a drag starts, the page re-measures)
+      over = false;
+      if (!current) return;
+      const finishing = current;
+      current = null;
+      finishing.progress(1).kill();
+    };
+    // (already over it when its section finishes playing: the next move of the mouse starts it)
+    const move = () => { if (over && !current && ready()) next(); };
+    el.addEventListener('mouseenter', enter);
+    el.addEventListener('mouseleave', leave);
+    el.addEventListener('mousemove', move);
+    el.addEventListener('focusin', enter); // (keyboard: focus inside it plays it too)
+    el.addEventListener('focusout', leave);
+    stopOn.forEach(type => el.addEventListener(type, stop));
+    const off = () => {
+      stop();
+      el.removeEventListener('mouseenter', enter);
+      el.removeEventListener('mouseleave', leave);
+      el.removeEventListener('mousemove', move);
+      el.removeEventListener('focusin', enter);
+      el.removeEventListener('focusout', leave);
+      stopOn.forEach(type => el.removeEventListener(type, stop));
+    };
+    off.stop = stop;
+    return off;
+  };
+
+  scenes.push(({ isDesktop }) => {
+    if (!isDesktop || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    const offs = [];
+    const loop = (el, round, options) => el && offs.push(hoverLoop(el, round, options));
+    const pause = s => ({ duration: s }); // a still moment at the end of a round
+
+    // Inbox: a question wobbles on its tilt (a drag stops it at once)
+    inbox.tags.forEach(tag => loop(tag, () => {
+      const r = gsap.getProperty(tag, 'rotation');
+      return gsap.timeline()
+        .to(tag, { rotation: r + 4, duration: 0.12, ease: 'sine.out' })
+        .to(tag, { rotation: r - 4, duration: 0.24, ease: 'sine.inOut' })
+        .to(tag, { rotation: r + 2, duration: 0.18, ease: 'sine.inOut' })
+        .to(tag, { rotation: r, duration: 0.14, ease: 'sine.in' })
+        .to({}, pause(0.5));
+    }, { stopOn: ['pointerdown'], ready: () => finished(inbox.section) && !inbox.pile.classList.contains('is-busy') })); // once the section has played and the questions have landed
+
+    // How: the dial turns a full circle; the reply goes back to "typing" and to the check
+    const dial = $('.process-glyph--round', how.cards[1]);
+    loop(how.cards[1], () => {
+      const from = parseFloat(gsap.getProperty(dial, '--dial')) || 0;
+      return gsap.timeline()
+        .fromTo(dial, { '--dial': `${from}deg` }, { '--dial': `${from + 360}deg`, duration: 2.4, ease: 'power1.inOut' })
+        .set(dial, { '--dial': `${from}deg` });
+    });
+    loop(how.cards[2], () => gsap.timeline()
+      .to(how.answer, { morphSVG: how.bubble, duration: 0.45, ease: MOTION.easeInOut })
+      .to({}, pause(0.6))
+      .to(how.answer, { morphSVG: how.check, duration: 0.45, ease: MOTION.easeInOut })
+      .to({}, pause(0.9)));
+    const askIcon = $('.how-art', how.cards[0]);
+    loop(how.cards[0], () => gsap.timeline()
+      .to(askIcon, { y: -6, duration: 0.35, ease: 'sine.out' })
+      .to(askIcon, { y: 0, duration: 0.45, ease: 'bounce.out' })
+      .to({}, pause(0.7)));
+
+    // Type or talk: the mini chat plays again like a messaging app (question, "•••", answers,
+    // chips); the voice orb glows
+    const mini = $('.mini-chat', modes.chat);
+    const rows = $$('.msg-row', mini);
+    const miniChips = $$('.chip', mini);
+    const miniDots = typingDots(rows[1], 'is-sm');
+    loop(modes.chat, () => {
+      const round = gsap.timeline()
+        .to([...rows, ...miniChips], { autoAlpha: 0, duration: 0.2 })
+        .set([...rows, ...miniChips], { y: 0, scale: 0.6, transformOrigin: i => (i === 0 ? 'right bottom' : 'left bottom') });
+      popIn(round, rows[0], 0.4);
+      typeIn(round, miniDots, 0.75, 0.45);
+      popIn(round, rows[1], 1.25);
+      popIn(round, rows[2], 1.6);
+      round.to(miniChips, { autoAlpha: 1, scale: 1, duration: 0.3, ease: 'back.out(1.8)', stagger: 0.1 }, 1.95);
+      return round.to({}, pause(1.4));
+    });
+    // The voice card answers: the mic swells, sound waves ripple out across the card, the glow
+    // brightens and "Listening…" turns to "Answering…" for a moment
+    const orb = $('.voice-orb', modes.voice);
+    const voiceStage = $('.voice-stage', modes.voice);
+    const listening = $('.listening', modes.voice);
+    const listeningText = listening.textContent;
+    const waves = [0, 1, 2].map(() => voiceStage.appendChild(Object.assign(document.createElement('span'), { className: 'voice-wave' })));
+    offs.push(() => waves.forEach(wave => wave.remove()));
+    loop(modes.voice, () => gsap.timeline()
+      .to(orb, { scale: 1.18, duration: 0.35, ease: 'sine.out' }, 0)
+      .to(voiceStage, { filter: 'brightness(1.4)', duration: 0.4, ease: 'sine.out' }, 0)
+      .fromTo(waves, { scale: 1, opacity: 0.75 }, { scale: 3.4, opacity: 0, duration: 1.5, ease: 'power2.out', stagger: 0.3 }, 0.1)
+      .call(() => { listening.textContent = 'Answering…'; }, null, 0.2)
+      .to(orb, { scale: 0.96, duration: 0.25, ease: 'sine.inOut' }, 0.55)
+      .to(orb, { scale: 1.12, duration: 0.25, ease: 'sine.inOut' }, 0.8)
+      .to(orb, { scale: 1, duration: 0.5, ease: 'sine.inOut' }, 1.05)
+      .to(voiceStage, { filter: 'brightness(1)', duration: 0.7, ease: 'sine.inOut' }, 1.1)
+      .call(() => { listening.textContent = listeningText; }, null, 1.9)
+      .set(voiceStage, { clearProps: 'filter' }, 2.1)
+      .to({}, pause(0.3)));
+
+    // Why concierge81?
+    const [availability, handoff, accuracy, languages, scale, insights] = values.cards;
+    const timeline = $('.timeline', availability);
+    const fill = $('.timeline-fill', availability);
+    loop(availability, () => gsap.timeline() // the dot runs the day again
+      .fromTo(timeline, { '--at': '0%' }, { '--at': '100%', duration: 2, ease: 'power1.inOut' })
+      .fromTo(fill, { scaleX: 0 }, { scaleX: 1, duration: 2, ease: 'power1.inOut' }, '<')
+      .to({}, pause(0.6)));
+    const lines = $$('.handoff-line', handoff);
+    const handoffPill = $('.handoff-pill', handoff);
+    loop(handoff, () => gsap.timeline() // the hand-off draws again
+      .to([...lines, handoffPill], { autoAlpha: 0, duration: 0.2 })
+      .set(lines, { scaleX: 0, autoAlpha: 1 })
+      .to(lines[0], { scaleX: 1, duration: 0.45, ease: 'power1.inOut' })
+      .fromTo(handoffPill, { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)' }, '-=0.1')
+      .to(lines[1], { scaleX: 1, duration: 0.45, ease: 'power1.inOut' }, '-=0.15')
+      .to({}, pause(1)));
+    const branches = $$('.info-branches path', accuracy);
+    const nodes = $$('.info-nodes > div', accuracy);
+    loop(accuracy, () => gsap.timeline() // the info branches out again
+      .to(nodes, { autoAlpha: 0, scale: 0.7, duration: 0.2 })
+      .set(branches, { strokeDashoffset: 1 })
+      .to(branches, { strokeDashoffset: 0, duration: 0.6, ease: 'power1.inOut', stagger: 0.1 })
+      .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, '-=0.3')
+      .to({}, pause(1)));
+    const langPill = $('.lang-pill', languages);
+    const tabs = $$('.lang-tabs span', languages);
+    const hello = $('.hello-en', languages);
+    const konnichiwa = $('.hello-jp', languages);
+    loop(languages, () => gsap.timeline() // Hello. ↔ こんにちは。
+      .to(langPill, { x: () => tabs[1].offsetLeft - tabs[0].offsetLeft, duration: 0.45, ease: MOTION.easeInOut })
+      .to(tabs[0], { color: '#A8A49A', duration: 0.3 }, '<0.05')
+      .to(tabs[1], { color: '#FFFFFF', duration: 0.3 }, '<0.1')
+      .to(hello, { autoAlpha: 0, y: -12, duration: 0.3, ease: 'power2.in' }, '<')
+      .to(konnichiwa, { autoAlpha: 1, y: 0, duration: 0.4 }, '>-0.05')
+      .to({}, pause(0.9))
+      .to(langPill, { x: 0, duration: 0.45, ease: MOTION.easeInOut })
+      .to(tabs[1], { color: '#A8A49A', duration: 0.3 }, '<0.05')
+      .to(tabs[0], { color: '#FFFFFF', duration: 0.3 }, '<0.1')
+      .to(konnichiwa, { autoAlpha: 0, y: 12, duration: 0.3, ease: 'power2.in' }, '<')
+      .to(hello, { autoAlpha: 1, y: 0, duration: 0.4 }, '>-0.05')
+      .to({}, pause(0.9)));
+    const glow = $('.network-glow', scale);
+    const placesOut = $$('.network-node', scale);
+    loop(scale, () => gsap.timeline() // the network pulses out from the hub
+      .to(glow, { scale: 1.5, opacity: 0.35, transformOrigin: '50% 50%', duration: 0.5, ease: 'sine.out' })
+      .to(placesOut, { scale: 1.35, transformOrigin: '50% 50%', duration: 0.25, ease: 'sine.out', stagger: 0.08 }, '-=0.2')
+      .to(placesOut, { scale: 1, duration: 0.35, ease: 'sine.inOut', stagger: 0.08 }, '-=0.15')
+      .to(glow, { scale: 1, opacity: 1, duration: 0.6, ease: 'sine.inOut' }, '<')
+      .to({}, pause(0.5)));
+    const bars = $$('.bar', insights);
+    loop(insights, () => gsap.timeline() // the week's bars grow again
+      .to(bars, { '--grow': 0, duration: 0.25, ease: 'power2.in' })
+      .to(bars, { '--grow': 1, duration: 0.5, ease: 'power2.out', stagger: 0.1 })
+      .to({}, pause(1)));
+
+    // Industries: the chat on a card pops in again (its photo zooms, in the CSS)
+    industries.cards.forEach((card) => {
+      const [question, answer] = $$('.industry-chat .bubble:not(.typing-dots)', card);
+      if (!answer) return;
+      const dots = typingDots(answer, 'is-sm');
+      loop(card, () => {
+        const round = gsap.timeline()
+          .to([question, answer], { autoAlpha: 0, duration: 0.2 })
+          .set([question, answer], { scale: 0.6 });
+        popIn(round, question, 0.3);
+        typeIn(round, dots, 0.65, 0.45);
+        popIn(round, answer, 1.15);
+        return round.to({}, pause(1.6));
+      });
+    });
+
+    // Pricing: each tier's graphic builds again
+    const [basic, capacity, business, enterprise] = pricing.cards;
+    const art = (card, selector) => $$(selector, card);
+    loop(basic, () => gsap.timeline()
+      .to(art(basic, '.tier-ring'), { scale: 0.5, opacity: 0, svgOrigin: '245 114', duration: 0.25 })
+      .to(art(basic, '.tier-ring'), { scale: 1, opacity: 1, duration: 0.7, stagger: 0.15 })
+      .to({}, pause(0.6)));
+    loop(capacity, () => gsap.timeline()
+      .to(art(capacity, '.tier-overlap'), { opacity: 0, duration: 0.2 })
+      .to(art(capacity, '.tier-left'), { x: -40, duration: 0.45, ease: MOTION.easeInOut }, '<')
+      .to(art(capacity, '.tier-right'), { x: 40, duration: 0.45, ease: MOTION.easeInOut }, '<')
+      .to(art(capacity, '.tier-left, .tier-right'), { x: 0, duration: 0.7, ease: MOTION.easeInOut })
+      .to(art(capacity, '.tier-overlap'), { opacity: 1, duration: 0.4 }, '-=0.2')
+      .to({}, pause(0.6)));
+    loop(business, () => gsap.timeline()
+      .fromTo(art(business, '.tier-dot'), { rotation: 0 }, { rotation: 360, svgOrigin: '275.36 59', duration: 1.6, ease: MOTION.easeInOut })
+      .set(art(business, '.tier-dot'), { rotation: 0 })
+      .to({}, pause(0.5)));
+    const spokes = art(enterprise, '.tier-spokes path');
+    const entNodes = art(enterprise, '.tier-nodes circle');
+    loop(enterprise, () => gsap.timeline()
+      .to(entNodes, { scale: 0, duration: 0.2 })
+      .set(spokes, { strokeDashoffset: 1 })
+      .to(spokes, { strokeDashoffset: 0, duration: 0.45, ease: 'power1.inOut', stagger: 0.07 })
+      .to(entNodes, { scale: 1, duration: 0.3, ease: 'back.out(2)', stagger: 0.07 }, '-=0.3')
+      .to({}, pause(0.8)));
+
+    // Every section's chat (not the opening's, which the story moves): the conversation plays
+    // again, the question pops up, "•••" types, then the answer and the sub-bubble pop in
+    $$('section .chat-section-header').filter(header => !header.closest('.story')).forEach((header) => {
+      const user = $('.chat-header-row.right', header);
+      const reply = $('.header-pill--ai', header);
+      const sub = $('.sub-pill-text', header);
+      if (!reply) return;
+      const dots = typingDots(reply);
+      const parts = [user, reply, sub].filter(Boolean);
+      const staged = header.closest('section').classList.contains('is-staged');
+      loop(header, () => {
+        placeDots(dots, reply);
+        const round = gsap.timeline()
+          .to(parts, { autoAlpha: 0, duration: 0.15 })
+          .set(parts, { scale: 0.6, transformOrigin: i => (parts[i] === user ? 'right bottom' : 'left bottom') });
+        let at = 0.2;
+        if (user) { popIn(round, user, at); at += 0.35; }
+        typeIn(round, dots, at, 0.5);
+        popIn(round, reply, at + 0.55);
+        if (sub) popIn(round, sub, at + 0.8);
+        return round.to({}, pause(1.2));
+      }, staged ? undefined : { ready: () => shownWhole(reply) }); // (the contact section isn't a scene)
+    });
+
+    // The opening's features: the icon pops and the row nudges toward the kiosk
+    const storyDone = () => root.classList.contains('story-plain') || $('.story').classList.contains('is-built');
+    $$('#features .feature-item').forEach((item) => {
+      const icon = $('.feature-icon', item);
+      const toward = item.closest('.left-col') ? 6 : -6;
+      loop(item, () => gsap.timeline()
+        .to(item, { x: toward, duration: 0.25, ease: 'power2.out' })
+        .fromTo(icon, { scale: 1 }, { scale: 1.18, duration: 0.18, ease: 'power2.out', yoyo: true, repeat: 1 }, '<')
+        .to(item, { x: 0, duration: 0.35, ease: 'power2.inOut' })
+        .to({}, pause(0.6)), { section: $('.story'), ready: () => storyDone() && shownWhole(item) });
+    });
+
+    // The concierge says hello: the hero avatar and the kiosks glow softly
+    const sayHello = el => gsap.timeline()
+      .to(el, { filter: 'brightness(1.08) drop-shadow(0 0 18px rgba(39, 111, 248, 0.45))', duration: 0.35, ease: 'power2.out' })
+      .to(el, { filter: 'brightness(1) drop-shadow(0 0 0px rgba(39, 111, 248, 0))', duration: 0.6, ease: 'power2.inOut' })
+      .set(el, { clearProps: 'filter' })
+      .to({}, pause(0.8));
+    [hero.avatar, $('#intro .kiosk-device')].forEach(el => el && loop(el, () => sayHello(el), { section: $('.story'), ready: () => !root.classList.contains('is-opening') && shownWhole(el) }));
+    const ctaScreen = $('#cta .kiosk-screen');
+    if (ctaScreen) loop(ctaScreen, () => sayHello(ctaScreen), { section: cta.section });
+
+    // Where would my concierge live?: each device's icon pulses (the card lifts, in the CSS)
+    deployment.cards.forEach((card) => {
+      const icon = $('.platform-icon', card);
+      if (icon) loop(card, () => gsap.timeline()
+        .fromTo(icon, { scale: 1 }, { scale: 1.15, duration: 0.2, ease: 'power2.out', yoyo: true, repeat: 1 })
+        .to({}, pause(0.7)));
+    });
+
+    // Why concierge81?: the demo card's rings ripple out and the concierge nods
+    const demoCard = $('#values .bento-card--cta');
+    if (demoCard) {
+      const rings = $$('.cta-rings i', demoCard);
+      const face = $('.avatar-circle', demoCard);
+      loop(demoCard, () => gsap.timeline()
+        .fromTo(rings, { scale: 0.85, opacity: 0.6 }, { scale: 1.15, opacity: 0, duration: 0.9, ease: 'power2.out', stagger: 0.12 })
+        .to(face, { y: -5, duration: 0.2, ease: 'power2.out', yoyo: true, repeat: 1 }, 0)
+        .set(rings, { clearProps: 'transform,opacity,scale' })
+        .to({}, pause(0.6)));
+    }
+
+    // How do I get started?: each next step's number pops
+    $$('#contact .step-item').forEach((item) => {
+      const number = $('.step-number', item);
+      if (number) loop(item, () => gsap.timeline()
+        .fromTo(number, { scale: 1 }, { scale: 1.2, duration: 0.18, ease: 'power2.out', yoyo: true, repeat: 1 })
+        .to({}, pause(0.5)), { ready: () => shownWhole(item) });
+    });
+
+    // The page re-measures (a refresh resets the scenes): every loop stops on its finished frame
+    const stopAll = () => offs.forEach(off => off.stop?.());
+    ScrollTrigger.addEventListener('refreshInit', stopAll);
+    return () => {
+      ScrollTrigger.removeEventListener('refreshInit', stopAll);
+      offs.forEach(off => off());
+    };
+  });
+
   setupPile();
 
   runOpening();
 
-  // Where the visitor is, as a section and a distance into it (positions shift when the intro
-  // story is shown finished instead of pinned), saved as they scroll
-  const places = ['.story', '#problem', '#how', '#interaction', '#industries', '#values', '#deployment', '#pricing', '#faq', '#cta', '#contact'];
+  // Where the visitor is, as a section and a distance into it (positions shift when scenes are
+  // shown as plain sections instead of pinned), saved as they scroll
   const topOf = (target) => {
     const el = typeof target === 'string' ? $(target) : target;
     const box = el.parentElement.classList.contains('pin-spacer') ? el.parentElement : el;
     // (with smooth scrolling the content trails the scrollbar, so ask the smoother)
     return smoother ? smoother.offset(box, 'top top') : box.getBoundingClientRect().top + scrollY;
   };
-  const mm = gsap.matchMedia();
-  mm.add(
+  // Keyboard mode (this visit): the calm layout of reduced motion, see below
+  let keyboardMode = session.get('keyboard') === '1';
+  let mm = gsap.matchMedia();
+  const setUpMotion = () => mm.add(
     {
       isDesktop: '(min-width: 901px) and (prefers-reduced-motion: no-preference)',
       isMobile: '(max-width: 900px) and (prefers-reduced-motion: no-preference)',
       reduceMotion: '(prefers-reduced-motion: reduce)'
     },
     (context) => {
-      if (context.conditions.reduceMotion) {
+      if (context.conditions.reduceMotion || keyboardMode) {
         // No movement: everything visible in its final state
+        root.classList.toggle('is-keyboard', keyboardMode);
         gsap.set('[data-anim]', { autoAlpha: 1 });
-        return;
+        return () => root.classList.remove('is-keyboard');
       }
       // Desktop: the page glides with a little momentum, so a quick flick or a slow wheel never
       // feels rough (phones keep their native touch scrolling)
       if (context.conditions.isDesktop && window.ScrollSmoother) {
         setHeaderHeight();
         root.classList.add('is-smooth');
-        smoother = ScrollSmoother.create({ wrapper: '#smooth-wrapper', content: '#smooth-content', smooth: 1.1, smoothTouch: false });
+        smoother = ScrollSmoother.create({ wrapper: '#smooth-wrapper', content: '#smooth-content', smooth: 0.6, smoothTouch: false });
       }
+      measuring = true; // setting up: shown finished where seen, nothing plays
+      const unlimit = context.conditions.isDesktop ? limitScroll() : null; // the scroll follows the animation
       const cleanups = scenes.map(scene => scene(context.conditions)).filter(Boolean);
+      if (plainAtStart.length) { // seen this session before a refresh: plain from the start
+        plainAtStart.splice(0).forEach(makePlain => makePlain());
+        ScrollTrigger.refresh();
+      }
+      requestAnimationFrame(() => { measuring = false; });
       return () => {
+        unlimit?.();
         cleanups.forEach(cleanup => cleanup());
         smoother?.kill();
         smoother = null;
@@ -2024,6 +2812,87 @@
       };
     }
   );
+  if (keyboardMode) finishOpening();
+  setUpMotion();
+
+  /* Keyboard mode. The landing reveals its sections as the visitor scrolls, so a control in a
+     section that hasn't played yet is hidden, and Tab (or a screen reader) can't reach it. The
+     first time Tab would move on past the header and the hero, the page switches, for this visit,
+     to the calm layout reduced motion uses: every section shown and finished, normal scrolling, no
+     pinning. The visitor stays at the same place and focus moves on to that next control. Mouse,
+     trackpad and touch visitors never see it. */
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const enterKeyboardMode = (next) => {
+    const y = scrollY;
+    const place = [...places].reverse().find(sel => topOf(sel) <= y + 1) || places[0];
+    keyboardMode = true;
+    session.set('keyboard', '1');
+    finishOpening();
+    mm.revert(); // every scene, pin and the smooth scrolling put back as the page was
+    mm = gsap.matchMedia();
+    setUpMotion();
+    ScrollTrigger.refresh();
+    requestAnimationFrame(() => {
+      if (!next.closest('#hero, .site-header')) $(place)?.scrollIntoView({ block: 'start' });
+      next.focus(); // (the browser scrolls it into view)
+    });
+  };
+  addEventListener('keydown', (e) => {
+    if (keyboardMode || e.key !== 'Tab' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey || !smoother) return;
+    const order = $$(FOCUSABLE).filter(el => el.getClientRects().length && !el.closest('[inert], [aria-hidden="true"], [hidden]'));
+    const from = document.activeElement;
+    const next = order.find(el => from === document.body ? true : (from.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) && !from.contains(el));
+    if (!next || next.closest('.site-header, #hero, .skip-link')) return; // the top of the page works as it is
+    e.preventDefault();
+    enterKeyboardMode(next);
+  }, true);
+
+  /* Keyboard (desktop): focus moving into the site header (Tab from the top of the page, Shift+Tab
+     back) brings it in over any section; it goes again when focus leaves it. */
+  let headerForFocus = false;
+  siteHeader.addEventListener('focusin', () => {
+    if (!smoother || gsap.getProperty(siteHeader, 'yPercent') > -1) return;
+    headerForFocus = true;
+    gsap.to(siteHeader, { yPercent: 0, duration: 0.3, ease: MOTION.easeInOut, overwrite: 'auto' });
+  });
+  siteHeader.addEventListener('focusout', (e) => {
+    if (!headerForFocus || siteHeader.contains(e.relatedTarget)) return;
+    headerForFocus = false;
+    gsap.to(siteHeader, { yPercent: -100, duration: 0.3, ease: MOTION.easeInOut, overwrite: 'auto' });
+  });
+
+  /* Below the opening the site header stays away, so a small pill keeps "Request a demo" and the
+     menu at hand (bottom right, desktop). "Menu" brings the header in until the visitor scrolls
+     on; the pill steps aside once the contact form is on screen. */
+  const pill = document.createElement('div');
+  pill.className = 'float-pill';
+  pill.innerHTML = '<button type="button" class="float-pill-menu" aria-expanded="false">Menu</button><a href="#contact" class="btn btn-primary btn-small">Request a demo</a>';
+  document.body.append(pill);
+  const menuBtn = $('.float-pill-menu', pill);
+  let calledAt = null; // the scroll position where "Menu" brought the header in
+  const sendHeaderAway = () => {
+    if (calledAt === null) return;
+    calledAt = null;
+    siteHeader.classList.remove('is-called');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    if (!siteHeader.contains(document.activeElement)) gsap.to(siteHeader, { yPercent: -100, duration: 0.35, ease: MOTION.easeInOut, overwrite: 'auto' });
+  };
+  menuBtn.addEventListener('click', () => {
+    if (calledAt !== null) { sendHeaderAway(); return; }
+    calledAt = scrollY;
+    siteHeader.classList.add('is-called');
+    menuBtn.setAttribute('aria-expanded', 'true');
+    gsap.to(siteHeader, { yPercent: 0, duration: 0.35, ease: MOTION.easeInOut, overwrite: 'auto' });
+  });
+  let pillTick = false;
+  const placePill = () => {
+    pillTick = false;
+    const past = smoother && !root.classList.contains('is-opening') && scrollY > topOf('#problem') + innerHeight * 0.5;
+    const formOnScreen = $('#contact').getBoundingClientRect().top < innerHeight * 0.75;
+    pill.classList.toggle('is-shown', !!past && !formOnScreen);
+    if (calledAt !== null && Math.abs(scrollY - calledAt) > 60) sendHeaderAway();
+  };
+  addEventListener('scroll', () => { if (!pillTick) { pillTick = true; requestAnimationFrame(placePill); } }, { passive: true });
 
   // In-page links glide there with the smooth scrolling (the story's step links are handled first)
   document.addEventListener('click', (e) => {
@@ -2048,13 +2917,24 @@
   ScrollTrigger.addEventListener('scrollEnd', savePlace);
   addEventListener('pagehide', savePlace);
 
-  // Recalculate trigger positions once images (avatar, photos) have their real size, then come
-  // back to where the visitor was before the refresh (straight there, its steps shown finished)
-  addEventListener('load', () => {
+  /* Back to where the visitor was (a refresh, or a return to the page this session): the page is
+     placed there before it is shown (index.html hides it with .is-restoring until then), the scene
+     there on its finished step and everything above it shown finished. It is shown once images
+     and fonts have their real size and it has been measured again there (or after 2.5s at most,
+     by index.html; then it is put back unless the visitor has moved meanwhile). */
+  const restore = () => {
+    if (!savedPlace || !$(savedPlace.id)) return;
     ScrollTrigger.refresh();
-    if (savedPlace && $(savedPlace.id)) {
-      scrollToY(topOf(savedPlace.id) + savedPlace.offset, false);
-      ScrollTrigger.refresh(); // the scenes jump to their finished step there, instead of playing up to it
-    }
+    scrollToY(topOf(savedPlace.id) + savedPlace.offset, false);
+    ScrollTrigger.refresh(); // the scenes jump to their finished step there, instead of playing up to it
+  };
+  restore();
+  let moved = false;
+  ['wheel', 'touchstart', 'keydown', 'pointerdown'].forEach(type => addEventListener(type, () => { moved = true; }, { once: true, passive: true }));
+  const loaded = new Promise(resolve => (document.readyState === 'complete' ? resolve() : addEventListener('load', resolve, { once: true })));
+  Promise.all([loaded, document.fonts?.ready]).then(() => {
+    if (moved) ScrollTrigger.refresh();
+    else restore();
+    requestAnimationFrame(() => root.classList.remove('is-restoring')); // shown there, at last
   });
 })();
