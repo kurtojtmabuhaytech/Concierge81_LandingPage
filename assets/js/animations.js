@@ -1866,7 +1866,9 @@
       index = gsap.utils.clamp(0, last, i);
       showDot();
       slide?.kill();
-      slide = gsap.to(track, { x: -shiftAt(index), duration: index === i ? 0.8 : 0.4, ease: MOTION.easeInOut });
+      glideTo = null;
+      gsap.killTweensOf(track, 'x');
+      slide = gsap.to(track, { x: -shiftAt(index), duration: index === i ? 0.8 : 0.4, ease: MOTION.easeInOut, onComplete: follow });
     };
     const go = dir => goTo(index + dir);
 
@@ -1880,40 +1882,62 @@
       else goTo(dots.indexOf(dot));
     };
     controls.addEventListener('click', onControls, true);
-    // Horizontal wheel/trackpad swipes step it; vertical scrolling over it scrolls the page as usual
-    let wheelX = 0;
+    /* Swipes and drags move the cards with the fingers or the pointer, freely, and glide on a little
+       when let go (user, 4 Nov); only the arrows and the dots step them one card at a time. The dots
+       and arrows follow wherever the cards come to rest. Vertical scrolling over it scrolls the page. */
+    const clampX = x => gsap.utils.clamp(-maxShift(), 0, x);
+    const follow = () => { // the dot of the card nearest the left edge; the arrows at the ends
+      const x = gsap.getProperty(track, 'x');
+      index = gsap.utils.clamp(0, last, Math.round(-x / step()));
+      showDot();
+      prevBtn.disabled = x > -1;
+      nextBtn.disabled = x < -maxShift() + 1;
+    };
+    let glideTo = null; // eases the track after the swipe (it follows the fingers, a touch softened)
+    const moveTo = (x) => {
+      slide?.kill();
+      glideTo = glideTo || gsap.quickTo(track, 'x', { duration: 0.3, ease: 'power3.out', onUpdate: follow });
+      glideTo(clampX(x));
+    };
+    let wheelGoal = null;
     let wheelAt = 0;
     const onWheel = (e) => {
       if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
       e.preventDefault();
       const now = performance.now();
-      if (now - wheelAt > 300) wheelX = 0;
+      if (wheelGoal === null || now - wheelAt > 300) wheelGoal = gsap.getProperty(track, 'x'); // (a new swipe starts from where the cards are)
       wheelAt = now;
-      wheelX += e.deltaX;
-      if (Math.abs(wheelX) > 60 && !slide?.isActive()) { go(wheelX > 0 ? 1 : -1); wheelX = 0; }
+      wheelGoal = clampX(wheelGoal - e.deltaX * (e.deltaMode === 1 ? 40 : 1));
+      moveTo(wheelGoal);
     };
     gallery.addEventListener('wheel', onWheel, { passive: false });
-    // Dragging: the track follows the pointer, then settles one card along (or back)
+    // Dragging: the track follows the pointer, then glides on with the pointer's speed
     let drag = null;
     const onDown = (e) => {
       if (e.button !== 0) return;
-      drag = { x: e.clientX, start: gsap.getProperty(track, 'x'), moved: false, id: e.pointerId };
+      drag = { x: e.clientX, start: gsap.getProperty(track, 'x'), moved: false, id: e.pointerId, lastX: e.clientX, lastT: performance.now(), v: 0 };
     };
     const onMove = (e) => {
       if (!drag) return;
       if (!(e.buttons & 1)) { onUp(e); return; } // (released outside the gallery before it moved: no drag)
       const dx = e.clientX - drag.x;
-      if (!drag.moved && Math.abs(dx) > 6) { drag.moved = true; slide?.kill(); gallery.setPointerCapture(drag.id); gallery.classList.add('is-dragging'); }
-      if (drag.moved) gsap.set(track, { x: drag.start + dx });
+      if (!drag.moved && Math.abs(dx) > 6) { drag.moved = true; slide?.kill(); glideTo = null; gsap.killTweensOf(track); gallery.setPointerCapture(drag.id); gallery.classList.add('is-dragging'); }
+      if (!drag.moved) return;
+      const now = performance.now();
+      drag.v = (e.clientX - drag.lastX) / Math.max(1, now - drag.lastT); // px per ms
+      drag.lastX = e.clientX;
+      drag.lastT = now;
+      gsap.set(track, { x: clampX(drag.start + dx) });
+      follow();
     };
-    const onUp = (e) => {
+    const onUp = () => {
       if (!drag) return;
-      const { moved, x } = drag;
+      const { moved, v, lastT } = drag;
       drag = null;
       gallery.classList.remove('is-dragging');
       if (!moved) return; // a click on a card's button or link
-      const dx = e.clientX - x;
-      go(dx < -50 ? 1 : dx > 50 ? -1 : 0);
+      const speed = performance.now() - lastT > 80 ? 0 : v; // (held still before letting go: no glide)
+      slide = gsap.to(track, { x: clampX(gsap.getProperty(track, 'x') + speed * 260), duration: 0.7, ease: 'power3.out', onUpdate: follow });
     };
     gallery.addEventListener('pointerdown', onDown);
     gallery.addEventListener('pointermove', onMove);
@@ -1922,8 +1946,9 @@
 
     const applyStart = () => {
       slide?.kill();
-      measure(); // (the visitor's card is kept: a resize or a re-measure never moves the carousel back)
-      gsap.set(track, { x: -shiftAt(index) });
+      measure(); // (where the visitor left the cards is kept: a resize or a re-measure never moves them back)
+      gsap.set(track, { x: clampX(gsap.getProperty(track, 'x')) });
+      follow();
       gsap.set(content, { y: 0, autoAlpha: 1 });
       heading.start();
       gsap.set(all, { autoAlpha: 0, x: 0 });
