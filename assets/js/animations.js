@@ -199,7 +199,10 @@
      over the tail as the next section covers it. `hold` keeps the scroll at the current step while the scene's own animation runs,
      and `runs` are such animations, paused with the step while the visitor is away. */
   const PACE = 0.25; // screen heights of scrolling per second of animation
-  const STEP_SPEED = 1.9; // new steps play quicker than the timeline (the whole page in about 40 s), still easy to read
+  const STEP_SPEED = 1; // steps play at the timeline's own (Figma) pace; a fast scroll never hurries them (user, 4 Nov)
+  // After a step has ended, the next one starts only on a new scroll gesture (input after a gap
+  // this long): the visitor sees every finished step before the page moves on, however fast they scroll
+  const GESTURE = 250; // ms
   let jumping = false; // an in-page link is gliding past scenes: show them finished
   /* The scroll follows the animation (desktop): the visitor can scroll down as far as the end of
      the step that is playing (or, once it has finished, of the next one, which starts as they
@@ -340,7 +343,14 @@
   const sceneListeners = new Set();
   // When the visitor last scrolled the page themselves (wheel, keys, touch, pointer)
   let inputAt = -1;
-  ['wheel', 'keydown', 'touchmove', 'pointerdown'].forEach(type => addEventListener(type, () => { inputAt = performance.now(); }, { capture: true, passive: true }));
+  // A gesture is a run of input without a GESTURE-long gap: a fling that goes on after a step has
+  // ended doesn't move the page on, the visitor's next, separate scroll does
+  let gestureAt = -1;
+  ['wheel', 'keydown', 'touchmove', 'pointerdown'].forEach(type => addEventListener(type, () => {
+    const now = performance.now();
+    if (now - inputAt > GESTURE) gestureAt = now;
+    inputAt = now;
+  }, { capture: true, passive: true }));
   const movedSince = at => inputAt > at;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
   ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
@@ -357,6 +367,9 @@
     let seen = seenAll ? Infinity : 0; // the furthest point the visitor has watched
     let playing = null; // new steps under way
     let playingTo = 0;
+    let restedAt = -1; // when the last step ended; the next starts on a scroll gesture begun after that
+    let steppedAt = -1; // the gesture that last started a step from rest (one scroll, one step)
+    const newGesture = () => gestureAt > restedAt;
     let follow = null;  // the scene easing after the scroll over what was seen
     let followTo = -1;
     let viewMove = null; // the view easing after the scroll (other scenes, over what was seen)
@@ -483,6 +496,7 @@
         onComplete: () => {
           playing = null;
           resting();
+          restedAt = performance.now();
           seen = Math.max(seen, target);
           noteView(target);
           builtAt = Math.min(seen, tl.duration());
@@ -497,7 +511,7 @@
       if (playing || measuring || jumping || plain || killed || !pin?.isActive) return; // (the pin: also right at the end of the steps)
       const allowed = gsap.utils.clamp(0, 1, (scrollLimit() - steps.start) / Math.max(1, steps.end - steps.start));
       const want = Math.max(firstStep(), stepAfter(Math.min(steps.progress, allowed) * tl.duration()));
-      if (want > Math.min(seen, tl.duration()) + 0.001) playOn(want);
+      if (want > Math.min(seen, tl.duration()) + 0.001 && newGesture()) playOn(want);
     };
     catchUps.add(catchUp);
 
@@ -538,7 +552,19 @@
         if (plain) return;
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001 && !switching && !measuring) { // (see goPlain; never during a re-measure)
-          playOn(want);
+          if (newGesture()) playOn(want); // (else: the last step has just ended; wait for the visitor's next scroll)
+          return;
+        }
+        // Resting on a finished step and the visitor scrolls on, by however little: the next step
+        // plays (one scroll, one step) and the page glides to that step's own position, so the
+        // scroll and the steps stay in step
+        // (the story, run back and watched again, moves on the same way: one scroll, one step)
+        if (self.direction > 0 && !playing && !follow && tl.time() < tl.duration() - 0.001 && newGesture() && gestureAt > steppedAt && !switching && !measuring) {
+          steppedAt = performance.now();
+          const here = stops().filter(t => t <= tl.time() + 0.001).at(-1) ?? 0;
+          const nextStop = Math.max(firstStep(), stops().find(t => t > here + 0.001) ?? tl.duration());
+          if (nextStop > watched + 0.001) playOn(nextStop); else followSeen(nextStop, 1);
+          if (smoother) smoother.scrollTo(toScroll(nextStop), true); else scrollTo({ top: toScroll(nextStop), behavior: 'smooth' });
           return;
         }
         // a step under way plays on (never cut short); in the story a scroll back reverses it from
@@ -616,7 +642,8 @@
       if (plain || killed || !pin) return Infinity;
       const done = Math.min(seen, tl.duration());
       if (done >= tl.duration() - 0.001 && !playing && !hold()) return Infinity;
-      const next = playing ? playingTo : (hold() ? done : (stops().find(t => t > done + 0.001) ?? tl.duration()));
+      // (a step just ended: held at it until the visitor scrolls again, see newGesture)
+      const next = playing ? playingTo : (hold() || !newGesture() ? done : (stops().find(t => t > done + 0.001) ?? tl.duration()));
       return toScroll(Math.max(next, firstStep()));
     });
     if (!followBack) finishedRanges.add(() => (!plain && !killed && pin && !playing && tl.progress() > 0.999 ? [pin.start, pin.end] : null));
@@ -1093,12 +1120,12 @@
       // place the features slide out from behind it row by row
       .to(featuresHeadline, { y: headlineToTop, duration: 0.5, ease: MOTION.easeInOut }, 'features')
       .to(featuresStage, { y: () => -centreLift(), duration: 2.84, ease: rise }, 'features+=0.1')
-      .to(traveller, { ...onSlot(featuresKiosk, centreLift), duration: 2.84, ease: rise }, 'features+=0.1')
-      .addLabel('popOut', 'features+=0.7');
-    // row by row, 0.44s apart; on each row the left one first, the right one 0.22s later
+      .to(traveller, { ...onSlot(featuresKiosk, centreLift), duration: 2.84, ease: rise }, 'features+=0.1');
+    // from 0.7s in, row by row, 0.44s apart; on each row the left one first, the right one 0.22s
+    // later (not a label: a label would be a step of its own, and the fly-out belongs to this one)
     const flyOut = { autoAlpha: 1, x: 0, y: 0, duration: 0.85, ease: bezier(0.22, 1, 0.36, 1) };
-    left.forEach((el, i) => tl.to(el, flyOut, `popOut+=${i * 0.44}`));
-    right.forEach((el, i) => tl.to(el, flyOut, `popOut+=${i * 0.44 + 0.22}`));
+    left.forEach((el, i) => tl.to(el, flyOut, `features+=${0.7 + i * 0.44}`));
+    right.forEach((el, i) => tl.to(el, flyOut, `features+=${0.7 + i * 0.44 + 0.22}`));
     tl.addLabel('fan');
 
     // The site header stays away for the rest of the page.
