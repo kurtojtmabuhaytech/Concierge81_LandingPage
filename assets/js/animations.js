@@ -184,10 +184,12 @@
      - Down, into steps not seen yet: they play in order at their own speed, and the scroll can't
        get more than a step ahead of them (see `limits`), so none is skipped or left half built.
      - Back up: always free. A step under way on screen snaps to its finished frame (snapBack);
-       sections seen to their end turn plain (goPlain), and the story turns plain as soon as it
-       has started. A section not seen to its end keeps what was built (nothing rewinds,
-       disappears or replays); the view inside follows the scroll back through the positions
-       seen at each step, and the section that slid over it slides back down.
+       sections seen to their end turn plain (goPlain). A section not seen to its end keeps what
+       was built (nothing rewinds, disappears or replays); the view inside follows the scroll back
+       through the positions seen at each step, and the section that slid over it slides back
+       down. The story (layers of one screen) retraces instead (`followBack`): it runs back step
+       by step with the scroll, a step under way reversing from where it is, and turns plain only
+       once the inbox has slid up over all of it.
      New steps only ever play on the way down, the first time. Each second of the timeline gets
      PACE of a screen of scrolling; `tail` keeps the scene pinned after its last step (the next
      section can slide up over it). `seen` starts the scene as already watched; `startShown` says
@@ -528,7 +530,9 @@
           playOn(want);
           return;
         }
-        if (playing) return; // a step under way plays on (never cut short)
+        // a step under way plays on (never cut short); in the story a scroll back reverses it from
+        // where it is (followSeen kills it and runs back to the step before)
+        if (playing && !(followBack && self.direction < 0)) return;
         if (keptView !== null && !movedSince(keptAt)) { followSeen(Math.min(keptView, watched), self.direction); return; } // (a resize: the same view, see keepView)
         // (while the page re-measures, the view is the one of the step there, not one in between)
         followSeen(Math.max(startShown ? 0 : firstStep(), Math.min(measuring ? stepAfter(at) : at, watched)), self.direction);
@@ -688,8 +692,7 @@
       });
       if (plainSaved.includes(`#${trigger.id}`)) plainAtStart.push(makePlain);
     }
-    // snap: the step under way jumps to its finished frame (see snapBack)
-    return { pin, scrub: { labelToScroll }, steps, kill, snap: () => { playing?.progress(1); } };
+    return { pin, scrub: { labelToScroll }, steps, kill };
   };
 
   const hero = {
@@ -1080,16 +1083,17 @@
     tl.addLabel('fan');
 
     // The site header stays away for the rest of the page.
-    // On the way back (see goPlain) the story becomes plain sections, like every section seen.
-    // The scroll back is always free (only the opening, before it, can't be scrolled): the first
-    // scroll back up once the story has started turns it plain at once, wherever it is, with
-    // everything shown finished (hero, intro, features); the part on screen stays in view.
+    // The scroll back is always free (only the opening, before it, can't be scrolled). Inside the
+    // story, scrolling back retraces it step by step (followBack): a step under way reverses from
+    // where it is and plays again on the way down. Once the story has played to its end and the
+    // inbox has slid up over it, the first scroll back turns it into plain sections (see goPlain),
+    // like every section seen; from then on it is a still preview.
     let plain = null;
     const scene = scrollScene({
       trigger: story,
       tl,
       startShown: true, // its start is the hero, a full page
-      followBack: true, // (a scroll back the page didn't catch as one, e.g. a touch drag: it retraces)
+      followBack: true, // on the way back it retraces its steps with the scroll
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       onUpdate: t => story.classList.toggle('is-at-hero', t < 0.001), // (the hero chat takes the wheel there)
@@ -1104,23 +1108,13 @@
     });
     plainables.push({
       id: '.story',
-      // as soon as it has moved past the hero (the step under way is shown finished by plainStory)
-      done: () => !!plain || tl.time() > 0.001,
+      // only once it has played to its end and the inbox has slid up over all of it (the visitor
+      // has moved on to the next page): the switch happens under the inbox, so it can't be seen.
+      // Before that, scrolling back retraces the story (followBack), never lays it out plain.
+      done: () => !!plain || (tl.progress() > 0.999 && next.getBoundingClientRect().top <= 1),
       inView: () => !!scene.pin?.isActive,
-      // a step under way (the card-to-kiosk morph, the kiosk's glide, the features' rise) finishes at
-      // once before the story is laid out plain: never a half-morphed card
-      progress: () => { const box = story.getBoundingClientRect(); return { onScreen: box.top < innerHeight && box.bottom > 0 }; },
-      snap: () => scene.snap(),
-      // what to keep in place as it turns plain: the inbox while it slides up over the story,
-      // otherwise the part the story is showing (the hero, the intro or the features), just under
-      // the site header (which comes back with the plain story)
-      anchor: () => {
-        if (story.getBoundingClientRect().bottom <= 0) return null; // (off screen above)
-        if (scrollY > scene.steps.end + 1) return { el: next, at: next.getBoundingClientRect().top };
-        const t = tl.time();
-        const part = t >= tl.labels.features - 0.001 ? '#features' : t >= tl.labels.kiosk - 0.001 ? '#intro' : '#hero';
-        return { el: $(part), at: siteHeader.offsetHeight };
-      },
+      // the inbox, covering the story, stays exactly where it is
+      anchor: () => ({ el: next, at: next.getBoundingClientRect().top }),
       makePlain: () => {
         if (plain) return;
         session.set('introDone', '1'); // (a refresh shows it plain too)

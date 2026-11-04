@@ -1191,11 +1191,10 @@ button.chip, a.chip {
     flex-wrap: nowrap;
   }
   .intro-split .kiosk-device {
-    flex: 0 0 calc(447 * var(--u));
-    width: calc(447 * var(--u));
-  }
-  .intro-split .kiosk-device {
-    height: calc(790 * var(--u));
+    --kiosk-h: min(calc(790 * var(--u)), calc(100svh - var(--header-h, calc(76 * var(--u))) - 4rem));
+    flex: 0 0 calc(var(--kiosk-h) * 447 / 790);
+    width: calc(var(--kiosk-h) * 447 / 790);
+    height: var(--kiosk-h);
   }
   :is(.intro-split, .feature-stage) .kiosk-device {
     display: flex;
@@ -1257,9 +1256,10 @@ button.chip, a.chip {
     gap: calc(80 * var(--u));
   }
   .feature-stage .kiosk-device {
-    flex: 0 0 calc(498 * var(--u));
-    width: calc(498 * var(--u));
-    height: calc(882 * var(--u));
+    --kiosk-h: min(calc(882 * var(--u)), calc(100svh - 10rem));
+    flex: 0 0 calc(var(--kiosk-h) * 498 / 882);
+    width: calc(var(--kiosk-h) * 498 / 882);
+    height: var(--kiosk-h);
   }
   .feature-col {
     flex: 0 1 calc(380 * var(--u));
