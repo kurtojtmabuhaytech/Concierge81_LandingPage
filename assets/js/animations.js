@@ -3001,7 +3001,7 @@
      on; the pill steps aside once the contact form is on screen. */
   const pill = document.createElement('div');
   pill.className = 'float-pill';
-  pill.innerHTML = '<button type="button" class="float-pill-menu" aria-expanded="false">Menu</button><a href="#contact" class="btn btn-primary btn-small">Request a demo</a>';
+  pill.innerHTML = '<button type="button" class="float-pill-menu" aria-expanded="false" aria-controls="navMenu">Menu</button><a href="#contact" class="btn btn-primary btn-small">Request a demo</a>';
   document.body.append(pill);
   const menuBtn = $('.float-pill-menu', pill);
   let calledAt = null; // the scroll position where "Menu" brought the header in

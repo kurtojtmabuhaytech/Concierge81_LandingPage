@@ -256,6 +256,11 @@ main:focus {
   font-weight: 600;
   cursor: pointer;
 }
+.lang-btn svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+}
 
 /* =========================================
    Section Themes (scoped — nothing bleeds)
@@ -4294,6 +4299,10 @@ button.chip, a.chip {
   color: #6E6B63;
   margin: 0;
 }
+.privacy-text a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 .lead-sent {
   display: flex;
@@ -5056,6 +5065,10 @@ main > .blog-section:has(+ #contact) {
   line-height: 1.41;
   letter-spacing: -0.014em;
   margin: 0 0 1.875rem;
+}
+.post-lead a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .post-byline {

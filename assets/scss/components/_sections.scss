@@ -63,6 +63,7 @@ main:focus { outline: none; } // the skip link's target
   display: inline-flex; align-items: center; gap: 4px;
   background: $color-white; border: 1px solid $color-border; color: $color-ink;
   border-radius: $radius-full; padding: 4px 12px; font: inherit; font-size: 0.75rem; font-weight: $font-weight-semibold; cursor: pointer;
+  svg { width: 1.1em; height: 1.1em; flex: none; } // the globe (the same as the footer's; it was an emoji, drawn differently on every system)
 }
 
 /* =========================================
@@ -1531,7 +1532,9 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   .footer-form-card.is-arrived { animation: none; }
   #leadForm .btn-primary.is-sending::before { animation-duration: 2s; }
 }
-.privacy-text { text-align: center; font-size: $type-caption; color: #6E6B63; margin: 0; }
+.privacy-text { text-align: center; font-size: $type-caption; color: #6E6B63; margin: 0;
+  a { text-decoration: underline; text-underline-offset: 2px; } // (a link in a sentence: shown by more than its colour)
+}
 
 // "Request sent." (Figma, after the form is sent)
 .lead-sent { display: flex; flex-direction: column; gap: 1.5rem; outline: none;

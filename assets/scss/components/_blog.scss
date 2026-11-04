@@ -186,7 +186,9 @@ main > .blog-section:has(+ #contact) { padding-bottom: clamp(4rem, 7.9vw, 7.5rem
 .back-link { display: inline-block; font-size: 0.875rem; font-weight: $font-weight-medium; color: $cobalt-600; margin-bottom: 2.75rem; }
 .post-header .post-eyebrow { margin-bottom: 18px; }
 .post-title { font-size: $type-headline; font-weight: $font-weight-semibold; letter-spacing: -0.025em; line-height: 1.07; margin: 0 0 18px; }
-.post-lead { font-size: clamp(1.125rem, 1.455vw, 1.375rem); color: $color-text-secondary; line-height: 1.41; letter-spacing: -0.014em; margin: 0 0 1.875rem; }
+.post-lead { font-size: clamp(1.125rem, 1.455vw, 1.375rem); color: $color-text-secondary; line-height: 1.41; letter-spacing: -0.014em; margin: 0 0 1.875rem;
+  a { text-decoration: underline; text-underline-offset: 3px; } // (a link in a sentence: shown by more than its colour)
+}
 .post-byline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
   .author-avatar { width: 44px; height: 44px; }
   .author-name { font-size: 1rem; line-height: 1.56; }
