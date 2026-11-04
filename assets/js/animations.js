@@ -353,6 +353,7 @@
     let viewMove = null; // the view easing after the scroll (other scenes, over what was seen)
     let pin;
     let plain = false; // turned into a plain section on the way back (makePlain)
+    let killed = false; // stopped for good (kill): it no longer limits or holds the scroll
 
     // The view inside the pinned screen at each point the visitor has watched (time → y), so going
     // back retraces it
@@ -480,7 +481,7 @@
     // above that was holding this one): it starts now, so what is on screen always matches the
     // scroll position (and a refresh brings back the same)
     const catchUp = () => {
-      if (playing || measuring || jumping || plain || !pin?.isActive) return; // (the pin: also right at the end of the steps)
+      if (playing || measuring || jumping || plain || killed || !pin?.isActive) return; // (the pin: also right at the end of the steps)
       const allowed = gsap.utils.clamp(0, 1, (scrollLimit() - steps.start) / Math.max(1, steps.end - steps.start));
       const want = Math.max(firstStep(), stepAfter(Math.min(steps.progress, allowed) * tl.duration()));
       if (want > Math.min(seen, tl.duration()) + 0.001) playOn(want);
@@ -597,13 +598,13 @@
     // the next one once it has finished; held at the current one while the scene's own animation
     // runs (`hold`: the inbox's rain and demo); no limit once the scene has been seen to its end
     limits.add(() => {
-      if (plain || !pin) return Infinity;
+      if (plain || killed || !pin) return Infinity;
       const done = Math.min(seen, tl.duration());
       if (done >= tl.duration() - 0.001 && !playing && !hold()) return Infinity;
       const next = playing ? playingTo : (hold() ? done : (stops().find(t => t > done + 0.001) ?? tl.duration()));
       return toScroll(Math.max(next, firstStep()));
     });
-    if (!followBack) finishedRanges.add(() => (!plain && pin && !playing && tl.progress() > 0.999 ? [pin.start, pin.end] : null));
+    if (!followBack) finishedRanges.add(() => (!plain && !killed && pin && !playing && tl.progress() > 0.999 ? [pin.start, pin.end] : null));
     // The first step (the visitor's question and the answer) starts as the section slides up
     // into view, so it never arrives as an empty panel
     const early = startShown ? null : ScrollTrigger.create({
@@ -642,6 +643,7 @@
     sceneListeners.add(detach);
     // Stops the scene for good: unpinned, nothing playing (the timeline stays where it is)
     function kill() {
+      killed = true;
       early?.kill();
       detach();
       stopAll();
@@ -686,7 +688,8 @@
       });
       if (plainSaved.includes(`#${trigger.id}`)) plainAtStart.push(makePlain);
     }
-    return { pin, scrub: { labelToScroll }, steps, kill };
+    // snap: the step under way jumps to its finished frame (see snapBack)
+    return { pin, scrub: { labelToScroll }, steps, kill, snap: () => { playing?.progress(1); } };
   };
 
   const hero = {
@@ -1104,6 +1107,10 @@
       // as soon as it has moved past the hero (the step under way is shown finished by plainStory)
       done: () => !!plain || tl.time() > 0.001,
       inView: () => !!scene.pin?.isActive,
+      // a step under way (the card-to-kiosk morph, the kiosk's glide, the features' rise) finishes at
+      // once before the story is laid out plain: never a half-morphed card
+      progress: () => { const box = story.getBoundingClientRect(); return { onScreen: box.top < innerHeight && box.bottom > 0 }; },
+      snap: () => scene.snap(),
       // what to keep in place as it turns plain: the inbox while it slides up over the story,
       // otherwise the part the story is showing (the hero, the intro or the features), just under
       // the site header (which comes back with the plain story)
