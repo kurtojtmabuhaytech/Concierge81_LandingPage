@@ -1098,6 +1098,11 @@ $q-pile: (
   border-radius: $radius-full; background: $neutral-800; border: 1px solid rgba($color-white, 0.12);
   span { position: relative; z-index: 1; min-width: 46px; padding: 6px 12px; text-align: center; font-size: 0.8125rem; font-weight: $font-weight-semibold; color: $neutral-400; }
   .is-active { color: $color-white; }
+  // the tabs can be picked: the pill moves there and the greeting turns into that language
+  span[role="button"] { cursor: pointer; border-radius: $radius-full; transition: color $transition-fast;
+    &:hover { color: $color-white; }
+    &:focus-visible { outline: 2px solid $color-white; outline-offset: 1px; }
+  }
 }
 .lang-pill { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 3px; width: 46px; border-radius: $radius-full; background: $color-cobalt-bright; }
 .hello { position: relative; display: flex; flex-direction: column; align-items: center; font-weight: $font-weight-semibold; line-height: 1.12; letter-spacing: -0.03em; }

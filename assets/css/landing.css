@@ -2920,6 +2920,18 @@ button.chip, a.chip {
 .lang-tabs .is-active {
   color: #FFFFFF;
 }
+.lang-tabs span[role=button] {
+  cursor: pointer;
+  border-radius: 999px;
+  transition: color 0.2s ease-in-out;
+}
+.lang-tabs span[role=button]:hover {
+  color: #FFFFFF;
+}
+.lang-tabs span[role=button]:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 1px;
+}
 
 .lang-pill {
   position: absolute;

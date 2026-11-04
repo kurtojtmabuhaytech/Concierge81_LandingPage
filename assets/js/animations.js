@@ -2003,6 +2003,67 @@
     cards: $$('#values .bento-card')
   };
 
+  /* The languages card: the tab pill moves to a language and the greeting turns into it (the scene
+     at its step, the hover loop, or the visitor clicking a tab). The big line greets in that
+     language; the blue line says こんにちは。, or Hello. once Japanese is on the big line. */
+  const greet = (() => {
+    const tabsEl = $('.lang-tabs', values.section);
+    if (!tabsEl) return null;
+    const pill = $('.lang-pill', tabsEl);
+    const tabs = $$('span', tabsEl).filter(tab => tab.textContent.trim() !== '+');
+    const big = $('.hello-en', values.section);
+    const small = $('.hello-jp', values.section);
+    const words = { EN: ['Hello.', 'en'], JP: ['こんにちは。', 'ja'], ZH: ['你好。', 'zh'], KO: ['안녕하세요.', 'ko'], ES: ['¡Hola!', 'es'] };
+    let shown = 'EN';
+    let swap = null;
+    let chosen = null; // the visitor's pick (it stays; the hover loop leaves it alone)
+    const write = (code) => {
+      const [word, lang] = words[code];
+      big.textContent = word;
+      big.lang = lang;
+      small.textContent = code === 'JP' ? 'Hello.' : 'こんにちは。';
+      small.lang = code === 'JP' ? 'en' : 'ja';
+    };
+    const colors = i => k => (k === i ? '#FFFFFF' : '#A8A49A');
+    const pillTo = (code, animate = !prefersReducedMotion) => {
+      const i = Math.max(0, tabs.findIndex(tab => tab.textContent.trim() === code));
+      const x = tabs[i].offsetLeft - tabs[0].offsetLeft;
+      tabs.forEach((tab, k) => { tab.classList.toggle('is-active', k === i); tab.setAttribute('aria-pressed', k === i); });
+      if (animate) {
+        gsap.to(pill, { x, duration: 0.45, ease: MOTION.easeInOut, overwrite: 'auto' });
+        gsap.to(tabs, { color: colors(i), duration: 0.3, overwrite: 'auto' });
+      } else {
+        gsap.set(pill, { x });
+        gsap.set(tabs, { color: colors(i) });
+      }
+    };
+    // the greeting turns into another language: out with a small lift, the new words in
+    const show = (code, animate = !prefersReducedMotion) => {
+      if (code === shown) return;
+      shown = code;
+      swap?.kill();
+      if (!animate) { swap = null; gsap.set([big, small], { autoAlpha: 1, y: 0 }); write(code); return; }
+      swap = gsap.timeline({ onComplete: () => { swap = null; } })
+        .to([big, small], { autoAlpha: 0, y: -8, duration: 0.18, ease: 'power1.in' })
+        .call(() => write(code))
+        .fromTo([big, small], { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.3, ease: 'power2.out', stagger: 0.06 });
+    };
+    // a click (or Enter / Space) on a tab: the pill goes there and the greeting turns into it (on
+    // the desktop scene, only once the card's step has played)
+    tabs.forEach((tab) => { tab.setAttribute('role', 'button'); tab.tabIndex = 0; tab.setAttribute('aria-pressed', tab.classList.contains('is-active')); });
+    const pick = (tab) => {
+      if (!tab || !tabs.includes(tab)) return;
+      const staged = values.section.classList.contains('is-staged');
+      if (staged && !values.section.classList.contains('is-built')) return;
+      chosen = tab.textContent.trim();
+      pillTo(chosen);
+      show(chosen);
+    };
+    tabsEl.addEventListener('click', e => pick(e.target.closest('span')));
+    tabsEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e.target.closest('span')); } });
+    return { show, pillTo, get chosen() { return chosen; } };
+  })();
+
   scenes.push(({ isDesktop }) => {
     if (!isDesktop) return;
     const { section, content, header, rows, cards } = values;
@@ -2121,7 +2182,15 @@
       .to(demo, { autoAlpha: 1, y: 0, duration: 0.6 }, 'row3+=0.6')
       .addLabel('built', 'row3+=1.6');
 
-    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart });
+    // The languages card's greeting follows its tab: こんにちは。 while the pill is on JP (row 2), back
+    // to Hello. with EN, either way with the scroll; once the scene is built, the visitor's pick stays
+    const greetAt = (t) => {
+      if (!greet) return;
+      // (from the end of the card's own step: a re-measure can put the scene a step back)
+      if (greet.chosen && t >= tl.labels.row2Done - 0.001) { greet.pillTo(greet.chosen, false); greet.show(greet.chosen, false); return; }
+      greet.show(t >= tl.labels.row2 + 0.55 && t < tl.labels.row2 + 1.75 ? 'JP' : 'EN');
+    };
+    scrollScene({ trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart, onUpdate: greetAt });
 
     return () => {
       next.classList.remove('slides-over');
@@ -2768,17 +2837,13 @@
       .to(branchSvg, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.7, ease: 'power1.inOut' })
       .to(nodes, { autoAlpha: 1, scale: 1, duration: 0.35, ease: 'back.out(1.7)', stagger: 0.15 }, '-=0.3')
       .to({}, pause(1)));
-    const langPill = $('.lang-pill', languages);
-    const tabs = $$('.lang-tabs span', languages);
-    loop(languages, () => gsap.timeline() // the language pill moves EN → JP and back
-      .to(langPill, { x: () => tabs[1].offsetLeft - tabs[0].offsetLeft, duration: 0.45, ease: MOTION.easeInOut })
-      .to(tabs[0], { color: '#A8A49A', duration: 0.3 }, '<0.05')
-      .to(tabs[1], { color: '#FFFFFF', duration: 0.3 }, '<0.1')
-      .to({}, pause(0.9))
-      .to(langPill, { x: 0, duration: 0.45, ease: MOTION.easeInOut })
-      .to(tabs[1], { color: '#A8A49A', duration: 0.3 }, '<0.05')
-      .to(tabs[0], { color: '#FFFFFF', duration: 0.3 }, '<0.1')
-      .to({}, pause(0.9)));
+    // the language pill moves EN → JP and back, Hello. turning into こんにちは。 and back (once the
+    // visitor has picked a language by clicking a tab, the card keeps it and the loop rests)
+    loop(languages, () => (greet?.chosen || !greet ? gsap.timeline().to({}, pause(1)) : gsap.timeline()
+      .add(() => { greet.pillTo('JP'); greet.show('JP'); })
+      .to({}, pause(1.6))
+      .add(() => { greet.pillTo('EN'); greet.show('EN'); })
+      .to({}, pause(1.4))));
     const glow = $('.network-glow', scale);
     const placesOut = $$('.network-node', scale);
     loop(scale, () => gsap.timeline() // the network pulses out from the hub
