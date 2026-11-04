@@ -1,0 +1,166 @@
+CONCIERGE81 LANDING PAGE: QA TICKETS AND STATUS
+Last updated: Friday 30 October 2026, 16:30
+
+Source: the creative head's Notion database "OJT QA Tickets"
+https://app.notion.com/p/0b653f26798e468dba5ce08a36cbae9b
+All tickets were checked against Figma frame 768:1386 (desktop page) and 917:3944 (animation).
+The creative head said the tickets are the full reference.
+
+Every fix is committed locally on its own branch. Nothing is pushed.
+To preview, open index.html with Live Server and press Ctrl+F5.
+
+
+======================================================================
+1. DONE: 18 tickets (Friday 30 October, 15:37-16:23)
+======================================================================
+Branches are stacked in this order on top of feature/hero-mode-switch.
+In Notion, set each one to "Ready for Retest" and put the branch name in "Fix Task / PR Link".
+
+TEXT
+  QA-10  fix/qa10-copy                 15:39
+         "Live translation" -> "Speak translation"; "Swipe to explore." added (also on desktop);
+         mini chat "Today 6:42 PM"; opening caption "concierge is typing...".
+         NOTE: on 30 October the creative head asked for "concierge81 is typing..." instead.
+         That change is planned for Monday (see section 4).
+  QA-12  fix/qa12-languages-card       15:55
+         Tabs EN · JP · ZH · KO · ES · +; large "Hello." with the blue "こんにちは。";
+         "Hola · Bonjour · Xin chào · Kumusta". The two greetings now stay together (no swap).
+
+SIZES AND LAYOUT
+  QA-4   fix/qa4-header                15:42   Landing header 76px tall, logo 127px wide (blog/news unchanged)
+  QA-5   fix/qa5-hero-card             16:10   Hero card 689px tall, 32px corners, 620px avatar;
+                                               the card-to-kiosk morph now shrinks her into the kiosk
+  QA-6   fix/qa6-kiosk-stand           15:52   Kiosk 790px tall with its full black stand;
+                                               the Features kiosk matches it (498 x 882)
+  QA-7   fix/qa7-inbox-headline        15:40   Inbox headline bubble fits its text (650 x 148)
+  QA-8   fix/qa8-pricing-headline      15:41   Pricing headline 44px, same as the other sections
+  QA-11  fix/qa11-how-steps            15:46   How It Works ends with step 1 blue and the line grey;
+                                               cards 436 x 426
+
+ANIMATION (Figma timings and curves)
+  QA-15  fix/qa15-opening-grow         16:05   Typing bubble grows into the greeting (0.44s); text fades in
+  QA-16  fix/qa16-hero-build-in        16:06   Card and avatar zoom in from 80%; composer comes down;
+                                               question slides up
+  QA-17  fix/qa17-kiosk-timing         16:00   Card-to-kiosk morph 0.75s, corners close to 21;
+                                               kiosk glide 1.5s with a slight overshoot; rise 2.84s
+  QA-18  fix/qa18-intro-slide-up       15:54   "I'm concierge81..." bubbles slide up instead of popping
+  QA-19  fix/qa19-features-headline    16:00   "Here's what I bring..." stays full size, only moves up
+  QA-20  fix/qa20-features-fly-out     16:08   The 10 features fly out from the kiosk, left side first
+  QA-21  fix/qa21-inbox-throw          16:12   Drag demo: the cursor throws "Where is the restroom?"
+                                               out to the right, then "What time do you open?" to the left
+  QA-22  fix/qa22-inbox-rain           15:57   Falling questions: one small rebound, about 2s in total
+
+LARGER SECTIONS
+  QA-13  fix/qa13-where-it-lives       16:23   Kiosk / Website / Mobile / Custom (Tablet removed);
+                                               "Scroll through our chat to see every place I can work.";
+                                               ends on a landscape screen showing the full hero
+  QA-14  fix/qa14-faq                  16:20   Blue active topic chip; two sample Q&As ("What is
+                                               concierge81?", "Will it replace my staff?") with
+                                               "Was this helpful? Yes / No"; six suggestions in 2 rows.
+         NOTE: this restored the 4 FAQ answers that were on hold for manager review (they are in
+         Figma), and hid "Can customers talk instead of typing?" (not in Figma; kept in a comment).
+         Needs the manager's confirmation (question 11 below).
+
+
+======================================================================
+2. NOT DONE: 4 tickets, plus the scroll rework
+======================================================================
+  QA-3   [Whole page] Wrong font: SF Pro isn't loaded, so pages show Inter     P1 / Major
+         Expected: text widths match Figma (e.g. "Here's what I bring..." 704px, "Ask. Understand.
+         Answer." 664px). Now: 789px and 738px (8-12% wider), lines wrap differently.
+         DECIDED (creative head): use Inter. Tune Inter's sizes and spacing to Figma's widths.
+
+  QA-9   [Whole page] Several sections are shorter than Figma                    P2 / Minor
+         Measured 30 October in the plain layout (ours / Figma, in px):
+           story 3003/2932   inbox 1400/1414   how 1042/1056   type-or-talk 1087/1200
+           industries 1216/1236   values 2152/2086   deployment 1224/1222   pricing 987/1024
+           FAQ 1369/1484   CTA 1140/1324   contact 1308/1268   footer 199/212
+         Waits for: the QA-3 font change, and question 9 (which Figma frame is the reference:
+         Figma's live FAQ frame 1158:4312 is 1374, but the ticket says 1484).
+
+  QA-23  [04 Features -> 05 Team Inbox] Thin strip of the old section at the top  P2 / Minor
+         Could not be reproduced as a stuck strip. The inbox covers the whole screen once it
+         arrives. The old headline only shows while the inbox is sliding up, or if the visitor
+         stops partway. Re-check after the scroll changes; cover the strip then if still needed.
+
+  QA-24  [Design questions]                                                       P3 / Trivial
+         1. Floating "Menu | Request a demo" button: DECIDED, keep it.
+         2. Second pricing plan "BASIC" (Figma) or "PROFESSIONAL" (site): STILL OPEN (question 7)
+         3. "Concierge81" or "concierge81": DECIDED, "concierge81" (already used everywhere).
+
+  SCROLL REWORK (no ticket; from the creative heads and supervisor)
+         Complaint: the scroll feels forced, restricted, and out of the user's control.
+         DECIDED (creative head; supervisor agrees). The new rules:
+           1. The opening plays first. It is the only lock.
+           2. Going down, each step plays smoothly at its own pace and is never skipped
+              (a fast scroll waits for the playing step).
+           3. Scrolling back is always free, even mid-step: no lock until the inbox,
+              no "finish first", no "chat holds the scroll".
+           4. Seen sections are shown plain and finished (no rewind, no replay).
+              Scrolling back mid-step snaps that step to its finished state.
+           5. Unchanged: hover animates cards only; the industries carousel moves by hand only.
+
+
+======================================================================
+3. QUESTIONS STILL OPEN
+======================================================================
+  Q7   Second pricing plan: "BASIC" or "PROFESSIONAL"?                      (QA-24)
+  Q9   Which Figma frame is the reference for section heights?              (QA-9; needed Monday 17:00)
+  Q11  Approve the 4 restored FAQ answers and hiding "Can customers talk..."? (QA-14)
+  Q12  Final domain and contact email (now www.concierge81.com / info@mabuhaytech.com)
+  Q13  Legal pages: who writes them, and when?
+  Q14  Which languages actually work at launch?
+  Q15  Can the unused images be deleted (Avatar.png, Frame 174.png, cards/*.jpg)?
+  Q16  "Request a demo" as a slide-in form over the page?
+  Q17  Where do form submissions go; spam protection?
+  Q18  Analytics and cookie consent?
+  Q19  Mobile Figma, and when does mobile start?
+  Q20  Blog/news: add motion and extras, or keep them simple?
+  Q21  WordPress migration date; who handles hosting?
+  Q22  Deadline: what is needed before launch versus after?
+  Q23  Who reviews before pushing; should "Ready for Retest" in Notion be used?
+
+  Answered 30 October: Q1-Q6, Q8, A-D (see section 2).
+
+
+======================================================================
+4. PLAN FOR MONDAY 2 NOVEMBER (waiting for the go)
+======================================================================
+  #  Branch                      What                                           Est.     Time
+  1  fix/opening-caption         "concierge81 is typing..."                     5 min    Mon 9:00-9:05
+  2  fix/scroll-back-free        Remove the inbox lock, "finish first" and      3.5 h    9:05-13:30
+                                 "chat holds"; scrolling back mid-step snaps           (lunch 12-13)
+                                 the step to finished
+  3  fix/scroll-forward-waits    A fast forward scroll never skips (wheel,      1.5 h    13:30-15:00
+                                 PageDown, End, dragging the scrollbar)
+  4  fix/qa3-inter               QA-3: tune Inter to Figma's widths             2 h      15:00-17:00
+  5  fix/qa9-section-heights     QA-9 (needs Q9)                                1.5 h    Mon 17:00-Tue 9:30
+  6  QA-23                       Re-check; fix if still visible                 0-45 min Tue 9:30-10:15
+  7  Full QA                     Scroll both ways, resize, links, keyboard,     2 h      10:15-12:15
+                                 phone, reduced motion, all pages
+  8  Push                        One by one, in order, only after "push"        30 min   Tue 13:00-13:30
+  Total: about 11-12 hours.
+
+
+======================================================================
+5. KNOWN, NOT IN THE TICKETS
+======================================================================
+  - A lighter band shows at the top of the hero card during the card-to-kiosk morph
+    (it was there before today's changes).
+  - Contrast (brand blue with white text 4.45:1, timestamps, pricing tier cards, red badge):
+    Figma's colours are kept by decision.
+  - Screen readers can't reach content that hasn't animated in yet.
+  - The page meta descriptions still mention "tablets"; Where It Lives no longer has a Tablet card.
+
+----------------------------------------------------------------------
+Added Wednesday 4 November (branch fix/scroll-back-free, local)
+----------------------------------------------------------------------
+  - QA-6 note: the intro kiosk now waits as the screen plus a short stand; the full 790 stand
+    (Figma) only extends while the kiosk glides to the features, where it shows in full.
+    Decided by the user on 4 November because the tall stand ran off the bottom on a laptop.
+    Tell the creative head at the retest.
+  - Story (hero > intro > features): scrolling back retraces the animation at the same pace
+    it played; it becomes a still preview only once the inbox has covered it.
+  - QA-12 note (4 November): the languages card now shows one greeting at a time, swapping
+    with the tab pill (EN Hello. / JP こんにちは。 / ZH / KO / ES), in the scroll step, on hover and
+    on click, as in the Figma animation. The tabs can be clicked (user's request).
