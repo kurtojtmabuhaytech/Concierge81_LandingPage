@@ -183,13 +183,11 @@
      timeline's labels.
      - Down, into steps not seen yet: they play in order at their own speed, and the scroll can't
        get more than a step ahead of them (see `limits`), so none is skipped or left half built.
-     - Back up: the page stays the same kind of page, pinned sections and slide-overs, both ways.
-       What was built stays (nothing rewinds, disappears or replays); the view inside follows the
-       scroll back through the positions seen at each step, and the section that slid over it
-       slides back down. A step under way carries on while in view and pauses while the visitor
-       is away from it. The story (layers of one screen) is the one exception: it retraces its
-       steps with the scroll (`followBack`), and can't be scrolled back before it has been seen
-       to the end (its one-way lock).
+     - Back up: always free. A step under way on screen snaps to its finished frame (snapBack);
+       sections seen to their end turn plain (goPlain), and the story turns plain as soon as it
+       has started. A section not seen to its end keeps what was built (nothing rewinds,
+       disappears or replays); the view inside follows the scroll back through the positions
+       seen at each step, and the section that slid over it slides back down.
      New steps only ever play on the way down, the first time. Each second of the timeline gets
      PACE of a screen of scrolling; `tail` keeps the scene pinned after its last step (the next
      section can slide up over it). `seen` starts the scene as already watched; `startShown` says
@@ -228,9 +226,10 @@
   /* The way back. Once a section has been seen to its end, the first scroll back up makes it a
      plain section for good: laid out in full, no pin, no slide-over, nothing replays (only its
      hover animations still play). Every section seen to its end turns plain at once, before the
-     page moves, with the scroll put so that what is on screen stays exactly where it is. A section
-     still playing its steps finishes first: the scroll back waits until it has played to its end. */
-  const plainables = []; // each scene: { id, done(), inView(), progress(), finish(), makePlain(), isPlain() }
+     page moves, with the scroll put so that what is on screen stays exactly where it is. The scroll
+     back is always free: a step still playing on screen snaps to its finished frame (see snapBack),
+     nothing holds the visitor or makes them wait. */
+  const plainables = []; // each scene: { id, done(), inView(), progress(), snap(), makePlain(), isPlain(), anchor()? }
   const plainAtStart = []; // scenes seen this session, plain from the start (after a refresh)
   const plainSaved = (() => { try { return JSON.parse(session.get('plain')) || []; } catch (e) { return []; } })();
   // something on screen to keep in place while the sections around it turn plain
@@ -243,8 +242,10 @@
     if (measuring || jumping) return;
     const due = plainables.filter(p => !p.isPlain() && p.done());
     if (!due.length) return;
-    const anchor = anchorOnScreen();
-    const at = anchor?.getBoundingClientRect().top;
+    // (a scene can name what to keep in place: the story, mid-way, keeps the part it is showing)
+    const preferred = due.map(p => p.anchor?.()).find(Boolean);
+    const anchor = preferred ? preferred.el : anchorOnScreen();
+    const at = preferred ? preferred.at : anchor?.getBoundingClientRect().top;
     due.forEach(p => p.makePlain());
     session.set('plain', JSON.stringify(plainables.filter(p => p.isPlain()).map(p => p.id)));
     smoother?.paused(true); // (so it doesn't ease on from where it was)
@@ -256,25 +257,18 @@
       ScrollTrigger.update();
     } finally { switching = false; }
   };
-  // A scroll back while a section on screen hasn't played to its end: it plays on, and the scroll waits
-  // Between two sections:
-  // - a section still playing its first step (its chat), arriving or on screen: the scroll back waits
-  //   for that step to end;
-  // - a section that has only played its first step: the visitor can go back (it slides back down
-  //   with just its chat; nothing is forced to play through);
-  // - a section played further than that: it plays on to its end first, then the scroll back goes.
-  const holdBack = () => {
-    let hold = false;
-    plainables.filter(p => !p.isPlain() && !p.done() && p.progress).forEach((p) => {
-      const { playing, playingTo, seen, first, onScreen, pinned } = p.progress();
-      if (!onScreen) return;
-      if (playing && playingTo <= first + 0.001) { hold = true; return; } // its chat: wait for it
-      if (!pinned) return;
-      if (!playing && seen <= first + 0.001) return; // only its chat so far: free to go back
-      p.finish(); // further along: it plays on to its end
-      hold = true;
+  // A scroll back is never held. A step still playing in a section on screen (its chat, a later step,
+  // the inbox's rain and demo) snaps to its finished frame at once; the section keeps what it has
+  // built, and the steps it hasn't reached yet play when the visitor scrolls down to them again.
+  const snapBack = () => {
+    plainables.filter(p => !p.isPlain() && p.snap && p.progress).forEach((p) => {
+      if (p.progress().onScreen) p.snap();
     });
-    return hold;
+  };
+  // The way back: snap what is playing, then turn every section seen to its end plain
+  const goBack = () => {
+    snapBack();
+    goPlain();
   };
   const backKeys = ['ArrowUp', 'PageUp', 'Home'];
   // A dragged scrollbar can't be held, but going up with it starts the plain way back too
@@ -283,15 +277,12 @@
   addEventListener('pointerup', () => { draggingBar = false; }, true);
   let barY = scrollY;
   addEventListener('scroll', () => {
-    if (draggingBar && scrollY < barY - 1 && !measuring && !jumping) goPlain();
+    if (draggingBar && scrollY < barY - 1 && !measuring && !jumping) goBack();
     barY = scrollY;
   }, { passive: true });
   const onLimitWheel = (e) => {
     if (scrollsItself(e)) return;
-    if (e.deltaY < 0 && !jumping && !measuring) {
-      if (holdBack()) { e.preventDefault(); return; }
-      goPlain();
-    }
+    if (e.deltaY < 0 && !jumping && !measuring) goBack();
     if (e.deltaY > 0 && atLimit()) { e.preventDefault(); return; }
     if (jumping || e.ctrlKey || !e.deltaY || !inFinished()) return;
     e.preventDefault();
@@ -300,10 +291,7 @@
   };
   const onLimitKey = (e) => {
     if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
-    if ((backKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) && !jumping && !measuring) {
-      if (holdBack()) { e.preventDefault(); return; }
-      goPlain();
-    }
+    if ((backKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) && !jumping && !measuring) goBack();
     if (downKeys.includes(e.key) && !(e.key === ' ' && e.shiftKey) && atLimit()) e.preventDefault();
   };
   // When the page puts itself back at the limit, that small move up is not the visitor scrolling
@@ -529,9 +517,9 @@
         // rewinds, disappears or replays) and its view follows the scroll back (followSeen); a
         // step under way carries on while in view and pauses once the visitor has scrolled away
         // (watchView). The story, layers of one screen, retraces its steps instead (followBack):
-        // the same pinned screen runs back with the scroll, so there is no break on the way up.
-        // It only runs back when the visitor scrolls back (not the page's own clamp-back, a
-        // re-measure, or a held scroll while it is still one-way: `canGoBack`).
+        // the same pinned screen runs back with the scroll (only if it wasn't turned plain first).
+        // It only runs back when the visitor scrolls back (not the page's own clamp-back or a
+        // re-measure).
         if (followBack && self.direction < 0 && (measuring || pulledBack() || !canGoBack())) return;
         if (plain) return;
         const watched = Math.min(seen, tl.duration());
@@ -687,7 +675,12 @@
           const box = trigger.getBoundingClientRect();
           return { playing: !!playing, playingTo, seen: Math.min(seen, tl.duration()), first: firstStep(), onScreen: box.top < innerHeight && box.bottom > 0, pinned: !!pin?.isActive };
         },
-        finish: () => { if (!playing || playingTo < tl.duration() - 0.001) playOn(tl.duration()); },
+        // the step under way (and the scene's own animation, e.g. the inbox's rain and demo) jumps
+        // to its finished frame; what it ends on counts as seen (playOn's onComplete)
+        snap: () => {
+          playing?.progress(1);
+          runs().forEach((run) => { if (run.progress() > 0 && run.progress() < 1) run.progress(1); });
+        },
         makePlain,
         isPlain: () => plain
       });
@@ -1084,16 +1077,16 @@
     tl.addLabel('fan');
 
     // The site header stays away for the rest of the page.
-    // On the way back (see goPlain) the story becomes plain sections, like every section seen:
-    // the switch happens while the inbox covers the whole screen, so it can't be seen.
-    let oneWay = true; // until the inbox has slid half way up (see below)
+    // On the way back (see goPlain) the story becomes plain sections, like every section seen.
+    // The scroll back is always free (only the opening, before it, can't be scrolled): the first
+    // scroll back up once the story has started turns it plain at once, wherever it is, with
+    // everything shown finished (hero, intro, features); the part on screen stays in view.
     let plain = null;
     const scene = scrollScene({
       trigger: story,
       tl,
       startShown: true, // its start is the hero, a full page
-      followBack: true, // on the way back it retraces its steps with the scroll
-      canGoBack: () => !oneWay,
+      followBack: true, // (a scroll back the page didn't catch as one, e.g. a touch drag: it retraces)
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       onUpdate: t => story.classList.toggle('is-at-hero', t < 0.001), // (the hero chat takes the wheel there)
@@ -1108,14 +1101,23 @@
     });
     plainables.push({
       id: '.story',
-      // (only together with the inbox below it, once that has played to its end too: never a
-      // plain opening over a half-played inbox)
-      done: () => !!plain || (tl.progress() > 0.999 && (plainables.find(p => p.id === '#problem')?.done() ?? true)),
-      inView: () => false, // (its one-way lock already keeps the visitor going until it has played)
-      finish: () => {},
+      // as soon as it has moved past the hero (the step under way is shown finished by plainStory)
+      done: () => !!plain || tl.time() > 0.001,
+      inView: () => !!scene.pin?.isActive,
+      // what to keep in place as it turns plain: the inbox while it slides up over the story,
+      // otherwise the part the story is showing (the hero, the intro or the features), just under
+      // the site header (which comes back with the plain story)
+      anchor: () => {
+        if (story.getBoundingClientRect().bottom <= 0) return null; // (off screen above)
+        if (scrollY > scene.steps.end + 1) return { el: next, at: next.getBoundingClientRect().top };
+        const t = tl.time();
+        const part = t >= tl.labels.features - 0.001 ? '#features' : t >= tl.labels.kiosk - 0.001 ? '#intro' : '#hero';
+        return { el: $(part), at: siteHeader.offsetHeight };
+      },
       makePlain: () => {
         if (plain) return;
-        unlock(); // (the one-way lock's job is done)
+        session.set('introDone', '1'); // (a refresh shows it plain too)
+        removeEventListener('scroll', onScroll);
         scene.kill();
         unstage();
         plain = plainStory();
@@ -1123,39 +1125,11 @@
       isPlain: () => !!plain
     });
 
-    /* One way through the opening: until the visitor reaches the team inbox, the page doesn't
-       scroll back up (wheel, trackpad, keys; a dragged scrollbar is held at the furthest point
-       reached), so the story is always watched through, never rewound or cut. Scrolling down
-       and in-page links work as usual. It stays one way until the inbox below it has played to
-       its end too (its chat, the rain, the drag demo, "Let me handle the repeats."); then the
-       first scroll back up turns both plain (see goPlain) and unlocks it for good. */
-    let furthest = scrollY;
-    const remeasured = () => { furthest = scrollY; }; // positions change when the page re-measures
-    const upKeys = ['ArrowUp', 'PageUp', 'Home'];
-    // (a box that scrolls itself, like the hero chat once the visitor has asked a few questions,
-    // still scrolls back through its messages: only the page is held)
-    const onWheel = (e) => { if (e.deltaY < 0 && !jumping && !scrollsItself(e)) e.preventDefault(); };
-    const onKey = (e) => {
-      if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
-      if (upKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) e.preventDefault();
-    };
+    // (a refresh once the visitor has reached the inbox shows the opening plain)
     const onScroll = () => {
-      if (measuring) return;
-      if (scrollY >= topOf(next) - innerHeight * 0.5) session.set('introDone', '1'); // (a refresh from here shows the opening plain)
-      if (jumping || scrollY >= furthest) furthest = scrollY;
-      else if (scrollY < furthest - 1) scrollToY(furthest, false);
+      if (!measuring && scrollY >= topOf(next) - innerHeight * 0.5) session.set('introDone', '1');
     };
-    const unlock = () => {
-      oneWay = false;
-      removeEventListener('wheel', onWheel, { capture: true });
-      removeEventListener('keydown', onKey, { capture: true });
-      removeEventListener('scroll', onScroll);
-      ScrollTrigger.removeEventListener('refresh', remeasured);
-    };
-    addEventListener('wheel', onWheel, { capture: true, passive: false });
-    addEventListener('keydown', onKey, { capture: true });
     addEventListener('scroll', onScroll, { passive: true });
-    ScrollTrigger.addEventListener('refresh', remeasured);
 
     // In-page links to the intro and features land on their step inside the pinned story
     const stepLinks = { '#intro': 'intro', '#features': 'fan' };
@@ -1182,7 +1156,7 @@
 
     return () => {
       document.removeEventListener('click', onStepLink, true);
-      unlock();
+      removeEventListener('scroll', onScroll);
       if (plain) plain();
       else unstage();
     };
