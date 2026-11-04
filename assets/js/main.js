@@ -86,7 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') setMenu(false);
+      if (e.key !== 'Escape' || !navMenu.classList.contains('active')) return;
+      setMenu(false);
+      mobileToggle.focus(); // (back to the button that opened it)
     });
 
     // Unlock scroll if the window is widened past the mobile breakpoint
@@ -211,24 +213,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
   }
 
+  // A link followed with the keyboard takes the focus along, so the next Tab carries on from there
+  const focusTarget = (target) => {
+    if (!target.matches('a[href], button, input, select, textarea, [tabindex]')) target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+  };
+  window.c81FocusTarget = focusTarget; // (animations.js glides the landing page's links itself)
+
   // Smooth scroll for in-page links (sections set scroll-margin-top for the sticky header).
   // On phones the form sits below the contact headline and steps: "contact" links go to the form.
   const phoneLayout = window.matchMedia('(max-width: 900px)');
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-      const href = this.getAttribute('href');
-      if (href === '#') return;
-      const target = (href === '#contact' && phoneLayout.matches && document.querySelector('#contact .footer-form-card'))
+  // (one listener for the page: links added later, like the hero chat's "Request a demo", too)
+  document.addEventListener('click', (e) => {
+    const anchor = e.target.closest?.('a[href^="#"]');
+    if (!anchor || e.defaultPrevented) return;
+    const href = anchor.getAttribute('href');
+    if (href === '#') return;
+    let target = null;
+    try {
+      target = (href === '#contact' && phoneLayout.matches && document.querySelector('#contact .footer-form-card'))
         || document.querySelector(href);
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: motionOK ? 'smooth' : 'auto' });
-        history.replaceState(null, '', href);
-      }
-    });
+    } catch (err) { return; } // (not a selector)
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: motionOK ? 'smooth' : 'auto' });
+      history.replaceState(null, '', href);
+      if (e.detail === 0) focusTarget(target); // keyboard: the focus goes there too (skip link, contents)
+    }
   });
 
-  singleSelect(document.querySelector('.mode-toggle'));
+  /* The hero's Avatar / Chat switch: "Chat" lets the chat have the card to itself, "Avatar" brings
+     the avatar back. (animations.js puts "Avatar" back before the opening moves the hero on.) */
+  const modeToggle = document.querySelector('.mode-toggle');
+  singleSelect(modeToggle);
+  const heroCard = modeToggle?.closest('.hero-card');
+  const setHeroMode = (mode, fade = true) => {
+    if (!heroCard || heroCard.classList.contains('is-chat-mode') === (mode === 'chat')) return;
+    heroCard.classList.toggle('is-chat-mode', mode === 'chat');
+    modeToggle.querySelectorAll('button').forEach((b) => {
+      const on = (b.textContent.trim().toLowerCase() === mode);
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on);
+    });
+    heroCard.classList.remove('is-mode-changing');
+    if (!fade) return;
+    void heroCard.offsetWidth; // (restart the fade)
+    heroCard.classList.add('is-mode-changing');
+  };
+  heroCard?.addEventListener('animationend', (e) => { if (e.target.matches('.hero-split-area')) heroCard.classList.remove('is-mode-changing'); });
+  modeToggle?.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (btn) setHeroMode(btn.textContent.trim().toLowerCase());
+  });
+  window.c81SetHeroMode = setHeroMode;
 
   // "Was this article helpful?": a vote swaps the buttons for a thank-you (read out: the spot is a
   // live region); one vote per article for the browser session
@@ -315,9 +352,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* FAQ chat ("Ask me anything"): tapping a suggestion asks it. Like a messaging app, the question
      pops in, the concierge types (•••), then the answer pops in, one after another, and the
-     conversation scrolls on its own inside the chat (the page keeps scrolling outside it). Asked
+     conversation scrolls on its own inside the chat (the page keeps scrolling outside it). Nothing
+     already said disappears: after each answer the concierge asks "Anything else…" again. Asked
      questions leave the suggestions; the topics filter what is left. The conversation is kept for
-     the browser session. "What is concierge81?" is asked by the scroll scene (animations.js). */
+     the browser session. "What is concierge81?" and "Will it replace my staff?" are asked by the
+     scroll scene (animations.js). */
   const faqBox = document.querySelector('.faq-chat-box');
   if (faqBox) {
     const thread = faqBox.querySelector('.faq-thread');
@@ -348,15 +387,20 @@ document.addEventListener('DOMContentLoaded', () => {
       singleSelect(row.querySelector('span'));
       return row;
     };
+    thread.querySelectorAll('.helpful > span').forEach(span => singleSelect(span)); // (the demo's, in the page)
 
     // Topics filter the suggestions still to ask
     let topic = 'all';
+    const allAsked = done.textContent;
     const showChips = () => {
       const left = chips.filter(chip => chip.isConnected && !chip.classList.contains('faq-ask'));
       left.forEach(chip => { chip.hidden = topic !== 'all' && !chip.dataset.cat.split(' ').includes(topic); });
       left.forEach(chip => chip.classList.toggle('is-first', chip === left.find(c => !c.hidden)));
-      done.hidden = left.length > 0;
-      suggested.hidden = left.length === 0;
+      const inTopic = left.filter(chip => !chip.hidden).length;
+      // (a topic asked out, with others left: says so, instead of the all-asked note)
+      done.textContent = left.length ? 'That’s all for this topic — pick another one, or ask our team.' : allAsked;
+      done.hidden = inTopic > 0;
+      suggested.hidden = inTopic === 0;
     };
     const filters = document.getElementById('faqFilters');
     singleSelect(filters);
@@ -391,8 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
       chip.remove();
       showChips();
       const [question, answer] = pair.querySelectorAll(':scope > .faq-q, :scope > .faq-a');
-      anything.hidden = true;
-      thread.insertBefore(pair, anything);
+      thread.append(pair); // (after everything said so far, the last "Anything else…" included)
       [question, answer].forEach(el => { el.hidden = true; });
       pair.hidden = false;
       pair.classList.add('is-asked');
@@ -414,13 +457,24 @@ document.addEventListener('DOMContentLoaded', () => {
       pair.append(row);
       pop(row);
       await wait(700);
-      pop(anything);
+      // the concierge offers more help again, below the answer (the earlier offer stays in the chat)
+      const again = anything.cloneNode(true);
+      again.hidden = true;
+      again.removeAttribute('style'); // (no leftover inline styles from the scroll scene)
+      again.classList.add('is-again');
+      thread.append(again);
+      pop(again);
     };
     faqBox.querySelector('.faq-suggestions').addEventListener('click', (e) => {
       const chip = e.target.closest('.faq-suggestion');
       if (!chip || chip.classList.contains('faq-ask')) return;
+      // the chip goes away once asked: the focus moves on to the next suggestion (or the chat)
+      if (document.activeElement === chip) {
+        const next = chips.find(c => c !== chip && c.isConnected && !c.hidden && !c.disabled && !c.classList.contains('faq-ask'));
+        (next || thread).focus({ preventScroll: true });
+      }
       chip.disabled = true;
-      queue = queue.then(() => ask(chip));
+      queue = queue.then(() => ask(chip)).catch((err) => { console.error(err); }); // (one failure never stops the next questions)
     });
   }
   setupListing({
@@ -601,15 +655,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Blog post: highlight the "On this page" link for the section in view
+  // (from the scroll position: the last section whose top has passed 30% of the screen, or the
+  // first one above them all, so a quick scroll back to the top never leaves the last one lit)
   const toc = document.getElementById('postToc');
-  if (toc && 'IntersectionObserver' in window) {
+  if (toc) {
     const links = [...toc.querySelectorAll('a[href^="#"]')];
     const sections = links.map(link => document.querySelector(link.getAttribute('href'))).filter(Boolean);
-    const setActive = (id) => links.forEach(link => link.classList.toggle('is-active', link.getAttribute('href') === `#${id}`));
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) setActive(entry.target.id); });
-    }, { rootMargin: '-20% 0px -70% 0px' });
-    sections.forEach(section => observer.observe(section));
+    const setActive = (id) => links.forEach((link) => {
+      const on = link.getAttribute('href') === `#${id}`;
+      link.classList.toggle('is-active', on);
+      if (on) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current');
+    });
+    let tocTicking = false;
+    const pick = () => {
+      tocTicking = false;
+      const line = window.innerHeight * 0.3;
+      const current = sections.filter(section => section.getBoundingClientRect().top <= line).pop() || sections[0];
+      if (current) setActive(current.id);
+    };
+    const onTocScroll = () => { if (!tocTicking) { tocTicking = true; requestAnimationFrame(pick); } };
+    window.addEventListener('scroll', onTocScroll, { passive: true });
+    window.addEventListener('resize', onTocScroll);
+    pick();
   }
 
   // Blog post: reading progress bar (through the article) and "Back to top" after about one screen
@@ -665,6 +732,22 @@ document.addEventListener('DOMContentLoaded', () => {
       area.scrollTop = area.scrollHeight;
       return el;
     };
+    // After a resize the card's size is measured again: its first messages alone, as when the
+    // chat started (a size frozen at the first question was wrong on another window size)
+    let fitting = 0;
+    window.addEventListener('resize', () => {
+      if (!area.style.height) return;
+      cancelAnimationFrame(fitting);
+      fitting = requestAnimationFrame(() => {
+        const asked = [...area.querySelectorAll('.is-asked')];
+        asked.forEach((r) => { r.style.display = 'none'; });
+        area.style.height = '';
+        const h = area.offsetHeight;
+        asked.forEach((r) => { r.style.display = ''; });
+        area.style.height = `${h}px`;
+        area.scrollTop = area.scrollHeight;
+      });
+    });
     const say = (question, answer, withLink) => {
       if (busy) return;
       busy = true;
@@ -676,7 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const q = row('user', '<p class="bubble bubble--user"></p><span class="timestamp">You · 9:12 PM</span>');
         q.querySelector('p').textContent = question;
       }
-      const typing = row('ai', '<p class="bubble bubble--sand faq-dots" aria-label="concierge81 is typing"><i></i><i></i><i></i></p>');
+      const typing = row('ai', '<p class="bubble bubble--sand faq-dots" role="img" aria-label="concierge81 is typing"><i></i><i></i><i></i></p>');
       setTimeout(() => {
         typing.remove();
         const a = row('ai', '<p class="bubble bubble--ai"></p><span class="timestamp">concierge81 · 9:12 PM</span>');
@@ -704,15 +787,21 @@ document.addEventListener('DOMContentLoaded', () => {
   langMenu.hidden = true;
   langMenu.setAttribute('role', 'menu');
   langMenu.innerHTML = languages.map(([code, name]) => `<button type="button" role="menuitemradio" aria-checked="${code === 'EN'}" data-lang="${code}"><span>${code}</span>${name}</button>`).join('')
-    + '<p class="lang-note" aria-live="polite"></p>';
+    + '<div class="lang-note" role="none" aria-hidden="true"></div>';
   document.body.append(langMenu);
   const note = langMenu.querySelector('.lang-note');
+  // (read out from outside the menu: a live region that is always there)
+  const langSaid = document.createElement('p');
+  langSaid.className = 'visually-hidden';
+  langSaid.setAttribute('aria-live', 'polite');
+  document.body.append(langSaid);
   let langFrom = null;
   let langAt = 0; // the scroll position it opened at
   const closeLang = (refocus) => {
     if (langMenu.hidden) return;
     langMenu.hidden = true;
     note.textContent = '';
+    langSaid.textContent = '';
     langFrom?.setAttribute('aria-expanded', 'false');
     if (refocus) langFrom?.focus();
     langFrom = null;
@@ -742,13 +831,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (item.dataset.lang === 'EN') { closeLang(true); return; }
     const [, , english] = languages.find(([code]) => code === item.dataset.lang);
     note.textContent = `${english} is coming soon.`;
+    langSaid.textContent = note.textContent;
   });
   langMenu.addEventListener('keydown', (e) => {
     const items = [...langMenu.querySelectorAll('[data-lang]')];
     const i = items.indexOf(document.activeElement);
     if (e.key === 'Escape') closeLang(true);
+    else if (e.key === 'Tab') closeLang(true); // (the Tab then carries on from the language button)
     else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
   });
   document.addEventListener('click', (e) => { if (!langMenu.contains(e.target)) closeLang(); });
+  langMenu.addEventListener('focusout', (e) => { if (e.relatedTarget && !langMenu.contains(e.relatedTarget)) closeLang(); });
   window.addEventListener('scroll', () => { if (Math.abs(window.scrollY - langAt) > 40) closeLang(); }, { passive: true }); // (a real scroll, not a tap's nudge)
 });

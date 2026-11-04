@@ -5,6 +5,15 @@
    ========================================= */
 .page-cream { background: $color-cream; }
 .page-cream .site-header { background: rgba(243, 241, 235, 0.95); border-bottom-color: $neutral-200; }
+// Desktop: the blog and news header as in their Figma frames (75 tall at 1512: a larger logo, dark
+// links, an outlined language button, a compact demo button). The landing keeps its own header.
+@media (min-width: 901px) {
+  .page-cream .site-header { padding-block: u(21); }
+  .page-cream .site-header .brand-logo { font-size: u(22); }
+  .page-cream .nav-menu a:not(.btn) { color: $color-ink; font-size: u(14); }
+  .page-cream .site-header .lang-btn { background: transparent; border-color: $neutral-300; color: $neutral-600; letter-spacing: 0.06em; font-size: u(12); padding: u(7) u(14); }
+  .page-cream .header-actions .btn { font-size: u(13); padding: u(7) u(12); }
+}
 
 // Current page in the nav: dot before the label
 .nav-menu a.is-current { color: $color-ink; font-weight: $font-weight-semibold;
@@ -12,6 +21,10 @@
 }
 
 .blog-hero { padding-top: clamp(2.5rem, 6.9vw, 6.5rem); padding-bottom: clamp(2rem, 4.8vw, 4.5rem); }
+// Space above the first line, per page, as in the Figma frames (at 1512: 120, 80 and 60)
+.blog-hero--list { padding-top: clamp(2.5rem, 7.94vw, 7.5rem); }
+.blog-hero--news { padding-top: clamp(2rem, 5.29vw, 5rem); }
+.blog-hero--post { padding-top: clamp(2rem, 3.97vw, 3.75rem); }
 .blog-hero .chat-section-header { margin-bottom: 0; }
 .blog-hero .chat-header-row.left { margin-bottom: 1rem; }
 .blog-hero .sub-pill-text { max-width: none; } // one line, as in the Figma
@@ -50,7 +63,7 @@ main > .blog-section:has(+ #contact) { padding-bottom: clamp(4rem, 7.9vw, 7.5rem
 // The chat sits in the photo's right half, where the original chat was (Figma)
 .story-chat {
   position: absolute;
-  top: 14%; bottom: 8%; left: 47.5%; right: 4.5%;
+  top: 8%; bottom: 2.5%; left: 47.5%; right: 4.5%;
   display: flex;
   flex-direction: column;
   gap: 0.6cqw;
@@ -58,7 +71,7 @@ main > .blog-section:has(+ #contact) { padding-bottom: clamp(4rem, 7.9vw, 7.5rem
   font-size: 1.3cqw;
 }
 .story-meta { font-size: 0.72em; color: rgba(255, 255, 255, 0.85); }
-.story-meta--end { align-self: flex-end; margin-top: 1.4cqw; }
+.story-meta--end { align-self: flex-end; margin-top: 0.4cqw; }
 .bubble--frost { background: rgba(255, 255, 255, 0.92); color: $color-ink; border-bottom-left-radius: 6px; }
 .story-chat .bubble { font-size: 1em; line-height: 1.5; padding: 0.9em 1.4em; border-radius: 1.6em; max-width: 66%; }
 .story-chat .bubble--frost { border-bottom-left-radius: 1.6em; }
@@ -68,13 +81,13 @@ main > .blog-section:has(+ #contact) { padding-bottom: clamp(4rem, 7.9vw, 7.5rem
   .suggest-label { color: rgba(255, 255, 255, 0.85); letter-spacing: 0.1em; font-size: 0.62em; margin-bottom: 0.8em; }
   .chip-row { gap: 0.45em; flex-wrap: nowrap; }
 }
-.chip--glass { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.55); color: $color-white; font-size: 0.6em; padding: 0.6em 0.95em; white-space: nowrap; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.chip--glass { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.55); color: $color-white; font-size: 0.6em; padding: 0.95em 0.95em; white-space: nowrap; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 
 .story-input {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 1em;
   border: 1px solid rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.06);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: $radius-full; padding: 0.5em 0.5em 0.5em 1.2em;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: $radius-full; padding: 0.75em 0.6em 0.75em 1.2em;
   font-size: 0.78em; color: rgba(255, 255, 255, 0.75);
 }
 .send-dot { width: 2.1em; height: 2.1em; border-radius: 50%; background: $color-cobalt-bright; color: $color-white; display: grid; place-items: center; svg { width: 50%; height: 50%; } }
@@ -142,7 +155,6 @@ main > .blog-section:has(+ #contact) { padding-bottom: clamp(4rem, 7.9vw, 7.5rem
   &:active { transform: translateY(-1px); box-shadow: none; } // pressed
 }
 .post-card-media { height: 16.25rem; flex-shrink: 0; overflow: hidden; background: $neutral-200;
-  &.placeholder-box { border: none; border-radius: 0; }
   img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; } // landscape kiosk photos: keep avatar + visitors centred
 }
 // Portrait avatar in a wide card: head + shoulders down to the chest, centred (Figma)
@@ -170,10 +182,12 @@ main > .blog-section:has(+ #contact) { padding-bottom: clamp(4rem, 7.9vw, 7.5rem
    760px article column; 32px headings and 18/30 body text
    ========================================= */
 .post-header { max-width: 47.5rem; }
-.back-link { display: inline-block; font-size: 0.875rem; font-weight: $font-weight-medium; color: $cobalt-600; margin-bottom: 1.625rem; }
+.back-link { display: inline-block; font-size: 0.875rem; font-weight: $font-weight-medium; color: $cobalt-600; margin-bottom: 2.75rem; }
 .post-header .post-eyebrow { margin-bottom: 18px; }
 .post-title { font-size: $type-headline; font-weight: $font-weight-semibold; letter-spacing: -0.025em; line-height: 1.07; margin: 0 0 18px; }
-.post-lead { font-size: clamp(1.125rem, 1.455vw, 1.375rem); color: $color-text-secondary; line-height: 1.41; letter-spacing: -0.014em; margin: 0 0 1.875rem; }
+.post-lead { font-size: clamp(1.125rem, 1.455vw, 1.375rem); color: $color-text-secondary; line-height: 1.41; letter-spacing: -0.014em; margin: 0 0 1.875rem;
+  a { text-decoration: underline; text-underline-offset: 3px; } // (a link in a sentence: shown by more than its colour)
+}
 .post-byline { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;
   .author-avatar { width: 44px; height: 44px; }
   .author-name { font-size: 1rem; line-height: 1.56; }

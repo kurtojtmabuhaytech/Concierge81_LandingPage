@@ -15,6 +15,7 @@
 }
 .news-featured-copy {
   padding: clamp(1.75rem, 4.2vw, 4rem) clamp(1.5rem, 3.7vw, 3.5rem);
+  padding-bottom: calc(clamp(1.75rem, 4.2vw, 4rem) + 1.25rem); // the copy sits a little above the middle (Figma)
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -31,6 +32,9 @@
   .news-featured { grid-template-columns: 1fr; }
   .news-featured-photo { order: -1; min-height: 0; aspect-ratio: 4 / 3; }
 }
+
+// The featured story's section: less room under it, before "All news" (Figma)
+.blog-section:has(.news-featured) { padding-bottom: clamp(2rem, 3.7vw, 3.5rem); }
 
 /* News List (date · tag · title · arrow), Figma "News/Row": 80px rows in a white card */
 .news-list-wrap { container-type: inline-size; }
@@ -66,6 +70,7 @@
 }
 
 .btn-outline-accent { background: transparent; border: 1.5px solid $color-cobalt-bright; color: $cobalt-600; &:hover { background: $cobalt-50; color: $cobalt-600; } }
+.news-list-wrap + .load-more { margin-top: 1.5rem; } // (closer under the list than the blog's, Figma)
 .load-more .btn-outline-accent { padding: 0.875rem 1.625rem; font-size: 1.0625rem; font-weight: $font-weight-medium; }
 
 /* Announcement Article: 760px header and column, 1066 × 640 hero */
@@ -89,6 +94,9 @@
 .news-gallery-photo { width: 100%; height: 16.25rem; object-fit: cover; object-position: 42% 50%; border-radius: 20px; background: $neutral-200; }
 .news-gallery-photo--office { object-position: 45% 50%; }
 
+// More room between the quote and the next heading ("Availability"), and above "More from the newsroom" (Figma)
+.news-body .news-quote + h2 { margin-top: 2.875rem; }
+.keep-reading:has(.news-list) { padding-top: calc(clamp(3rem, 5.8vw, 5.5rem) + 1.625rem); }
 .news-quote { margin: 0; padding: 1rem 0; display: flex; flex-direction: column; gap: 12px;
   blockquote { margin: 0; background: $color-cobalt-bright; color: $color-white; border-radius: 28px 28px 28px 8px; padding: 1.5rem 1.75rem;
     font-size: clamp(1.375rem, 2vw, 1.875rem); font-weight: $font-weight-semibold; letter-spacing: -0.02em; line-height: 1.27; }
@@ -99,7 +107,7 @@
   li { display: flex; gap: 12px; align-items: flex-start; font-size: 1.125rem; line-height: 1.44; letter-spacing: -0.011em; color: $color-ink; }
 }
 
-.press-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; background: $color-white; border-radius: 24px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+.press-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 2.125rem; background: $color-white; border-radius: 24px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
   .suggest-label { @extend %eyebrow; display: block; color: #6E6B63; margin-bottom: 4px; }
   a:not(.btn) { font-size: 1.125rem; font-weight: $font-weight-medium; color: $cobalt-600; }
   .btn { padding: 0.875rem 1.625rem; font-size: 1.0625rem; font-weight: $font-weight-medium; }

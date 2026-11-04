@@ -10,14 +10,16 @@
 
 // Keyboard focus is always visible: a cobalt ring, white on dark and blue surfaces
 :focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 3px; }
-:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card, .tier-card--featured) :focus-visible,
+:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card) :focus-visible,
 :is(.btn-primary, .theme-dark .btn):focus-visible { outline-color: $color-white; }
 main:focus { outline: none; } // the skip link's target
+// Read by screen readers, not shown (e.g. the newsroom's "Showing 8 of 12 stories", not in the Figma)
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .form-group :is(input, textarea):focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 1px; } // (over their own soft glow)
 
 // "Skip to content": the first stop for the keyboard, shown only when focused
 .skip-link {
-  position: fixed; top: 0.75rem; left: 0.75rem; z-index: 1000;
+  position: fixed; top: 0.75rem; left: 0.75rem; z-index: 1002; // (above the opening splash)
   padding: 0.6rem 1.1rem; border-radius: 999px;
   background: $color-white; color: $color-ink; font-weight: $font-weight-semibold; text-decoration: none;
   box-shadow: 0 6px 20px rgba(13, 15, 20, 0.18);
@@ -61,6 +63,7 @@ main:focus { outline: none; } // the skip link's target
   display: inline-flex; align-items: center; gap: 4px;
   background: $color-white; border: 1px solid $color-border; color: $color-ink;
   border-radius: $radius-full; padding: 4px 12px; font: inherit; font-size: 0.75rem; font-weight: $font-weight-semibold; cursor: pointer;
+  svg { width: 1.1em; height: 1.1em; flex: none; } // the globe (the same as the footer's; it was an emoji, drawn differently on every system)
 }
 
 /* =========================================
@@ -167,14 +170,13 @@ main:focus { outline: none; } // the skip link's target
   border-radius: 28px 28px 28px 8px;
   font-size: $type-message;
   font-weight: $font-weight-semibold;
-  letter-spacing: -0.027em;
+  letter-spacing: -0.04em; // (Figma -0.027em in SF Pro; Inter Display is a little wider, see $font-family-base)
   line-height: 1.136;
   max-width: min(100%, 56.25rem);
   margin: 0;
 }
 
-.header-pill--lg { font-size: $type-message; line-height: 1.14; border-radius: 28px 28px 28px 8px; max-width: min(100%, 40rem); } // contact "Leave your email."
-.header-pill--xl { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; border-radius: 28px 28px 28px 8px; max-width: min(100%, 40rem); } // intro h1
+.header-pill--xl { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.04em; border-radius: 28px 28px 28px 8px; max-width: min(100%, 40rem); text-wrap: balance; } // intro h1 (two even lines: "I'm concierge81, / your AI concierge.", as in Figma)
 
 // Secondary concierge bubble: Regular 21/31, 16 × 24 padding
 .sub-pill-text {
@@ -287,6 +289,7 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
     border-radius: inherit;
     background: radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%);
     opacity: var(--hero-surface, 1);
+    scale: calc(0.8 + 0.2 * var(--hero-surface, 1)); // the opening grows it in from 80% as it fades in (Figma)
   }
 }
 .hero-card-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
@@ -334,6 +337,20 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
 }
 
 .hero-chat-interface { display: flex; flex-direction: column; gap: 0.9rem; padding: clamp(0.5rem, 2vw, 1.5rem) 0 clamp(1rem, 2.5vw, 1.5rem); }
+
+// "Chat" in the hero's Avatar / Chat switch (main.js): the avatar steps aside and the chat has the
+// card to itself, centred; "Avatar" brings her back
+.hero-card.is-chat-mode {
+  .hero-split-area { grid-template-columns: 1fr; }
+  .hero-avatar { display: none; }
+  .hero-chat-interface { width: 100%; max-width: 48rem; justify-self: center; }
+}
+.hero-card.is-mode-changing .hero-split-area { animation: hero-mode-in 0.8s cubic-bezier(0.33, 1, 0.68, 1) both; } // (unhurried: a soft fade and settle)
+@keyframes hero-mode-in {
+  from { opacity: 0; translate: 0 0.75rem; scale: 0.985; }
+  40% { opacity: 0.6; }
+}
+@media (prefers-reduced-motion: reduce) { .hero-card.is-mode-changing .hero-split-area { animation: none; } }
 .chat-messages-area { display: flex; flex-direction: column; gap: 1rem; }
 // Once the visitor chats in the hero (main.js), the messages scroll inside the same space
 .chat-messages-area.is-chatting { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
@@ -446,16 +463,27 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   // Logo and menu line up with the story's edges (80px at 1512; on short wide screens the story
   // is sized by the height, so it's narrower than the screen)
   .site-header > .container { max-width: none; padding-inline: max(1.5rem, calc((100% - #{u(1350)}) / 2)); }
+  // Landing header bar 76 tall at 1512 (75 + the border) with the 22px logo, as in Figma (blog/news keep their 75)
+  body:not(.page-cream) .site-header { padding-block: 0; }
+  body:not(.page-cream) .site-header > .container { min-height: u(75); }
+  .site-header .brand-logo { font-size: u(22); }
 
   .story > .section > .container { max-width: u(1350); padding-inline: 0; }
 
-  // Hero card: 1350 × 687, avatar on the left, chat panel (672 wide) on the right
-  .hero-card { padding: u(36) u(39) 0; border-radius: u(28); }
+  // Hero card: 1350 × 689, radius 32, avatar (about 620 tall) on the left, chat panel (672 wide) on the right
+  .hero-card { padding: u(36) u(39) 0; border-radius: u(32); }
   .hero-card-top .brand-logo { font-size: u(22); }
   .mode-toggle button { font-size: u(13); padding: u(6) u(20); }
   .hero-card-tools .lang-btn { font-size: u(13); padding: u(6) u(14); }
   .hero-split-area { grid-template-columns: 1fr u(672); gap: 0; }
-  .hero-avatar img { width: u(430); }
+  .hero-avatar img { width: u(475); }
+  // In the pinned opening the avatar keeps its place unseen in "Chat" (the opening measures it there
+  // and morphs it into the kiosk; the switch goes back to "Avatar" as soon as the story moves on)
+  .story.is-staged .hero-card.is-chat-mode {
+    .hero-split-area { grid-template-columns: 1fr u(672); }
+    .hero-avatar { display: flex; grid-area: 1 / 1; clip-path: inset(0 0 0 100%); }
+    .hero-chat-interface { grid-area: 1 / 1 / 2 / -1; width: u(860); max-width: 100%; }
+  }
   .hero-chat-interface { gap: u(16); padding: u(30) 0 u(27); }
   .chat-messages-area { gap: u(14); }
   .hero-chat-interface .bubble { font-size: u(21); line-height: 1.333; padding: u(17) u(22); border-radius: u(20); max-width: 100%; }
@@ -473,7 +501,18 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
 
   // Intro: kiosk (447 wide) then the thread (717 wide), 78 apart
   .intro-split { gap: u(78); flex-wrap: nowrap; }
-  .intro-split .kiosk-device { flex: 0 0 u(447); width: u(447); }
+  // Intro kiosk: 447 wide (Figma), narrower on a screen too short for the features kiosk it grows
+  // into (same shape as that one). At rest it is the screen plus a short stand; the full stand
+  // (Figma's 790) only extends as it glides to the features (animations.js), so it never waits
+  // on screen as a tall black block
+  .intro-split .kiosk-device {
+    --kiosk-w: min(#{u(447)}, calc((100svh - 10rem) * 447 / 882));
+    flex: 0 0 var(--kiosk-w);
+    width: var(--kiosk-w);
+    height: auto;
+  }
+  :is(.intro-split, .feature-stage) .kiosk-device { display: flex; flex-direction: column; }
+  :is(.intro-split, .feature-stage) .kiosk-base { flex: 0 0 auto; height: u(90); }
   .intro-thread { flex: 0 1 u(717); gap: u(12); }
   .intro-thread .msg-row--user { margin-bottom: u(26); }
   .intro-thread .bubble--user { font-size: u(22); line-height: 1.27; padding: u(18) u(26); border-radius: u(22) u(22) u(6) u(22); max-width: none; }
@@ -487,12 +526,22 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   // Features: 44px headline, kiosk 498 wide, ten 52px icons on 108px rows
   #features .header-pill--ai { font-size: u(44); padding: u(24) u(28); border-radius: u(28) u(28) u(28) u(8); max-width: none; }
   .feature-stage { flex-wrap: nowrap; gap: u(80); }
-  .feature-stage .kiosk-device { flex: 0 0 u(498); width: u(498); }
+  // the intro kiosk a little larger (498 wide, Figma), with the same short stand (user, 4 Nov: no
+  // tall stand anywhere); narrower on a short screen
+  .feature-stage .kiosk-device {
+    --kiosk-w: min(#{u(498)}, calc((100svh - 10rem) * 498 / 882));
+    flex: 0 0 var(--kiosk-w);
+    width: var(--kiosk-w);
+    height: auto;
+  }
   .feature-col { flex: 0 1 u(380); max-width: none; gap: u(56); }
   .feature-item { gap: u(18); }
   .feature-item h3 { font-size: u(20); margin-bottom: u(4); }
   .feature-item p { font-size: u(16); }
   .feature-icon { width: u(52); height: u(52); border-radius: u(14); svg { width: u(24); height: u(24); } }
+
+  // Inbox: the two-line headline bubble hugs its text (650 wide), not the 900 max
+  #problem .header-pill--ai { max-width: u(650); }
 }
 
 /* =========================================
@@ -622,7 +671,8 @@ $q-pile: (
     content: '';
     position: absolute; top: 50%; left: calc(100% / 6); right: calc(100% / 6);
     height: 2px; margin-top: -1px; border-radius: 2px;
-    background: rgba($color-cobalt-bright, 0.6); // solid cobalt line joining all three steps
+    // the line joining the steps: cobalt while the animation draws it (--lit), grey at rest as in Figma
+    background: color-mix(in srgb, rgba($color-cobalt-bright, 0.6) calc(var(--lit, 0) * 100%), $neutral-700);
     transform: scaleX(var(--line, 1)); // drawn from step 1 to step 3 by the scroll animation
     transform-origin: left center;
   }
@@ -665,7 +715,7 @@ $q-pile: (
 // Illustration: soft cobalt glow behind a faint ring
 .process-icon {
   position: relative;
-  width: 10rem; height: 10rem; margin: 0 auto 3.4rem;
+  width: 10rem; height: 10rem; margin: 0 auto 2.2rem; // cards 436 × 426 as in Figma
   &::before {
     content: '';
     position: absolute; inset: -40%;
@@ -684,12 +734,12 @@ $q-pile: (
 }
 .process-label { @extend %eyebrow; display: block; color: $color-text-accent-dark; margin-bottom: 0.75rem; }
 
-// Desktop: the How section sits in the 80px frame like the story, with a 56px headline
+// Desktop: the How section sits in the 80px frame like the story, with a 56px headline (Pricing keeps the 44px one)
 @media (min-width: 901px) {
   #how { background: $neutral-950; }
   #how > .container, #pricing > .container { max-width: calc(84.5rem + 10.582vw); padding-inline: max(1.5rem, 5.291vw); }
   #how .header-pill--user, #pricing .header-pill--user { background: #F6F6F3; }
-  #how .header-pill--ai, #pricing .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; }
+  #how .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.04em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; }
   #how .sub-pill-text { font-size: 1.375rem; padding: 0.68em 1.09em; }
   #how .stepper { margin-bottom: 1.75rem; }
 }
@@ -711,7 +761,7 @@ $q-pile: (
   display: flex;
   flex-direction: column;
 
-  h3 { font-size: $type-headline; font-weight: $font-weight-semibold; letter-spacing: -0.025em; margin: 0.6rem 0; }
+  h3 { font-size: $type-headline; font-weight: $font-weight-semibold; letter-spacing: -0.04em; margin: 0.6rem 0; }
   .mode-header p { max-width: 30ch; margin: 0 auto; font-size: 0.95rem; line-height: 1.5; }
 }
 .mode-tag { @extend %eyebrow; color: $color-cobalt-bright; }
@@ -819,8 +869,6 @@ $q-pile: (
   h3 { font-size: clamp(1.3rem, 2.2vw, 1.55rem); font-weight: $font-weight-semibold; line-height: 1.1; letter-spacing: -0.02em; margin: 0.25rem 0 0; max-width: 13ch; }
 }
 .industries-section { overflow-x: clip; } // contains the gallery bleed so the page never scrolls sideways
-// "Swipe to explore" is a touch hint; a mouse gets the arrows and dots instead
-@media (hover: hover) and (pointer: fine) { .industries-section .swipe-hint { display: none; } }
 // Landscape photos cropped to the portrait card; each keeps its kiosk + visitors in frame (Figma)
 .industry-photo {
   position: absolute; inset: 0;
@@ -923,7 +971,7 @@ $q-pile: (
     border-radius: 28px;
     padding: 2rem;
     &::after { background: linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.72) 100%); }
-    h3 { font-size: 1.875rem; line-height: 1.13; letter-spacing: -0.02em; margin-top: 0.5rem; max-width: none; }
+    h3 { font-size: 1.875rem; line-height: 1.13; letter-spacing: -0.04em; margin-top: 0.5rem; max-width: none; }
   }
   .industry-label { font-size: 0.875rem; font-weight: $font-weight-semibold; opacity: 1; }
   .industry-card .industry-plus {
@@ -999,7 +1047,7 @@ $q-pile: (
   display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
   padding: 6px 13px; border-radius: $radius-full;
   background: $neutral-800; border: 1px solid rgba($color-white, 0.12);
-  color: $color-white; font-size: 0.8125rem; font-weight: $font-weight-medium;
+  color: $color-white; font-size: 0.75rem; font-weight: $font-weight-semibold; // 12 semibold (Figma)
   i { width: 6px; height: 6px; border-radius: 50%; background: $color-success; }
   &::after { content: ''; position: absolute; left: 15%; top: 100%; height: 2.5rem; border-left: 1px solid rgba($color-white, 0.25); }
 }
@@ -1035,8 +1083,9 @@ $q-pile: (
 .info-title { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; font-weight: $font-weight-medium; color: $color-white; svg { width: 13px; height: 13px; } }
 .info-chip { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; white-space: nowrap; padding: 5px 11px; border-radius: $radius-full; background: $color-cobalt-bright; color: $color-white; font-size: 0.8125rem; font-weight: $font-weight-medium; svg { width: 11px; height: 11px; } }
 .info-line { display: block; height: 4px; border-radius: 2px; background: $neutral-600; width: 75%; &--short { width: 52%; } }
-.info-branches { width: 66%; height: 3rem; overflow: visible; path { fill: none; stroke: #3B5FA8; stroke-width: 1.5; vector-effect: non-scaling-stroke; } }
-.info-nodes { display: flex; justify-content: space-between; width: 76%; font-size: 0.8125rem; color: $neutral-400; text-align: center;
+// the lines and the icons share one width and three equal columns, so each line ends on its icon
+.info-branches { width: 76%; height: 3rem; overflow: visible; path { fill: none; stroke: #3B5FA8; stroke-width: 1.5; vector-effect: non-scaling-stroke; } }
+.info-nodes { display: grid; grid-template-columns: repeat(3, 1fr); justify-items: center; width: 76%; font-size: 0.8125rem; color: $neutral-400; text-align: center;
   div { display: flex; flex-direction: column; align-items: center; gap: 10px; }
   i { width: 48px; height: 48px; border-radius: 50%; background: $neutral-700; border: 1px solid rgba($color-white, 0.12); display: grid; place-items: center; color: $neutral-200; svg { width: 18px; height: 18px; } }
 }
@@ -1049,12 +1098,22 @@ $q-pile: (
   border-radius: $radius-full; background: $neutral-800; border: 1px solid rgba($color-white, 0.12);
   span { position: relative; z-index: 1; min-width: 46px; padding: 6px 12px; text-align: center; font-size: 0.8125rem; font-weight: $font-weight-semibold; color: $neutral-400; }
   .is-active { color: $color-white; }
+  // the tabs can be picked: the pill moves there and the greeting turns into that language
+  span[role="button"] { cursor: pointer; border-radius: $radius-full; transition: color $transition-fast;
+    &:hover { color: $color-white; }
+    &:focus-visible { outline: 2px solid $color-white; outline-offset: 1px; }
+  }
 }
 .lang-pill { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 3px; width: 46px; border-radius: $radius-full; background: $color-cobalt-bright; }
-.hello { position: relative; display: flex; flex-direction: column; align-items: center; font-weight: $font-weight-semibold; line-height: 1.12; letter-spacing: -0.03em; }
+// One greeting at a time, in the same spot (Figma animation): Hello. with EN; with another tab it
+// gives way to that language's greeting (こんにちは。 with JP), in blue; animations.js swaps them
+.hello { position: relative; display: grid; place-items: center; font-weight: $font-weight-semibold; line-height: 1.12; letter-spacing: -0.03em;
+  > * { grid-area: 1 / 1; white-space: nowrap; }
+}
+.hello-jp { visibility: hidden; opacity: 0; }
 .hello-en { font-size: clamp(2.4rem, 3.6vw, 3.4rem); color: $color-white; }
 .hello-jp { font-size: clamp(2.2rem, 3.2vw, 3rem); font-weight: $font-weight-bold; letter-spacing: 0; color: $color-cobalt-bright; }
-.hello-alt { position: relative; margin-top: 0.4rem; font-size: 1.0625rem; color: $neutral-500; text-align: center; }
+.hello-alt { position: relative; margin-top: 0.4rem; font-size: 1rem; /* 16 (Figma) */ color: $neutral-500; text-align: center; }
 
 // Scale: the hub links four places on a dotted map
 .scale {
@@ -1079,7 +1138,7 @@ $q-pile: (
 // Insights: the most asked topic and its week of questions
 .insights { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 1.5rem 2.5rem; margin-bottom: 0.5rem; }
 .insight-copy { flex: 1 1 15rem; }
-.insight-kicker { font-size: 0.9375rem; color: $neutral-400; }
+.insight-kicker { font-size: 0.875rem; /* 14 (Figma) */ color: $neutral-400; }
 .insight-word {
   margin: 0.6rem 0 0.4rem;
   font-size: clamp(3rem, 4.4vw, 4.2rem); font-weight: $font-weight-bold; line-height: 1.05; letter-spacing: -0.04em;
@@ -1118,7 +1177,12 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   align-items: center; justify-content: center; text-align: center;
   h3 { font-size: $type-title; margin: 1.6rem 0 0.9rem; }
   p { color: rgba($color-white, 0.9); margin-bottom: 1.4rem; }
+  // The rings are centred on the avatar (they share .demo-face), and the avatar here is a closer
+  // crop: her face in the middle of the circle
+  .demo-face { position: relative; display: block; }
+  .demo-face .cta-rings { top: 50%; }
   .avatar-circle { position: relative; width: 86px; height: 86px; border: 0; box-shadow: none; }
+  .avatar-circle img { top: -2%; width: 104%; }
   .btn { position: relative; padding: 0.9rem 1.4rem; font-size: 1rem; }
 }
 .cta-rings { position: absolute; left: 50%; top: 32%; width: 0; height: 0; pointer-events: none;
@@ -1147,7 +1211,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 }
 
 // One device, shaped as a website screen by default; the scroll scene morphs it into the
-// kiosk, tablet and phone (size, bezel and corners) as the list grows
+// kiosk, phone and a custom display (size, bezel and corners) as the list grows
 .device {
   width: 89%;
   padding: 4px;
@@ -1299,10 +1363,9 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   &:hover { border-color: $color-cobalt-bright; }
   &.is-active { background: $color-cobalt-bright; color: $color-white; border-color: $color-cobalt-bright; }
 }
-// FAQ topics (Figma: 136px chips, ink when active)
+// FAQ topics (Figma: 136px chips, blue when active)
 .faq-filters { gap: 8px; margin-bottom: 1.5rem;
-  .filter-btn { min-width: 8.5rem; padding: 10px 18px; font-size: 1rem; line-height: 1.56; letter-spacing: -0.012em;
-    &.is-active { background: $color-ink; border-color: $color-ink; color: #F3F1EB; } }
+  .filter-btn { min-width: 8.5rem; padding: 10px 18px; font-size: 1rem; line-height: 1.56; letter-spacing: -0.012em; }
 }
 
 .faq-chat-box {
@@ -1322,7 +1385,6 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   scrollbar-width: thin; scrollbar-color: $neutral-300 transparent;
   &:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 2px; border-radius: 12px; }
 }
-.faq-chat-box [hidden] { display: none !important; }
 .faq-day { align-self: center; font-size: $type-caption; color: #6E6B63; }
 .faq-pair { display: flex; flex-direction: column; gap: 0.875rem; }
 .faq-pair[hidden] { display: none; }
@@ -1356,7 +1418,6 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 // Until the scroll has asked the demo question, the suggestions wait (desktop scene)
 .faq-chat-box.is-waiting .faq-suggestion { pointer-events: none; }
 .faq-suggestions-done { margin: 0; font-size: $type-caption; color: #6E6B63; }
-.msg-ai { display: flex; align-items: flex-end; gap: 0.5rem; }
 .msg-avatar { width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; }
 .helpful { display: flex; align-items: center; gap: 8px; padding-left: 40px; font-size: $type-caption; color: #6E6B63;
   button { background: none; border: 1px solid $neutral-300; border-radius: $radius-full; padding: 4px 12px; font: inherit; font-size: $type-caption; color: $color-text-secondary; cursor: pointer; transition: scale 0.12s ease-out;
@@ -1378,8 +1439,8 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   span { color: $neutral-500; }
   &:hover, &.is-first { background: rgba(0, 122, 255, 0.15); } // the first one shown is tinted (Figma; main.js)
 }
-// The demo question, asked in the thread above; shown as a suggestion only before the scroll
-// scene asks it (animations.js)
+// The demo questions, asked in the thread above; shown as suggestions only before the scroll
+// scene asks them (animations.js)
 .faq-ask { display: none; }
 
 /* =========================================
@@ -1391,7 +1452,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 .status-line { display: inline-flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; font-weight: $font-weight-semibold; margin-bottom: 1.25rem;
   .online-dot { font-size: $type-caption; font-weight: $font-weight-normal; color: #6E6B63; }
 }
-.cta-title { font-size: $type-display; font-weight: $font-weight-semibold; letter-spacing: -0.03em; line-height: 1.05; margin: 0 0 1.25rem;
+.cta-title { font-size: $type-display; font-weight: $font-weight-semibold; letter-spacing: -0.042em; line-height: 1.05; margin: 0 0 1.25rem;
   span { display: block; background: linear-gradient(90deg, $cobalt-500, $cobalt-300); -webkit-background-clip: text; background-clip: text; color: transparent; }
 }
 .cta-sub { color: $color-text-secondary; font-size: $type-lead; line-height: 1.48; letter-spacing: -0.014em; max-width: 28.4rem; margin: 0 auto 2rem; }
@@ -1399,7 +1460,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   .btn { padding: 0.875rem 1.625rem; font-size: 1.0625rem; font-weight: $font-weight-medium; }
   .link-btn { font-size: 1.0625rem; color: $cobalt-600; }
 }
-.cta-hero .kiosk-device { width: min(100%, 26.25rem, calc((100svh - 7rem) * 0.62)); margin: 0 auto -6rem; // 420 at 1512 (Figma); the whole screen fits the screen's height border-radius: 36px 36px 14px 14px; padding: 14px 14px 0; border: 3px solid $neutral-700;
+.cta-hero .kiosk-device { width: min(100%, 26.25rem, calc((100svh - 7rem) * 0.62)); margin: 0 auto -6rem; /* 420 at 1512 (Figma); the whole screen fits the screen's height */ border-radius: 36px 36px 14px 14px; padding: 14px 14px 0; border: 3px solid $neutral-700;
   .kiosk-screen { border-radius: 22px; }
 }
 
@@ -1409,7 +1470,7 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
    ========================================= */
 #contact { padding-block: clamp(4rem, 8.466vw, 8rem); }
 #contact .header-pill--user { background: #F6F6F3; }
-#contact .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.025em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; max-width: none; }
+#contact .header-pill--ai { font-size: $type-headline; line-height: 1.07; letter-spacing: -0.04em; padding: 0.43em 0.6em; border-radius: 36px 36px 36px 8px; max-width: none; }
 .contact-split { display: flex; flex-wrap: wrap; gap: 4rem; align-items: flex-start; }
 .next-steps { flex: 1 1 0; min-width: min(100%, 16.25rem); padding-top: 2.5rem; }
 .eyebrow { @extend %eyebrow; display: block; color: $color-text-accent-dark; margin-bottom: 2rem; }
@@ -1480,7 +1541,9 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
   .footer-form-card.is-arrived { animation: none; }
   #leadForm .btn-primary.is-sending::before { animation-duration: 2s; }
 }
-.privacy-text { text-align: center; font-size: $type-caption; color: #6E6B63; margin: 0; }
+.privacy-text { text-align: center; font-size: $type-caption; color: #6E6B63; margin: 0;
+  a { text-decoration: underline; text-underline-offset: 2px; } // (a link in a sentence: shown by more than its colour)
+}
 
 // "Request sent." (Figma, after the form is sent)
 .lead-sent { display: flex; flex-direction: column; gap: 1.5rem; outline: none;

@@ -1,5 +1,8 @@
-/* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
-$font-family-base: 'SF Pro', 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Inter', 'Noto Sans JP', sans-serif;
+/* Fonts & Typography. Figma sets the page in SF Pro, which can't be served on the web: Inter on
+   every system (QA-3, creative head, 30 Oct), loaded with its optical-size axis so large text uses
+   Inter Display, which comes within a few percent of SF Pro's widths; the big headlines are
+   tracked a little tighter to close the rest. (Macs used to show SF Pro, the rest Inter.) */
+$font-family-base: 'Inter', 'Noto Sans JP', sans-serif;
 $font-family-mono: 'SFMono-Regular', Consolas, monospace;
 // Fluid root size: 16px up to a 1512px screen (the Figma landing frame), then grows to 20px
 // so the whole rem-based layout scales up on large desktops

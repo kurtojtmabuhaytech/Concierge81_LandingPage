@@ -90,6 +90,8 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   // the features, once the story has played to them, answer the pointer (their hover)
   &.is-built > #features .feature-item { pointer-events: auto; }
+  // the hero chat, once it scrolls (a few questions asked), takes the wheel while the hero is the step shown
+  &.is-at-hero > #hero .chat-messages-area.is-chatting { pointer-events: auto; }
   > .section {
     > .container { width: 100%; }
   }
@@ -97,12 +99,10 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   // The avatar shrinks into the kiosk screen, which can sit past the card's edge
   .hero-card { overflow: visible; }
 
-  // One avatar at one size: the kiosk screens frame the avatar exactly like the hero (same
-  // artwork, same shape), and the intro kiosk's screen is the hero avatar's size, so the morph
-  // only moves the avatar. The logo sits over the empty space above her head.
-  .kiosk-screen { aspect-ratio: 1672 / 2180; }
+  // The kiosk screens frame the avatar exactly like the hero (same artwork, same shape), so the
+  // morph only moves and shrinks the avatar. The logo sits over the empty space above her head.
+  .kiosk-screen { aspect-ratio: 1672 / 2180; border-radius: 21px; } // the card's corners close to 21 (Figma)
   .kiosk-avatar { height: 100%; }
-  .intro-split .kiosk-device { flex: 0 0 auto; width: calc(var(--hero-avatar-w, 22.5rem) + 20px); }
   #features .chat-section-header { margin-bottom: 1.5rem; }
 }
 
@@ -144,11 +144,6 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   .inbox-card { margin-bottom: 2rem; }
 }
 
-// Desktop Why concierge81?: Hello. and こんにちは。 share one spot and swap with the language tab
-#values.is-staged .hello { display: grid; place-items: center;
-  > span { grid-area: 1 / 1; }
-}
-
 // Desktop industries carousel: the cards sit on a track that moves one card per step
 #industries.is-staged {
   // starts at the container's edge, so the card that has moved out is fully hidden
@@ -188,6 +183,8 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   pointer-events: none;
   transform-origin: 0 0;
   will-change: transform, opacity;
+  display: flex; flex-direction: column; // sized to the intro kiosk; the stand takes the height left
+  .kiosk-base { flex: 1 0 auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -220,10 +217,10 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 // it and the industry photos zoom, so the visitor sees they respond (the hover loops in
 // animations.js play their parts)
 @media (min-width: 901px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .is-staged :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card) {
+  .is-staged :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card, .industry-card) {
     transition: translate 0.35s $reveal-ease, box-shadow 0.35s ease;
   }
-  .is-staged.is-built:not(.is-playing) :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card):hover {
+  .is-staged.is-built:not(.is-playing) :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card, .industry-card):hover {
     translate: 0 -6px !important; // GSAP writes translate: none inline on what it animates
     box-shadow: 0 18px 40px rgba(13, 15, 20, 0.18);
   }

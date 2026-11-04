@@ -1,5 +1,8 @@
 @charset "UTF-8";
-/* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
+/* Fonts & Typography. Figma sets the page in SF Pro, which can't be served on the web: Inter on
+   every system (QA-3, creative head, 30 Oct), loaded with its optical-size axis so large text uses
+   Inter Display, which comes within a few percent of SF Pro's widths; the big headlines are
+   tracked a little tighter to close the rest. (Macs used to show SF Pro, the rest Inter.) */
 /* Type Scale (Design System V2, fluid between mobile and desktop) */
 /* Primitive Scales */
 /* Color Palette (Brand: Cobalt, Ink, Paper) */
@@ -16,7 +19,7 @@
 }
 
 html {
-  font-family: "SF Pro", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans JP", sans-serif;
+  font-family: "Inter", "Noto Sans JP", sans-serif;
   font-size: clamp(16px, 1.0582vw, 20px);
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
@@ -80,29 +83,10 @@ code, kbd, samp, pre {
   padding-right: max(1.5rem, 6.614vw);
 }
 
-/* =========================================
-   Media & Image Placeholders
-   Labelled boxes that hold the place of artwork until the real files arrive
-   ========================================= */
-.placeholder-box {
-  background-color: #F3F1EB;
-  border: 2px dashed #E5E2D9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #8A867B;
-  font-weight: 500;
-  font-size: 0.9rem;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.placeholder-box span {
-  padding: 0.5rem;
-  text-align: center;
-}
-
-/* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
+/* Fonts & Typography. Figma sets the page in SF Pro, which can't be served on the web: Inter on
+   every system (QA-3, creative head, 30 Oct), loaded with its optical-size axis so large text uses
+   Inter Display, which comes within a few percent of SF Pro's widths; the big headlines are
+   tracked a little tighter to close the rest. (Macs used to show SF Pro, the rest Inter.) */
 /* Type Scale (Design System V2, fluid between mobile and desktop) */
 /* Primitive Scales */
 /* Color Palette (Brand: Cobalt, Ink, Paper) */
@@ -130,13 +114,25 @@ code, kbd, samp, pre {
   outline-offset: 3px;
 }
 
-:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card, .tier-card--featured) :focus-visible,
+:is(.theme-dark, .btn-primary, .header-pill--ai, .industry-card) :focus-visible,
 :is(.btn-primary, .theme-dark .btn):focus-visible {
   outline-color: #FFFFFF;
 }
 
 main:focus {
   outline: none;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .form-group :is(input, textarea):focus-visible {
@@ -148,7 +144,7 @@ main:focus {
   position: fixed;
   top: 0.75rem;
   left: 0.75rem;
-  z-index: 1000;
+  z-index: 1002;
   padding: 0.6rem 1.1rem;
   border-radius: 999px;
   background: #FFFFFF;
@@ -243,6 +239,11 @@ main:focus {
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
+}
+.lang-btn svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
 }
 
 /* =========================================
@@ -453,25 +454,19 @@ main:focus {
   border-radius: 28px 28px 28px 8px;
   font-size: clamp(1.75rem, 4vw, 2.75rem);
   font-weight: 600;
-  letter-spacing: -0.027em;
+  letter-spacing: -0.04em;
   line-height: 1.136;
   max-width: min(100%, 56.25rem);
   margin: 0;
 }
 
-.header-pill--lg {
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
-  line-height: 1.14;
-  border-radius: 28px 28px 28px 8px;
-  max-width: min(100%, 40rem);
-}
-
 .header-pill--xl {
   font-size: clamp(2.1rem, 5.5vw, 3.5rem);
   line-height: 1.07;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.04em;
   border-radius: 28px 28px 28px 8px;
   max-width: min(100%, 40rem);
+  text-wrap: balance;
 }
 
 .sub-pill-text {
@@ -684,6 +679,7 @@ button.chip, a.chip {
   border-radius: inherit;
   background: radial-gradient(ellipse at 30% 30%, #F4F5FF 0%, #EEF1FC 55%, #E8ECFB 100%);
   opacity: var(--hero-surface, 1);
+  scale: calc(0.8 + 0.2 * var(--hero-surface, 1));
 }
 
 .hero-card-top {
@@ -763,6 +759,37 @@ button.chip, a.chip {
   padding: clamp(0.5rem, 2vw, 1.5rem) 0 clamp(1rem, 2.5vw, 1.5rem);
 }
 
+.hero-card.is-chat-mode .hero-split-area {
+  grid-template-columns: 1fr;
+}
+.hero-card.is-chat-mode .hero-avatar {
+  display: none;
+}
+.hero-card.is-chat-mode .hero-chat-interface {
+  width: 100%;
+  max-width: 48rem;
+  justify-self: center;
+}
+
+.hero-card.is-mode-changing .hero-split-area {
+  animation: hero-mode-in 0.8s cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+@keyframes hero-mode-in {
+  from {
+    opacity: 0;
+    translate: 0 0.75rem;
+    scale: 0.985;
+  }
+  40% {
+    opacity: 0.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-card.is-mode-changing .hero-split-area {
+    animation: none;
+  }
+}
 .chat-messages-area {
   display: flex;
   flex-direction: column;
@@ -1031,13 +1058,22 @@ button.chip, a.chip {
     max-width: none;
     padding-inline: max(1.5rem, (100% - calc(1350 * var(--u))) / 2);
   }
+  body:not(.page-cream) .site-header {
+    padding-block: 0;
+  }
+  body:not(.page-cream) .site-header > .container {
+    min-height: calc(75 * var(--u));
+  }
+  .site-header .brand-logo {
+    font-size: calc(22 * var(--u));
+  }
   .story > .section > .container {
     max-width: calc(1350 * var(--u));
     padding-inline: 0;
   }
   .hero-card {
     padding: calc(36 * var(--u)) calc(39 * var(--u)) 0;
-    border-radius: calc(28 * var(--u));
+    border-radius: calc(32 * var(--u));
   }
   .hero-card-top .brand-logo {
     font-size: calc(22 * var(--u));
@@ -1055,7 +1091,20 @@ button.chip, a.chip {
     gap: 0;
   }
   .hero-avatar img {
-    width: calc(430 * var(--u));
+    width: calc(475 * var(--u));
+  }
+  .story.is-staged .hero-card.is-chat-mode .hero-split-area {
+    grid-template-columns: 1fr calc(672 * var(--u));
+  }
+  .story.is-staged .hero-card.is-chat-mode .hero-avatar {
+    display: flex;
+    grid-area: 1/1;
+    clip-path: inset(0 0 0 100%);
+  }
+  .story.is-staged .hero-card.is-chat-mode .hero-chat-interface {
+    grid-area: 1/1/2/-1;
+    width: calc(860 * var(--u));
+    max-width: 100%;
   }
   .hero-chat-interface {
     gap: calc(16 * var(--u));
@@ -1125,8 +1174,18 @@ button.chip, a.chip {
     flex-wrap: nowrap;
   }
   .intro-split .kiosk-device {
-    flex: 0 0 calc(447 * var(--u));
-    width: calc(447 * var(--u));
+    --kiosk-w: min(calc(447 * var(--u)), calc((100svh - 10rem) * 447 / 882));
+    flex: 0 0 var(--kiosk-w);
+    width: var(--kiosk-w);
+    height: auto;
+  }
+  :is(.intro-split, .feature-stage) .kiosk-device {
+    display: flex;
+    flex-direction: column;
+  }
+  :is(.intro-split, .feature-stage) .kiosk-base {
+    flex: 0 0 auto;
+    height: calc(90 * var(--u));
   }
   .intro-thread {
     flex: 0 1 calc(717 * var(--u));
@@ -1181,8 +1240,10 @@ button.chip, a.chip {
     gap: calc(80 * var(--u));
   }
   .feature-stage .kiosk-device {
-    flex: 0 0 calc(498 * var(--u));
-    width: calc(498 * var(--u));
+    --kiosk-w: min(calc(498 * var(--u)), calc((100svh - 10rem) * 498 / 882));
+    flex: 0 0 var(--kiosk-w);
+    width: var(--kiosk-w);
+    height: auto;
   }
   .feature-col {
     flex: 0 1 calc(380 * var(--u));
@@ -1207,6 +1268,9 @@ button.chip, a.chip {
   .feature-icon svg {
     width: calc(24 * var(--u));
     height: calc(24 * var(--u));
+  }
+  #problem .header-pill--ai {
+    max-width: calc(650 * var(--u));
   }
 }
 /* =========================================
@@ -1717,7 +1781,7 @@ button.chip, a.chip {
   height: 2px;
   margin-top: -1px;
   border-radius: 2px;
-  background: rgba(39, 111, 248, 0.6);
+  background: color-mix(in srgb, rgba(39, 111, 248, 0.6) calc(var(--lit, 0) * 100%), #35342F);
   transform: scaleX(var(--line, 1));
   transform-origin: left center;
 }
@@ -1779,7 +1843,7 @@ button.chip, a.chip {
   position: relative;
   width: 10rem;
   height: 10rem;
-  margin: 0 auto 3.4rem;
+  margin: 0 auto 2.2rem;
 }
 .process-icon::before {
   content: "";
@@ -1832,10 +1896,10 @@ button.chip, a.chip {
   #how .header-pill--user, #pricing .header-pill--user {
     background: #F6F6F3;
   }
-  #how .header-pill--ai, #pricing .header-pill--ai {
+  #how .header-pill--ai {
     font-size: clamp(2.1rem, 5.5vw, 3.5rem);
     line-height: 1.07;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.04em;
     padding: 0.43em 0.6em;
     border-radius: 36px 36px 36px 8px;
   }
@@ -1868,7 +1932,7 @@ button.chip, a.chip {
 .mode-card h3 {
   font-size: clamp(2.1rem, 5.5vw, 3.5rem);
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.04em;
   margin: 0.6rem 0;
 }
 .mode-card .mode-header p {
@@ -2088,11 +2152,6 @@ button.chip, a.chip {
   overflow-x: clip;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .industries-section .swipe-hint {
-    display: none;
-  }
-}
 .industry-photo {
   position: absolute;
   inset: 0;
@@ -2379,7 +2438,7 @@ button.chip, a.chip {
   .industry-card h3 {
     font-size: 1.875rem;
     line-height: 1.13;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.04em;
     margin-top: 0.5rem;
     max-width: none;
   }
@@ -2575,8 +2634,8 @@ button.chip, a.chip {
   background: #1E1F21;
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 .timeline-tip i {
   width: 6px;
@@ -2779,7 +2838,7 @@ button.chip, a.chip {
 }
 
 .info-branches {
-  width: 66%;
+  width: 76%;
   height: 3rem;
   overflow: visible;
 }
@@ -2791,8 +2850,9 @@ button.chip, a.chip {
 }
 
 .info-nodes {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  justify-items: center;
   width: 76%;
   font-size: 0.8125rem;
   color: #A8A49A;
@@ -2860,6 +2920,18 @@ button.chip, a.chip {
 .lang-tabs .is-active {
   color: #FFFFFF;
 }
+.lang-tabs span[role=button] {
+  cursor: pointer;
+  border-radius: 999px;
+  transition: color 0.2s ease-in-out;
+}
+.lang-tabs span[role=button]:hover {
+  color: #FFFFFF;
+}
+.lang-tabs span[role=button]:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 1px;
+}
 
 .lang-pill {
   position: absolute;
@@ -2874,12 +2946,20 @@ button.chip, a.chip {
 
 .hello {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  place-items: center;
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: -0.03em;
+}
+.hello > * {
+  grid-area: 1/1;
+  white-space: nowrap;
+}
+
+.hello-jp {
+  visibility: hidden;
+  opacity: 0;
 }
 
 .hello-en {
@@ -2897,7 +2977,7 @@ button.chip, a.chip {
 .hello-alt {
   position: relative;
   margin-top: 0.4rem;
-  font-size: 1.0625rem;
+  font-size: 1rem; /* 16 (Figma) */
   color: #8A867B;
   text-align: center;
 }
@@ -2974,7 +3054,7 @@ button.chip, a.chip {
 }
 
 .insight-kicker {
-  font-size: 0.9375rem;
+  font-size: 0.875rem; /* 14 (Figma) */
   color: #A8A49A;
 }
 
@@ -3104,12 +3184,23 @@ button.chip, a.chip {
   color: rgba(255, 255, 255, 0.9);
   margin-bottom: 1.4rem;
 }
+.bento-card--cta .demo-face {
+  position: relative;
+  display: block;
+}
+.bento-card--cta .demo-face .cta-rings {
+  top: 50%;
+}
 .bento-card--cta .avatar-circle {
   position: relative;
   width: 86px;
   height: 86px;
   border: 0;
   box-shadow: none;
+}
+.bento-card--cta .avatar-circle img {
+  top: -2%;
+  width: 104%;
 }
 .bento-card--cta .btn {
   position: relative;
@@ -3597,11 +3688,6 @@ button.chip, a.chip {
   line-height: 1.56;
   letter-spacing: -0.012em;
 }
-.faq-filters .filter-btn.is-active {
-  background: #0E1013;
-  border-color: #0E1013;
-  color: #F3F1EB;
-}
 
 .faq-chat-box {
   display: flex;
@@ -3628,10 +3714,6 @@ button.chip, a.chip {
   outline: 2px solid #276FF8;
   outline-offset: 2px;
   border-radius: 12px;
-}
-
-.faq-chat-box [hidden] {
-  display: none !important;
 }
 
 .faq-day {
@@ -3781,12 +3863,6 @@ button.chip, a.chip {
   color: #6E6B63;
 }
 
-.msg-ai {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-}
-
 .msg-avatar {
   width: 30px;
   height: 30px;
@@ -3901,7 +3977,7 @@ button.chip, a.chip {
 .cta-title {
   font-size: clamp(2.5rem, 7vw, 5rem);
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.042em;
   line-height: 1.05;
   margin: 0 0 1.25rem;
 }
@@ -3942,7 +4018,10 @@ button.chip, a.chip {
 
 .cta-hero .kiosk-device {
   width: min(100%, 26.25rem, (100svh - 7rem) * 0.62);
-  margin: 0 auto -6rem;
+  margin: 0 auto -6rem; /* 420 at 1512 (Figma); the whole screen fits the screen's height */
+  border-radius: 36px 36px 14px 14px;
+  padding: 14px 14px 0;
+  border: 3px solid #35342F;
 }
 .cta-hero .kiosk-device .kiosk-screen {
   border-radius: 22px;
@@ -3963,7 +4042,7 @@ button.chip, a.chip {
 #contact .header-pill--ai {
   font-size: clamp(2.1rem, 5.5vw, 3.5rem);
   line-height: 1.07;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.04em;
   padding: 0.43em 0.6em;
   border-radius: 36px 36px 36px 8px;
   max-width: none;
@@ -4213,6 +4292,10 @@ button.chip, a.chip {
   color: #6E6B63;
   margin: 0;
 }
+.privacy-text a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 .lead-sent {
   display: flex;
@@ -4422,6 +4505,30 @@ button.chip, a.chip {
   border-bottom-color: #E5E2D9;
 }
 
+@media (min-width: 901px) {
+  .page-cream .site-header {
+    padding-block: calc(21 * var(--u));
+  }
+  .page-cream .site-header .brand-logo {
+    font-size: calc(22 * var(--u));
+  }
+  .page-cream .nav-menu a:not(.btn) {
+    color: #0E1013;
+    font-size: calc(14 * var(--u));
+  }
+  .page-cream .site-header .lang-btn {
+    background: transparent;
+    border-color: #CFCBC0;
+    color: #5C5A4D;
+    letter-spacing: 0.06em;
+    font-size: calc(12 * var(--u));
+    padding: calc(7 * var(--u)) calc(14 * var(--u));
+  }
+  .page-cream .header-actions .btn {
+    font-size: calc(13 * var(--u));
+    padding: calc(7 * var(--u)) calc(12 * var(--u));
+  }
+}
 .nav-menu a.is-current {
   color: #0E1013;
   font-weight: 600;
@@ -4440,6 +4547,18 @@ button.chip, a.chip {
 .blog-hero {
   padding-top: clamp(2.5rem, 6.9vw, 6.5rem);
   padding-bottom: clamp(2rem, 4.8vw, 4.5rem);
+}
+
+.blog-hero--list {
+  padding-top: clamp(2.5rem, 7.94vw, 7.5rem);
+}
+
+.blog-hero--news {
+  padding-top: clamp(2rem, 5.29vw, 5rem);
+}
+
+.blog-hero--post {
+  padding-top: clamp(2rem, 3.97vw, 3.75rem);
 }
 
 .blog-hero .chat-section-header {
@@ -4536,8 +4655,8 @@ main > .blog-section:has(+ #contact) {
 
 .story-chat {
   position: absolute;
-  top: 14%;
-  bottom: 8%;
+  top: 8%;
+  bottom: 2.5%;
   left: 47.5%;
   right: 4.5%;
   display: flex;
@@ -4554,7 +4673,7 @@ main > .blog-section:has(+ #contact) {
 
 .story-meta--end {
   align-self: flex-end;
-  margin-top: 1.4cqw;
+  margin-top: 0.4cqw;
 }
 
 .bubble--frost {
@@ -4599,7 +4718,7 @@ main > .blog-section:has(+ #contact) {
   border-color: rgba(255, 255, 255, 0.55);
   color: #FFFFFF;
   font-size: 0.6em;
-  padding: 0.6em 0.95em;
+  padding: 0.95em 0.95em;
   white-space: nowrap;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
@@ -4615,7 +4734,7 @@ main > .blog-section:has(+ #contact) {
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-radius: 999px;
-  padding: 0.5em 0.5em 0.5em 1.2em;
+  padding: 0.75em 0.6em 0.75em 1.2em;
   font-size: 0.78em;
   color: rgba(255, 255, 255, 0.75);
 }
@@ -4822,10 +4941,6 @@ main > .blog-section:has(+ #contact) {
   overflow: hidden;
   background: #E5E2D9;
 }
-.post-card-media.placeholder-box {
-  border: none;
-  border-radius: 0;
-}
 .post-card-media img {
   width: 100%;
   height: 100%;
@@ -4918,7 +5033,7 @@ main > .blog-section:has(+ #contact) {
   font-size: 0.875rem;
   font-weight: 500;
   color: #1F59C6;
-  margin-bottom: 1.625rem;
+  margin-bottom: 2.75rem;
 }
 
 .post-header .post-eyebrow {
@@ -4939,6 +5054,10 @@ main > .blog-section:has(+ #contact) {
   line-height: 1.41;
   letter-spacing: -0.014em;
   margin: 0 0 1.875rem;
+}
+.post-lead a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .post-byline {
@@ -5507,6 +5626,7 @@ main > .blog-section:has(+ #contact) {
 
 .news-featured-copy {
   padding: clamp(1.75rem, 4.2vw, 4rem) clamp(1.5rem, 3.7vw, 3.5rem);
+  padding-bottom: calc(clamp(1.75rem, 4.2vw, 4rem) + 1.25rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -5563,6 +5683,10 @@ main > .blog-section:has(+ #contact) {
     aspect-ratio: 4/3;
   }
 }
+.blog-section:has(.news-featured) {
+  padding-bottom: clamp(2rem, 3.7vw, 3.5rem);
+}
+
 /* News List (date · tag · title · arrow), Figma "News/Row": 80px rows in a white card */
 .news-list-wrap {
   container-type: inline-size;
@@ -5668,6 +5792,10 @@ main > .blog-section:has(+ #contact) {
   color: #1F59C6;
 }
 
+.news-list-wrap + .load-more {
+  margin-top: 1.5rem;
+}
+
 .load-more .btn-outline-accent {
   padding: 0.875rem 1.625rem;
   font-size: 1.0625rem;
@@ -5747,6 +5875,14 @@ main > .blog-section:has(+ #contact) {
   object-position: 45% 50%;
 }
 
+.news-body .news-quote + h2 {
+  margin-top: 2.875rem;
+}
+
+.keep-reading:has(.news-list) {
+  padding-top: calc(clamp(3rem, 5.8vw, 5.5rem) + 1.625rem);
+}
+
 .news-quote {
   margin: 0;
   padding: 1rem 0;
@@ -5800,7 +5936,7 @@ main > .blog-section:has(+ #contact) {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 2.125rem;
   background: #FFFFFF;
   border-radius: 24px;
   padding: 1.5rem 1.5rem 1.5rem 1.75rem;
@@ -5947,6 +6083,9 @@ main > .blog-section:has(+ #contact) {
 .story.is-staged.is-built > #features .feature-item {
   pointer-events: auto;
 }
+.story.is-staged.is-at-hero > #hero .chat-messages-area.is-chatting {
+  pointer-events: auto;
+}
 .story.is-staged > .section > .container {
   width: 100%;
 }
@@ -5955,13 +6094,10 @@ main > .blog-section:has(+ #contact) {
 }
 .story.is-staged .kiosk-screen {
   aspect-ratio: 1672/2180;
+  border-radius: 21px;
 }
 .story.is-staged .kiosk-avatar {
   height: 100%;
-}
-.story.is-staged .intro-split .kiosk-device {
-  flex: 0 0 auto;
-  width: calc(var(--hero-avatar-w, 22.5rem) + 20px);
 }
 .story.is-staged #features .chat-section-header {
   margin-bottom: 1.5rem;
@@ -6018,14 +6154,6 @@ main > .blog-section:has(+ #contact) {
   margin-bottom: 2rem;
 }
 
-#values.is-staged .hello {
-  display: grid;
-  place-items: center;
-}
-#values.is-staged .hello > span {
-  grid-area: 1/1;
-}
-
 #industries.is-staged .industry-gallery {
   overflow: hidden;
   scroll-snap-type: none;
@@ -6080,6 +6208,11 @@ main > .blog-section:has(+ #contact) {
   pointer-events: none;
   transform-origin: 0 0;
   will-change: transform, opacity;
+  display: flex;
+  flex-direction: column;
+}
+.kiosk-traveller .kiosk-base {
+  flex: 1 0 auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6110,10 +6243,10 @@ main > .blog-section:has(+ #contact) {
   }
 }
 @media (min-width: 901px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .is-staged :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card) {
+  .is-staged :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card, .industry-card) {
     transition: translate 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.35s ease;
   }
-  .is-staged.is-built:not(.is-playing) :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card):hover {
+  .is-staged.is-built:not(.is-playing) :is(.process-card, .mode-card, .bento-card, .tier-card, .platform-card, .industry-card):hover {
     translate: 0 -6px !important;
     box-shadow: 0 18px 40px rgba(13, 15, 20, 0.18);
   }
