@@ -1,5 +1,8 @@
 @charset "UTF-8";
-/* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
+/* Fonts & Typography. Figma sets the page in SF Pro, which can't be served on the web: Inter on
+   every system (QA-3, creative head, 30 Oct), loaded with its optical-size axis so large text uses
+   Inter Display, which comes within a few percent of SF Pro's widths; the big headlines are
+   tracked a little tighter to close the rest. (Macs used to show SF Pro, the rest Inter.) */
 /* Type Scale (Design System V2, fluid between mobile and desktop) */
 /* Primitive Scales */
 /* Color Palette (Brand: Cobalt, Ink, Paper) */
@@ -16,7 +19,7 @@
 }
 
 html {
-  font-family: "SF Pro", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans JP", sans-serif;
+  font-family: "Inter", "Noto Sans JP", sans-serif;
   font-size: clamp(16px, 1.0582vw, 20px);
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
@@ -102,7 +105,10 @@ code, kbd, samp, pre {
   text-align: center;
 }
 
-/* Fonts & Typography (Design System V2: SF Pro + Noto Sans JP) */
+/* Fonts & Typography. Figma sets the page in SF Pro, which can't be served on the web: Inter on
+   every system (QA-3, creative head, 30 Oct), loaded with its optical-size axis so large text uses
+   Inter Display, which comes within a few percent of SF Pro's widths; the big headlines are
+   tracked a little tighter to close the rest. (Macs used to show SF Pro, the rest Inter.) */
 /* Type Scale (Design System V2, fluid between mobile and desktop) */
 /* Primitive Scales */
 /* Color Palette (Brand: Cobalt, Ink, Paper) */
@@ -470,7 +476,7 @@ main:focus {
   border-radius: 28px 28px 28px 8px;
   font-size: clamp(1.75rem, 4vw, 2.75rem);
   font-weight: 600;
-  letter-spacing: -0.027em;
+  letter-spacing: -0.04em;
   line-height: 1.136;
   max-width: min(100%, 56.25rem);
   margin: 0;
@@ -486,9 +492,10 @@ main:focus {
 .header-pill--xl {
   font-size: clamp(2.1rem, 5.5vw, 3.5rem);
   line-height: 1.07;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.04em;
   border-radius: 28px 28px 28px 8px;
   max-width: min(100%, 40rem);
+  text-wrap: balance;
 }
 
 .sub-pill-text {
@@ -1921,7 +1928,7 @@ button.chip, a.chip {
   #how .header-pill--ai {
     font-size: clamp(2.1rem, 5.5vw, 3.5rem);
     line-height: 1.07;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.04em;
     padding: 0.43em 0.6em;
     border-radius: 36px 36px 36px 8px;
   }
@@ -1954,7 +1961,7 @@ button.chip, a.chip {
 .mode-card h3 {
   font-size: clamp(2.1rem, 5.5vw, 3.5rem);
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.04em;
   margin: 0.6rem 0;
 }
 .mode-card .mode-header p {
@@ -2460,7 +2467,7 @@ button.chip, a.chip {
   .industry-card h3 {
     font-size: 1.875rem;
     line-height: 1.13;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.04em;
     margin-top: 0.5rem;
     max-width: none;
   }
@@ -2656,8 +2663,8 @@ button.chip, a.chip {
   background: #1E1F21;
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 .timeline-tip i {
   width: 6px;
@@ -2978,7 +2985,7 @@ button.chip, a.chip {
 .hello-alt {
   position: relative;
   margin-top: 0.4rem;
-  font-size: 1.0625rem;
+  font-size: 1rem; /* 16 (Figma) */
   color: #8A867B;
   text-align: center;
 }
@@ -3055,7 +3062,7 @@ button.chip, a.chip {
 }
 
 .insight-kicker {
-  font-size: 0.9375rem;
+  font-size: 0.875rem; /* 14 (Figma) */
   color: #A8A49A;
 }
 
@@ -3984,7 +3991,7 @@ button.chip, a.chip {
 .cta-title {
   font-size: clamp(2.5rem, 7vw, 5rem);
   font-weight: 600;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.042em;
   line-height: 1.05;
   margin: 0 0 1.25rem;
 }
@@ -4049,7 +4056,7 @@ button.chip, a.chip {
 #contact .header-pill--ai {
   font-size: clamp(2.1rem, 5.5vw, 3.5rem);
   line-height: 1.07;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.04em;
   padding: 0.43em 0.6em;
   border-radius: 36px 36px 36px 8px;
   max-width: none;
