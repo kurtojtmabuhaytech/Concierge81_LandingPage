@@ -187,13 +187,11 @@
      timeline's labels.
      - Down, into steps not seen yet: they play in order at their own speed, and the scroll can't
        get more than a step ahead of them (see `limits`), so none is skipped or left half built.
-     - Back up: always free. A step under way on screen snaps to its finished frame (snapBack);
-       sections seen to their end turn plain (goPlain). A section not seen to its end keeps what
-       was built (nothing rewinds, disappears or replays); the view inside follows the scroll back
-       through the positions seen at each step, and the section that slid over it slides back
-       down. The story (layers of one screen) retraces instead (`followBack`): it runs back step
-       by step with the scroll, a step under way reversing from where it is, and turns plain only
-       once the inbox has slid up over all of it.
+     - Back up: always free. A section not played to its end retraces (`followBack`): it runs
+       back step by step with the scroll at the pace it played, a step under way reversing from
+       where it is, and a step run back plays again on the way down. A section played to its end
+       turns plain on the first scroll back (goPlain): a still preview, no animation, no retrace.
+       The story turns plain only once the inbox has slid up over all of it.
      New steps only ever play on the way down, the first time. Each second of the timeline gets
      PACE of a screen of scrolling; `tail` keeps the scene pinned after its last step (the next
      section can slide up over it). `seen` starts the scene as already watched; `startShown` says
@@ -235,8 +233,8 @@
      plain section for good: laid out in full, no pin, no slide-over, nothing replays (only its
      hover animations still play). Every section seen to its end turns plain at once, before the
      page moves, with the scroll put so that what is on screen stays exactly where it is. The scroll
-     back is always free: a step still playing on screen snaps to its finished frame (see snapBack),
-     nothing holds the visitor or makes them wait. */
+     back is always free: a section not played to its end runs back (followBack; its own animations
+     too, see snapBack), nothing holds the visitor or makes them wait. */
   const plainables = []; // each scene: { id, done(), inView(), progress(), snap(), makePlain(), isPlain(), anchor()? }
   const plainAtStart = []; // scenes seen this session, plain from the start (after a refresh)
   // (starting over from the top, nothing stays plain: the sections play again as they are reached)
@@ -274,11 +272,10 @@
       ScrollTrigger.update();
     } finally { switching = false; }
   };
-  // A scroll back is never held. A step still playing in a section on screen (its chat, a later step,
-  // the inbox's rain and demo) goes back to the last step finished; the section keeps what it has
-  // built, and that step and the ones after it play when the visitor scrolls down to them again.
+  // A scroll back is never held. A section on screen that hasn't played to its end runs back (its
+  // steps in followSeen; its own animations, like the inbox's rain and demo, here).
   const snapBack = () => {
-    plainables.filter(p => !p.isPlain() && p.snap && p.progress).forEach((p) => {
+    plainables.filter(p => !p.isPlain() && !p.done() && p.snap && p.progress).forEach((p) => {
       if (p.progress().onScreen) p.snap();
     });
   };
@@ -359,7 +356,7 @@
   const movedSince = at => inputAt > at;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
   ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
-  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, hold = () => false, runs = () => [] }) => {
+  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = true, ownPlain = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, hold = () => false, runs = () => [] }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
@@ -566,10 +563,13 @@
         // (the story, run back and watched again, moves on the same way: one scroll, one step)
         if (self.direction > 0 && !playing && !follow && tl.time() < tl.duration() - 0.001 && newGesture() && gestureAt > steppedAt && !switching && !measuring) {
           steppedAt = performance.now();
+          if (hold()) { onUpdate(tl.time()); return; } // (the scene's own animation, run back: it plays again first)
           const here = stops().filter(t => t <= tl.time() + 0.001).at(-1) ?? 0;
           const nextStop = Math.max(firstStep(), stops().find(t => t > here + 0.001) ?? tl.duration());
           if (nextStop > watched + 0.001) playOn(nextStop); else followSeen(nextStop, 1);
-          if (smoother) smoother.scrollTo(toScroll(nextStop), true); else scrollTo({ top: toScroll(nextStop), behavior: 'smooth' });
+          // (at once, not a glide: inside the pinned screen the picture is the timeline's, so the
+          // move can't be seen, and a glide still under way would swallow a scroll back)
+          scrollToY(toScroll(nextStop), false);
           return;
         }
         // a step under way plays on (never cut short); in the story a scroll back reverses it from
@@ -582,6 +582,8 @@
       onRefresh: (self) => {
         // Rewind with the old measurements, re-measure the starting state, then show (no replay)
         // the finished step at the scroll position
+        const was = tl.time(); // (a scene run back part-way, or retracing: it keeps its place)
+        const goal = follow ? followTo : null;
         stopAll();
         builtAt = -1;
         views.length = 0;
@@ -599,6 +601,13 @@
         // before the visitor scrolled back up, keeps it); the view goes back to where it was
         tl.time(Math.min(seen, tl.duration()));
         noteView(tl.time());
+        if (followBack) {
+          // a re-measure (a section above turning plain, a resize) must not throw a scene run
+          // back part-way to its furthest step, nor cut short the retrace under way: it goes on
+          if (was < tl.time() - 0.001) { tl.time(was); noteView(was); }
+          if (goal !== null && Math.abs(goal - tl.time()) > 0.001) { followTo = -1; followSeen(goal, goal < tl.time() ? -1 : 1); }
+          return;
+        }
         if (keptView !== null && self.progress > 0 && self.progress < 1) gsap.set(content, { y: viewAt(Math.min(keptView, tl.duration())) });
         else if (content && seen > want + 0.001) gsap.set(content, { y: viewAt(Math.max(firstStep(), want)) });
       }
@@ -677,7 +686,9 @@
        page re-measures, the view on screen is noted as a moment of the timeline, and after it the
        same moment's view (re-measured) is shown, until the visitor moves on */
     const keepView = () => {
-      keptView = content && !plain && !playing && pin?.isActive ? timeOfView(gsap.getProperty(content, 'y')) : null;
+      // (not for a section turning plain, see goPlain: that keeps the picture itself in place, and
+      // a retrace under way must go on)
+      keptView = !switching && content && !plain && !playing && pin?.isActive ? timeOfView(gsap.getProperty(content, 'y')) : null;
       keptAt = performance.now();
     };
     ScrollTrigger.addEventListener('refreshInit', keepView);
@@ -715,7 +726,7 @@
       resting();
       tl.progress(1);
     };
-    if (!followBack) {
+    if (!ownPlain) {
       plainables.push({
         id: `#${trigger.id}`,
         done: () => plain || (tl.progress() > 0.999 && !playing && !hold()),
@@ -724,20 +735,10 @@
           const box = trigger.getBoundingClientRect();
           return { playing: !!playing, playingTo, seen: Math.min(seen, tl.duration()), first: firstStep(), onScreen: box.top < innerHeight && box.bottom > 0, pinned: !!pin?.isActive };
         },
-        // the step under way goes back to the last step finished (and the scene's own animation,
-        // e.g. the inbox's rain and demo, to its start), so nothing is left half built and the step
-        // plays again, whole, when the visitor comes back down: a step is never skipped
-        snap: () => {
-          if (playing) {
-            playing.kill();
-            playing = null;
-            resting();
-            tl.time(Math.min(seen, tl.duration()));
-            noteView(tl.time());
-            builtAt = tl.time();
-          }
-          runs().forEach((run) => { if (run.progress() > 0 && run.progress() < 1) run.pause(0); });
-        },
+        // the scene's own animation (the inbox's rain and demo) runs backwards on a scroll back and
+        // plays again when the visitor comes down to its step (the steps themselves run back in
+        // followSeen)
+        snap: () => { runs().forEach((run) => { if (run.progress() > 0 && !run.reversed()) run.reverse(); }); },
         makePlain,
         isPlain: () => plain
       });
@@ -1144,7 +1145,7 @@
       trigger: story,
       tl,
       startShown: true, // its start is the hero, a full page
-      followBack: true, // on the way back it retraces its steps with the scroll
+      ownPlain: true, // its own plain rule, below (only once the inbox has slid up over it)
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
       onUpdate: t => story.classList.toggle('is-at-hero', t < 0.001), // (the hero chat takes the wheel there)
@@ -1382,6 +1383,9 @@
     // the questions can be picked up. Built below; reset with the scene.
     let show = null;
     const applyStart = () => {
+      // (a re-measure keeps the show where it is, running the way it was: forward, or back)
+      const showAt = show?.progress() ?? 0;
+      const showBack = !!show?.reversed();
       show?.pause(0);
       gsap.set(content, { y: 0 });
       asking.start();
@@ -1395,6 +1399,12 @@
       gsap.set([floatCursor, openCursor], { opacity: 0, scale: 1, transformOrigin: '20% 10%' });
       show?.invalidate();
       pile.classList.add('is-busy');
+      if (show && showAt > 0) {
+        show.progress(showAt);
+        if (showAt >= 1) pile.classList.remove('is-busy');
+        else if (showBack) show.reverse();
+        else show.play();
+      }
     };
     applyStart();
 
@@ -1458,9 +1468,10 @@
     // The card in full view starts the show. When the page is only re-measuring (a refresh past
     // it, a resize), or a link glides past, it is shown finished instead: it never replays.
     const startShow = (time) => {
-      if (time < tl.labels.inbox - 0.001 || show.progress() > 0) return;
-      if (measuring || jumping) show.progress(1);
-      else show.play();
+      if (time < tl.labels.inbox - 0.001 || show.progress() >= 1) return;
+      if (measuring || jumping) { if (show.progress() === 0) show.progress(1); return; }
+      // not yet started, or run back (part-way or fully) by a scroll up: it plays (on) from where it is
+      if (show.progress() === 0 || show.reversed() || !show.isActive()) show.play();
     };
 
     const next = $('#how');
