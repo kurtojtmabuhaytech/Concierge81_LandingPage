@@ -512,8 +512,7 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
     height: auto;
   }
   :is(.intro-split, .feature-stage) .kiosk-device { display: flex; flex-direction: column; }
-  .intro-split .kiosk-base { flex: 0 0 auto; height: u(90); }
-  .feature-stage .kiosk-base { flex: 1 0 auto; }
+  :is(.intro-split, .feature-stage) .kiosk-base { flex: 0 0 auto; height: u(90); }
   .intro-thread { flex: 0 1 u(717); gap: u(12); }
   .intro-thread .msg-row--user { margin-bottom: u(26); }
   .intro-thread .bubble--user { font-size: u(22); line-height: 1.27; padding: u(18) u(26); border-radius: u(22) u(22) u(6) u(22); max-width: none; }
@@ -527,12 +526,13 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   // Features: 44px headline, kiosk 498 wide, ten 52px icons on 108px rows
   #features .header-pill--ai { font-size: u(44); padding: u(24) u(28); border-radius: u(28) u(28) u(28) u(8); max-width: none; }
   .feature-stage { flex-wrap: nowrap; gap: u(80); }
-  // the intro kiosk, scaled (790 × 498 / 446); on a short screen it fits under the headline instead
+  // the intro kiosk a little larger (498 wide, Figma), with the same short stand (user, 4 Nov: no
+  // tall stand anywhere); narrower on a short screen
   .feature-stage .kiosk-device {
-    --kiosk-h: min(#{u(882)}, calc(100svh - 10rem));
-    flex: 0 0 calc(var(--kiosk-h) * 498 / 882);
-    width: calc(var(--kiosk-h) * 498 / 882);
-    height: var(--kiosk-h);
+    --kiosk-w: min(#{u(498)}, calc((100svh - 10rem) * 498 / 882));
+    flex: 0 0 var(--kiosk-w);
+    width: var(--kiosk-w);
+    height: auto;
   }
   .feature-col { flex: 0 1 u(380); max-width: none; gap: u(56); }
   .feature-item { gap: u(18); }

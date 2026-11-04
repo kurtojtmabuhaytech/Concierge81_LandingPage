@@ -200,7 +200,6 @@
      and `runs` are such animations, paused with the step while the visitor is away. */
   const PACE = 0.25; // screen heights of scrolling per second of animation
   const STEP_SPEED = 1.9; // new steps play quicker than the timeline (the whole page in about 40 s), still easy to read
-  const CATCH_UP = 1.2; // seconds: further behind than this, new steps speed up to keep up
   let jumping = false; // an in-page link is gliding past scenes: show them finished
   /* The scroll follows the animation (desktop): the visitor can scroll down as far as the end of
      the step that is playing (or, once it has finished, of the next one, which starts as they
@@ -234,9 +233,15 @@
   const plainables = []; // each scene: { id, done(), inView(), progress(), snap(), makePlain(), isPlain(), anchor()? }
   const plainAtStart = []; // scenes seen this session, plain from the start (after a refresh)
   const plainSaved = (() => { try { return JSON.parse(session.get('plain')) || []; } catch (e) { return []; } })();
-  // something on screen to keep in place while the sections around it turn plain
+  // something on screen to keep in place while the sections around it turn plain: part of the
+  // section actually showing there, never of the one under a section that has slid over it
+  const sectionOf = el => el.closest('.section, section, .story');
+  const uncovered = (el, box) => {
+    const hit = document.elementFromPoint(Math.min(innerWidth - 1, box.left + box.width / 2), Math.min(innerHeight - 1, box.top + box.height / 2));
+    return !!hit && sectionOf(hit) === sectionOf(el);
+  };
   const anchorOnScreen = () => $$('.chat-section-header > *, [data-anim], .bento-row, .industry-card, .tier-card, .faq-chat-box, h2, h3')
-    .find((el) => { const box = el.getBoundingClientRect(); return box.height > 0 && box.top >= 0 && box.top < innerHeight * 0.8; });
+    .find((el) => { const box = el.getBoundingClientRect(); return box.height > 0 && box.top >= 0 && box.top < innerHeight * 0.8 && uncovered(el, box); });
   // While the page re-measures for that switch, the scroll still points where it was in the
   // longer page: the scenes below must not take that as the visitor having reached them
   let switching = false;
@@ -244,10 +249,12 @@
     if (measuring || jumping) return;
     const due = plainables.filter(p => !p.isPlain() && p.done());
     if (!due.length) return;
-    // (a scene can name what to keep in place: the story, mid-way, keeps the part it is showing)
-    const preferred = due.map(p => p.anchor?.()).find(Boolean);
-    const anchor = preferred ? preferred.el : anchorOnScreen();
-    const at = preferred ? preferred.at : anchor?.getBoundingClientRect().top;
+    // what is actually showing stays in place (the section that slid over the ones turning plain,
+    // most often); failing that, a scene can name what to keep (the story: the inbox over it)
+    const visible = anchorOnScreen();
+    const preferred = visible ? null : due.map(p => p.anchor?.()).find(Boolean);
+    const anchor = visible || preferred?.el;
+    const at = visible ? visible.getBoundingClientRect().top : preferred?.at;
     due.forEach(p => p.makePlain());
     session.set('plain', JSON.stringify(plainables.filter(p => p.isPlain()).map(p => p.id)));
     smoother?.paused(true); // (so it doesn't ease on from where it was)
@@ -260,8 +267,8 @@
     } finally { switching = false; }
   };
   // A scroll back is never held. A step still playing in a section on screen (its chat, a later step,
-  // the inbox's rain and demo) snaps to its finished frame at once; the section keeps what it has
-  // built, and the steps it hasn't reached yet play when the visitor scrolls down to them again.
+  // the inbox's rain and demo) goes back to the last step finished; the section keeps what it has
+  // built, and that step and the ones after it play when the visitor scrolls down to them again.
   const snapBack = () => {
     plainables.filter(p => !p.isPlain() && p.snap && p.progress).forEach((p) => {
       if (p.progress().onScreen) p.snap();
@@ -415,11 +422,9 @@
     };
     // How long `distance` seconds of the timeline take to play, starting at `from`: the section's
     // chat (its first step) at its own pace so "•••" and the replies read, the steps after it
-    // quicker; far behind, they catch up. The same pace forwards, backwards and on a replay.
-    const paceOf = (distance, from) => {
-      const natural = distance / (from < firstStep() - 0.001 ? 1 : STEP_SPEED);
-      return natural <= CATCH_UP ? natural : CATCH_UP + (natural - CATCH_UP) * 0.35;
-    };
+    // quicker. The same pace forwards, backwards and on a replay, however fast the visitor
+    // scrolls: the steps never hurry to catch up with the scroll (user, 4 Nov); the scroll waits.
+    const paceOf = (distance, from) => distance / (from < firstStep() - 0.001 ? 1 : STEP_SPEED);
     // Over what was seen: follow the scroll
     const followSeen = (time, direction = 1) => {
       playing?.kill();
@@ -687,11 +692,19 @@
           const box = trigger.getBoundingClientRect();
           return { playing: !!playing, playingTo, seen: Math.min(seen, tl.duration()), first: firstStep(), onScreen: box.top < innerHeight && box.bottom > 0, pinned: !!pin?.isActive };
         },
-        // the step under way (and the scene's own animation, e.g. the inbox's rain and demo) jumps
-        // to its finished frame; what it ends on counts as seen (playOn's onComplete)
+        // the step under way goes back to the last step finished (and the scene's own animation,
+        // e.g. the inbox's rain and demo, to its start), so nothing is left half built and the step
+        // plays again, whole, when the visitor comes back down: a step is never skipped
         snap: () => {
-          playing?.progress(1);
-          runs().forEach((run) => { if (run.progress() > 0 && run.progress() < 1) run.progress(1); });
+          if (playing) {
+            playing.kill();
+            playing = null;
+            resting();
+            tl.time(Math.min(seen, tl.duration()));
+            noteView(tl.time());
+            builtAt = tl.time();
+          }
+          runs().forEach((run) => { if (run.progress() > 0 && run.progress() < 1) run.pause(0); });
         },
         makePlain,
         isPlain: () => plain
@@ -908,12 +921,6 @@
       gsap.set(traveller, { width: introKiosk.offsetWidth, height: introKiosk.offsetHeight });
     };
     fitTraveller();
-    // The traveller's height once it has grown the features kiosk's full stand: that kiosk's
-    // shape at the traveller's own width (it is scaled to the slot's width on arrival)
-    const tallKiosk = () => {
-      const slot = featuresKiosk.getBoundingClientRect();
-      return slot.height * traveller.offsetWidth / slot.width;
-    };
 
     // Positions inside the story, unaffected by scrolling or pinning
     const within = (el) => {
@@ -1077,9 +1084,7 @@
       // (so the features headline, which grows next, never sits under it)
       .to([intro.question, intro.headline, ...intro.rest], { autoAlpha: 0, y: -50, duration: 0.4, stagger: 0.05, ease: 'power2.in' }, 'intro')
       .to(siteHeader, { yPercent: -100, duration: 0.5, ease: MOTION.easeInOut }, 'intro+=0.3')
-      // the kiosk glides to the features with a slight overshoot (Figma); on the way its short stand
-      // extends to the full one of the features kiosk (the stand only grows as it moves)
-      .to(traveller, { ...onSlot(featuresKiosk), height: tallKiosk, duration: 1.5, ease: bezier(0.29, 0, 0, 1.09) }, 'intro+=0.5');
+      .to(traveller, { ...onSlot(featuresKiosk), duration: 1.5, ease: bezier(0.29, 0, 0, 1.09) }, 'intro+=0.5'); // a slight overshoot (Figma)
     bubbleIn(tl, featuresHeadline, 'intro+=1.2')
       .addLabel('features')
 
