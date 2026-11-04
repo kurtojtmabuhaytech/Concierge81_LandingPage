@@ -24,14 +24,18 @@
     get: key => { try { return sessionStorage.getItem(`c81:${key}`); } catch (e) { return null; } },
     set: (key, value) => { try { sessionStorage.setItem(`c81:${key}`, value); } catch (e) { /* storage blocked */ } }
   };
-  const introSeen = session.get('introSeen') === '1';
-  const introDone = session.get('introDone') === '1';
   const reloaded = performance.getEntriesByType?.('navigation')[0]?.type === 'reload';
   if (reloaded && location.hash) history.replaceState(null, '', location.pathname + location.search);
+  /* Where the visitor was, saved as they scroll (savePlace). On the first page (the story: hero,
+     intro, features), or with nothing saved (a new tab, a new browser), the page starts from the
+     top and the opening plays, every time (supervisor, 4 Nov). Past the first page, a refresh
+     brings the visitor back to the page they were on, shown finished, with no opening. */
   const savedPlace = (() => {
-    if (!introSeen || location.hash) return null;
-    try { return JSON.parse(session.get('place')); } catch (e) { return null; }
+    if (location.hash) return null;
+    try { const place = JSON.parse(session.get('place')); return place && place.id !== '.story' ? place : null; } catch (e) { return null; }
   })();
+  const introSeen = !!savedPlace; // the opening is skipped only to come back past the first page
+  const introDone = !!savedPlace; // (then the story is shown plain, never replayed)
   // The page's sections, top to bottom, as places to come back to
   const places = ['.story', '#problem', '#how', '#interaction', '#industries', '#values', '#deployment', '#pricing', '#faq', '#cta', '#contact'];
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -235,7 +239,8 @@
      nothing holds the visitor or makes them wait. */
   const plainables = []; // each scene: { id, done(), inView(), progress(), snap(), makePlain(), isPlain(), anchor()? }
   const plainAtStart = []; // scenes seen this session, plain from the start (after a refresh)
-  const plainSaved = (() => { try { return JSON.parse(session.get('plain')) || []; } catch (e) { return []; } })();
+  // (starting over from the top, nothing stays plain: the sections play again as they are reached)
+  const plainSaved = (() => { if (!savedPlace) { session.set('plain', '[]'); return []; } try { return JSON.parse(session.get('plain')) || []; } catch (e) { return []; } })();
   // something on screen to keep in place while the sections around it turn plain: part of the
   // section actually showing there, never of the one under a section that has slid over it
   const sectionOf = el => el.closest('.section, section, .story');
