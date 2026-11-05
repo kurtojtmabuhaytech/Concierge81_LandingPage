@@ -729,7 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.innerHTML = html;
       if (motionOK) el.classList.add('is-popping');
       area.appendChild(el);
-      area.scrollTop = area.scrollHeight;
+      area.scrollTo({ top: area.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
       return el;
     };
     // After a resize the card's size is measured again: its first messages alone, as when the
@@ -771,6 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
           link.textContent = 'Request a demo ›';
           a.querySelector('p').append(' ', link);
         }
+          area.scrollTo({ top: area.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
         busy = false;
       }, motionOK ? 1100 : 300);
     };
