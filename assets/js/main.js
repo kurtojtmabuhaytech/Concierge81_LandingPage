@@ -372,13 +372,26 @@ document.addEventListener('DOMContentLoaded', () => {
       try { sessionStorage.setItem(SAVED, JSON.stringify(asked)); } catch (e) { /* storage blocked */ }
     };
     const wait = ms => new Promise(resolve => setTimeout(resolve, motionOK ? ms : 0));
-    // A message pops in (springs up from its tail corner); the chat follows the newest one
+    // The chat keeps its newest message in view: runs whenever a message appears or grows (a new
+    // one, the restored ones, the scroll scene's demo, late fonts), and fades the top once it's full.
+    // It glides only on screen: off screen (a refresh) the browser drops a glide, so it jumps.
+    const follow = () => {
+      thread.classList.toggle('is-overflowing', thread.scrollHeight > thread.clientHeight);
+      const box = thread.getBoundingClientRect();
+      const onScreen = box.bottom > 0 && box.top < innerHeight;
+      thread.scrollTo({ top: thread.scrollHeight, behavior: motionOK && onScreen ? 'smooth' : 'auto' });
+    };
+    const watcher = new ResizeObserver(follow);
+    [...thread.children].forEach(el => watcher.observe(el));
+    // The scroll scene moves the FAQ when it sets up (ScrollTrigger), which drops the thread back to
+    // its top without changing any size: follow again
+    thread.addEventListener('scroll', () => { if (thread.scrollTop === 0) follow(); });
+    // A message pops in (springs up from its tail corner)
     const pop = (el) => {
       el.hidden = false;
       el.classList.remove('is-popping');
       void el.offsetWidth; // restart the animation
       el.classList.add('is-popping');
-      thread.scrollTo({ top: thread.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
     };
     const helpful = () => {
       const row = document.createElement('div');
@@ -424,7 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (faqBox.querySelector(`.faq-ask[data-q="${q}"]`)) return; // the scroll scene asks that one
       if (pair) place(pair);
     });
-    if (saved.length) thread.scrollTop = thread.scrollHeight;
     showChips();
 
     // Asking: one question at a time, each waits for the one before it
@@ -722,6 +734,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const demoReply = 'In the live demo you can talk to me or browse topics by category. Request a demo to try it with your own questions.';
     area.setAttribute('aria-live', 'polite');
+    area.addEventListener('scroll', () => area.classList.toggle('is-at-start', area.scrollTop < 1), { passive: true });
     let busy = false;
     const row = (who, html) => {
       const el = document.createElement('div');
@@ -732,6 +745,15 @@ document.addEventListener('DOMContentLoaded', () => {
       area.appendChild(el);
       area.scrollTo({ top: area.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
       return el;
+    };
+    // The story (animations.js) leaving the hero glides the chat back to its first messages, so the
+    // greeting and the question sit where the move into the intro expects them; coming back to the
+    // hero glides it to the newest again
+    window.c81HeroChatTo = (where) => {
+      if (!area.classList.contains('is-chatting')) return;
+      const box = area.getBoundingClientRect();
+      const onScreen = box.bottom > 0 && box.top < innerHeight; // (off screen the browser drops a glide: jump)
+      area.scrollTo({ top: where === 'start' ? 0 : area.scrollHeight, behavior: motionOK && onScreen ? 'smooth' : 'auto' });
     };
     // After a resize the card's size is measured again: its first messages alone, as when the
     // chat started (a size frozen at the first question was wrong on another window size)

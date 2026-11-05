@@ -352,8 +352,14 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
 }
 @media (prefers-reduced-motion: reduce) { .hero-card.is-mode-changing .hero-split-area { animation: none; } }
 .chat-messages-area { display: flex; flex-direction: column; gap: 1rem; }
-// Once the visitor chats in the hero (main.js), the messages scroll inside the same space
-.chat-messages-area.is-chatting { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; overflow-x: hidden; &::-webkit-scrollbar {display:none; } }
+// Once the visitor chats in the hero (main.js), the messages scroll inside the same space (no bar),
+// the oldest fade at the top; at the newest, the wheel moves the story on (animations.js scrollsItself)
+.chat-messages-area.is-chatting {
+  overflow-y: auto; overflow-x: hidden; // (no overscroll-behavior: contain: at its end the wheel must carry on to the page)
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+  &:not(.is-at-start) { mask-image: linear-gradient(to bottom, transparent, #000 2.5rem); } // (at its first message nothing is cut off above)
+}
 .hero-chat-interface .is-popping { animation: faq-pop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 .hero-chat-interface .msg-row--user.is-popping { transform-origin: right bottom; }
 .hero-chat-interface .msg-row--ai.is-popping { transform-origin: left bottom; }
@@ -1383,11 +1389,9 @@ $bar-heights: 35%, 50%, 44%, 63%, 56%, 80%, 100%;
 .faq-thread {
   display: flex; flex-direction: column; gap: 0.875rem;
   max-height: clamp(16rem, 44vh, 28rem);
-  overflow-y: auto; // at its ends the wheel carries on to the page
-  overflow-x: hidden;
-  margin: -0.5rem; padding: 0.5rem; // room for the bubbles' spring
-  scrollbar-width: none;
-  &::-webkit-scrollbar { display: none; }
+  overflow:hidden; // messages stay still; the wheel moves the page.
+  margin: -0.5rem; padding: 0.5rem; // room for the bubbles' spring.
+  &.is-overflowing { mask-image: linear-gradient(to bottom, transparent, #000 2.5rem); }
   &:focus-visible { outline: 2px solid $color-cobalt-bright; outline-offset: 2px; border-radius: 12px; }
 }
 .faq-day { align-self: center; font-size: $type-caption; color: #6E6B63; }

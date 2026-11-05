@@ -798,12 +798,14 @@ button.chip, a.chip {
 
 .chat-messages-area.is-chatting {
   overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
   overflow-x: hidden;
+  scrollbar-width: none;
 }
 .chat-messages-area.is-chatting::-webkit-scrollbar {
   display: none;
+}
+.chat-messages-area.is-chatting:not(.is-at-start) {
+  mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
 }
 
 .hero-chat-interface .is-popping {
@@ -3713,14 +3715,12 @@ button.chip, a.chip {
   flex-direction: column;
   gap: 0.875rem;
   max-height: clamp(16rem, 44vh, 28rem);
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   margin: -0.5rem;
   padding: 0.5rem;
-  scrollbar-width: none;
 }
-.faq-thread::-webkit-scrollbar {
-  display: none;
+.faq-thread.is-overflowing {
+  mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
 }
 .faq-thread:focus-visible {
   outline: 2px solid #276FF8;
