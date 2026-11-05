@@ -202,6 +202,7 @@
      and `runs` are such animations, paused with the step while the visitor is away. */
   const PACE = 0.25; // screen heights of scrolling per second of animation
   const STEP_SPEED = 1; // steps play at the timeline's own (Figma) pace; a fast scroll never hurries them (user, 4 Nov)
+  const BACK_SPEED = 3.5; // a scroll back mid-step runs the step back 3x faster than it played (user, 5 Nov)
   // After a step has ended, the next one starts only on a new scroll gesture (input after a gap
   // this long): the visitor sees every finished step before the page moves on, however fast they scroll
   const GESTURE = 250; // ms
@@ -472,7 +473,7 @@
         // would then count as running for good, holding the scroll)
         if (Math.abs(tl.time() - goal) < 0.001) { follow = null; return; }
         // (a step run back or replayed ends the gesture like a step played: the next needs a new scroll)
-        follow = tl.tweenTo(goal, { duration: paceOf(Math.abs(goal - tl.time()), Math.min(goal, tl.time())), ease: 'none', onComplete: () => { follow = null; restedAt = performance.now(); } });
+        follow = tl.tweenTo(goal, { duration: paceOf(Math.abs(goal - tl.time()), Math.min(goal, tl.time())) / (goal < tl.time() ? BACK_SPEED : 1), ease: 'none', onComplete: () => { follow = null; restedAt = performance.now(); } });
         return;
       }
       build();
