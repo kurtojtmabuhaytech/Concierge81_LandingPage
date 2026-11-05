@@ -88,6 +88,8 @@ $reveal-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
     pointer-events: none; // layers overlap: only visible links and buttons take clicks
     a, button { pointer-events: auto; }
   }
+  > #hero .chat-messages-area .is-asked { transition: opacity 0.3s; }
+  &:not(.is-at-hero) > #hero .chat-messages-area .is-asked { opacity: 0; }
   // the features, once the story has played to them, answer the pointer (their hover)
   &.is-built > #features .feature-item { pointer-events: auto; }
   // the hero chat, once it scrolls (a few questions asked), takes the wheel while the hero is the step shown

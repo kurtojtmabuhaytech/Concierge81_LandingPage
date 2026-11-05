@@ -728,6 +728,7 @@ document.addEventListener('DOMContentLoaded', () => {
       el.className = `msg-row msg-row--${who} is-asked`;
       el.innerHTML = html;
       if (motionOK) el.classList.add('is-popping');
+      el.addEventListener('animationend', () => el.classList.remove('is-popping'), { once: true }); // once popped, drop the class: its kept opacity would block the hide rule (_animations.scss)
       area.appendChild(el);
       area.scrollTo({ top: area.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
       return el;

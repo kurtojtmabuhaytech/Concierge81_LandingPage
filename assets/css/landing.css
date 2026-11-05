@@ -6092,6 +6092,12 @@ main > .blog-section:has(+ #contact) {
 .story.is-staged > .section a, .story.is-staged > .section button {
   pointer-events: auto;
 }
+.story.is-staged > #hero .chat-messages-area .is-asked {
+  transition: opacity 0.3s;
+}
+.story.is-staged:not(.is-at-hero) > #hero .chat-messages-area .is-asked {
+  opacity: 0;
+}
 .story.is-staged.is-built > #features .feature-item {
   pointer-events: auto;
 }
