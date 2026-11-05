@@ -799,7 +799,11 @@ button.chip, a.chip {
 .chat-messages-area.is-chatting {
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  overflow-x: hidden;
+}
+.chat-messages-area.is-chatting::-webkit-scrollbar {
+  display: none;
 }
 
 .hero-chat-interface .is-popping {
@@ -2328,7 +2332,9 @@ button.chip, a.chip {
   flex-direction: column;
   gap: 1.5rem;
   padding: 1.5rem 1.75rem;
+  scrollbar-width: none;
   overflow-y: auto;
+  overflow-x: hidden;
   border-radius: 24px 24px 28px 28px;
   background: rgba(18, 18, 20, 0.9);
   -webkit-backdrop-filter: blur(12px);
@@ -2337,6 +2343,9 @@ button.chip, a.chip {
   transform: translateY(101%);
   visibility: hidden;
   transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), visibility 0s 0.45s;
+}
+.industry-card .industry-more::-webkit-scrollbar {
+  display: none;
 }
 
 .industry-card.is-open .industry-more {
@@ -3705,10 +3714,13 @@ button.chip, a.chip {
   gap: 0.875rem;
   max-height: clamp(16rem, 44vh, 28rem);
   overflow-y: auto;
+  overflow-x: hidden;
   margin: -0.5rem;
   padding: 0.5rem;
-  scrollbar-width: thin;
-  scrollbar-color: #CFCBC0 transparent;
+  scrollbar-width: none;
+}
+.faq-thread::-webkit-scrollbar {
+  display: none;
 }
 .faq-thread:focus-visible {
   outline: 2px solid #276FF8;
