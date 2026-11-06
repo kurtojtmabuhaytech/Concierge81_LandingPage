@@ -352,6 +352,7 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
 }
 @media (prefers-reduced-motion: reduce) { .hero-card.is-mode-changing .hero-split-area { animation: none; } }
 .chat-messages-area { display: flex; flex-direction: column; gap: 1rem; }
+.chat-messages-area > :first-child { margin-top: auto; } // (with room to spare, as in Chat mode, the conversation sits at the bottom, near the composer)
 // Once the visitor chats in the hero (main.js), the messages scroll inside the same space (no bar),
 // the oldest fade at the top; at the newest, the wheel moves the story on (animations.js scrollsItself)
 .chat-messages-area.is-chatting {
@@ -488,7 +489,10 @@ button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures o
   .story.is-staged .hero-card.is-chat-mode {
     .hero-split-area { grid-template-columns: 1fr u(672); }
     .hero-avatar { display: flex; grid-area: 1 / 1; clip-path: inset(0 0 0 100%); }
-    .hero-chat-interface { grid-area: 1 / 1 / 2 / -1; width: u(860); max-width: 100%; }
+    .hero-chat-interface { grid-area: 1 / 1 / 2 / -1; width: u(860); max-width: 100%; align-self: stretch; }
+    // The chat fills the whole card: the messages take the room above the composer (over the height
+    // main.js keeps for the Avatar layout), the conversation sitting at the bottom, near the composer
+    .chat-messages-area { flex: 1 1 0; min-height: 0; height: auto !important; }
   }
   .hero-chat-interface { gap: u(16); padding: u(30) 0 u(27); }
   .chat-messages-area { gap: u(14); }

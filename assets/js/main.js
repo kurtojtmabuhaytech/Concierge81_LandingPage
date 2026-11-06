@@ -814,12 +814,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     // The card's size: its first messages alone, as when the chat started (measured again after a
     // resize: a size frozen at the first question was wrong on another window size)
+    // (always the Avatar layout's size: in Chat mode the messages fill the card instead, _sections.scss)
+    const card = heroChat.closest('.hero-card');
     const fit = () => {
+      const chatMode = card?.classList.contains('is-chat-mode');
+      if (chatMode) card.classList.remove('is-chat-mode');
       const asked = [...area.querySelectorAll('.is-asked')];
       asked.forEach((r) => { r.style.display = 'none'; });
       area.style.height = '';
       const h = area.offsetHeight;
       asked.forEach((r) => { r.style.display = ''; });
+      if (chatMode) card.classList.add('is-chat-mode');
       area.style.height = `${h}px`;
       area.scrollTop = area.scrollHeight;
     };
@@ -833,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (busy) return;
       busy = true;
       if (!area.style.height) { // keep the card's size from here on
-        area.style.height = `${area.offsetHeight}px`;
+        fit();
         area.classList.add('is-chatting');
       }
       if (question) askRow(question);
