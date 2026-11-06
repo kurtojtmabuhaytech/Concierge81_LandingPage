@@ -1119,14 +1119,17 @@
     // and the avatar fades in. On the visitor's scroll this is a step of its own (downHolds,
     // below): the card closes into the kiosk only on the next scroll, after it has finished
     const heroChat = $('.hero-chat-interface');
-    const leaveChatMode = () => {
+    // (slow: the visitor's scroll step, an unhurried glide; otherwise quick, as the kiosk move runs with it)
+    const leaveChatMode = (slow = false) => {
       if (!hero.surface.classList.contains('is-chat-mode')) return null;
       const from = heroChat.getBoundingClientRect();
       window.c81SetHeroMode?.('avatar', false);
       const to = heroChat.getBoundingClientRect();
       return gsap.timeline()
-        .fromTo(heroChat, { x: from.left - to.left, y: from.top - to.top }, { x: 0, y: 0, duration: 0.6, ease: toKiosk, clearProps: 'transform' })
-        .fromTo(hero.avatar, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power1.inOut' }, 0.1);
+        .fromTo(heroChat, { x: from.left - to.left, y: from.top - to.top },
+          { x: 0, y: 0, duration: slow ? 1.2 : 0.6, ease: slow ? 'power2.inOut' : toKiosk, clearProps: 'transform' })
+        .fromTo(hero.avatar, { opacity: 0 },
+          { opacity: 1, duration: slow ? 1 : 0.5, ease: 'power1.inOut' }, slow ? 0.25 : 0.1);
     };
 
     // Tweens start at 0.01 so resting on the first step never touches the hero the opening is building
@@ -1258,7 +1261,7 @@
         chatLeftAt = -1;
       }
       if (plain || tl.time() > 0.001 || scrollY > 2 || !hero.surface.classList.contains('is-chat-mode')) return false;
-      chatLeaving = leaveChatMode();
+      chatLeaving = leaveChatMode(true);
       chatLeaving?.eventCallback('onComplete', () => { chatLeaving = null; chatLeftAt = performance.now(); });
       return true;
     });
