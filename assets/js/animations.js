@@ -187,9 +187,9 @@
      timeline's labels.
      - Down, into steps not seen yet: they play in order at their own speed, and the scroll can't
        get more than a step ahead of them (see `limits`), so none is skipped or left half built.
-     - Back up: always free. A section not played to its end retraces (`followBack`): it runs
-       back step by step with the scroll at the pace it played, a step under way reversing from
-       where it is, and a step run back plays again on the way down. A section played to its end
+     - Back up: a section not played to its end retraces (`followBack`): one step back per scroll
+       gesture, at BACK_SPEED, the page waiting while it runs back (`floors`), a step under way
+       reversing from where it is, and a step run back plays again on the way down. A section played to its end
        turns plain on the first scroll back (goPlain): a still preview, no animation, no retrace.
        The story turns plain only once the inbox has slid up over all of it.
      New steps only ever play on the way down, the first time. Each second of the timeline gets
@@ -202,7 +202,7 @@
      and `runs` are such animations, paused with the step while the visitor is away. */
   const PACE = 0.25; // screen heights of scrolling per second of animation
   const STEP_SPEED = 1; // steps play at the timeline's own (Figma) pace; a fast scroll never hurries them (user, 4 Nov)
-  const BACK_SPEED = 3.5; // a scroll back mid-step runs the step back 3.5x faster than it played (user, 5 Nov)
+  const BACK_SPEED = 1.5; // a step runs back 1.5x faster than it played, slow enough to watch (user, 6 Nov)
   // After a step has ended, the next one starts only on a new scroll gesture (input after a gap
   // this long): the visitor sees every finished step before the page moves on, however fast they scroll
   const GESTURE = 250; // ms
@@ -217,6 +217,13 @@
   const scrollLimit = () => Math.min(Infinity, ...[...limits].map(limit => limit()));
   const downKeys = ['ArrowDown', 'PageDown', 'End', ' '];
   const atLimit = () => !jumping && scrollY >= scrollLimit() - 1;
+  /* The way back, mid-animation (user, 6 Nov): a section not played to its end runs back ONE step
+     per scroll gesture, and the page waits while it does, so the visitor sees it run in reverse;
+     the next step back needs a new scroll. Each scene says how far up the visitor may go
+     (`floors`); the highest applies. A section played to its end turns plain (goPlain): free. */
+  const floors = new Set();
+  const scrollFloor = () => Math.max(-Infinity, ...[...floors].map(floor => floor()));
+  const atFloor = () => !jumping && scrollY <= scrollFloor() + 1;
   // A wheel over something that scrolls by itself (the FAQ chat) scrolls it, not the page
   const scrollsItself = (e) => {
     for (let el = e.target; el && el !== document.body; el = el.parentElement) {
@@ -299,10 +306,22 @@
     if (scrollsItself(e) || e.ctrlKey) return; // (ctrl + wheel is the browser's zoom, not a scroll)
     if (e.deltaY < 0 && !jumping && !measuring) goBack();
     if (e.deltaY > 0 && (heldDown(e) || atLimit())) e.preventDefault();
+    if (e.deltaY < 0 && atFloor()) e.preventDefault(); // (a step running back, or just run back: see floors)
   };
   const onLimitKey = (e) => {
     if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
-    if ((backKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) && !jumping && !measuring) goBack();
+    if ((backKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) && !jumping && !measuring) {
+      goBack();
+      if (e.key === ' ' && e.target.closest?.('button, a, [role="button"]')) return; // (Space presses it)
+      if (atFloor()) { e.preventDefault(); return; }
+      // a long jump up glides as far as the step back allows (see floors); the arrow stays native
+      if (e.key !== 'ArrowUp' && scrollFloor() > -Infinity) {
+        e.preventDefault();
+        const target = e.key === 'Home' ? 0 : scrollY - innerHeight * 0.85;
+        if (smoother) smoother.scrollTo(Math.max(target, scrollFloor()), true);
+        else scrollTo({ top: Math.max(target, scrollFloor()), behavior: 'smooth' });
+      }
+    }
     if (downKeys.includes(e.key) && !(e.key === ' ' && e.shiftKey) && !jumping) {
       if (e.key === ' ' && e.target.closest?.('button, a, [role="button"]')) return; // (Space presses it)
       if (heldDown(e) || atLimit()) { e.preventDefault(); return; }
@@ -325,6 +344,13 @@
     if (scrollY > max + 1) {
       clampedAt = performance.now();
       scrollToY(max, false);
+      return;
+    }
+    // (going up past a step that is running back is put back there too; a dragged scrollbar goes free)
+    const min = draggingBar ? -Infinity : scrollFloor();
+    if (scrollY < min - 1) {
+      clampedAt = performance.now();
+      scrollToY(min, false);
     }
   };
   const catchUpAll = () => catchUps.forEach(fn => fn());
@@ -339,6 +365,7 @@
       removeEventListener('scroll', onLimitScroll);
       ScrollTrigger.removeEventListener('scrollEnd', catchUpAll);
       limits.clear();
+      floors.clear();
       downHolds.clear();
       plainables.length = 0;
       plainAtStart.length = 0;
@@ -578,6 +605,9 @@
         // (a scene runs back only when the visitor scrolls back: not the page's own hold-back, a
         // re-measure, or any nudge up while the visitor's input goes down)
         if (followBack && self.direction < 0 && (measuring || pulledBack() || inputDir > 0)) return;
+        // (nor on, while the visitor's input goes up: that is the page putting them back at a step
+        // running back, see floors)
+        if (followBack && self.direction > 0 && inputDir < 0) return;
         if (plain) return;
         const watched = Math.min(seen, tl.duration());
         if (self.direction > 0 && want > watched + 0.001 && !switching && !measuring) { // (see goPlain; never during a re-measure)
@@ -703,6 +733,21 @@
       const here = stops().filter(t => t <= at + 0.001).at(-1) ?? 0;
       const next = hold() || !newGesture() ? here : (stops().find(t => t > here + 0.001) ?? tl.duration());
       return toScroll(Math.max(next, firstStep()));
+    });
+    // How far up the visitor may scroll (see `floors`), while in the scene: to the step running back
+    // (or a step under way reverses to), and once it rests there, held until a new scroll, which
+    // runs back the step before. At its first step it slides back down freely with the page.
+    floors.add(() => {
+      if (plain || killed || !pin || jumping || measuring) return -Infinity;
+      if (scrollY < pin.start - 1 || scrollY > pin.start + span() + tail() + 1) return -Infinity;
+      const first = startShown ? 0 : firstStep();
+      const stepAt = time => Math.max(first, stops().filter(t => t <= time + 0.001).at(-1) ?? 0);
+      if (follow && followTo < tl.time()) return toScroll(followTo); // (running back)
+      const here = stepAt(tl.time()); // (a step under way: it reverses to its start)
+      if (!playing && !follow && here <= first + 0.001) return -Infinity;
+      const floor = toScroll(playing || follow || !newGesture() ? here : stepAt(here - 0.002));
+      // (never pulls the page down: the visitor already above it, as after a refresh between two steps)
+      return scrollY < floor - 2 ? -Infinity : floor;
     });
     // The first step (the visitor's question and the answer) starts as the section slides up
     // into view, so it never arrives as an empty panel
