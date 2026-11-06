@@ -788,14 +788,29 @@ document.addEventListener('DOMContentLoaded', () => {
       link.textContent = 'Request a demo ›';
       a.querySelector('p').append(' ', link);
     };
-    // The story (animations.js) leaving the hero glides the chat back to its first messages, so the
+    // The story (animations.js) leaving the hero takes the chat back to its first messages, so the
     // greeting and the question sit where the move into the intro expects them; coming back to the
-    // hero glides it to the newest again
+    // hero takes it to the newest again. Never a fast scroll through the whole conversation: the
+    // chat fades out, moves while unseen, and fades back in there, unhurried
+    let swap = null;
     window.c81HeroChatTo = (where) => {
       if (!area.classList.contains('is-chatting')) return;
+      const top = where === 'start' ? 0 : area.scrollHeight;
       const box = area.getBoundingClientRect();
-      const onScreen = box.bottom > 0 && box.top < innerHeight; // (off screen the browser drops a glide: jump)
-      area.scrollTo({ top: where === 'start' ? 0 : area.scrollHeight, behavior: motionOK && onScreen ? 'smooth' : 'auto' });
+      const onScreen = box.bottom > 0 && box.top < innerHeight;
+      swap?.forEach(run => run.cancel());
+      swap = null;
+      if (!motionOK || !onScreen || !area.animate) { area.scrollTop = top; return; } // (unseen: just there)
+      const from = +getComputedStyle(area).opacity;
+      const out = area.animate([{ opacity: from }, { opacity: 0 }], { duration: 200 * from, easing: 'ease-out', fill: 'forwards' });
+      swap = [out];
+      out.onfinish = () => {
+        area.scrollTop = top;
+        const back = area.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 350, easing: 'ease-in-out' });
+        out.cancel();
+        swap = [back];
+        back.onfinish = () => { swap = null; };
+      };
     };
     // The card's size: its first messages alone, as when the chat started (measured again after a
     // resize: a size frozen at the first question was wrong on another window size)
