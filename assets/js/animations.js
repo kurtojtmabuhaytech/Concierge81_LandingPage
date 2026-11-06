@@ -1123,11 +1123,15 @@
     const leaveChatMode = (slow = false) => {
       if (!hero.surface.classList.contains('is-chat-mode')) return null;
       const from = heroChat.getBoundingClientRect();
+      // The chat is narrower in the Avatar layout: it narrows during the glide (not at once, which
+      // rewrapped the messages and cut the newest off), and keeps its newest message in view meanwhile
+      const msgs = heroChat.querySelector('.chat-messages-area');
+      const atNewest = msgs && msgs.scrollTop + msgs.clientHeight >= msgs.scrollHeight - 2;
       window.c81SetHeroMode?.('avatar', false);
       const to = heroChat.getBoundingClientRect();
-      return gsap.timeline()
-        .fromTo(heroChat, { x: from.left - to.left, y: from.top - to.top },
-          { x: 0, y: 0, duration: slow ? 1.2 : 0.6, ease: slow ? 'power2.inOut' : toKiosk, clearProps: 'transform' })
+      return gsap.timeline({ onUpdate: () => { if (atNewest) msgs.scrollTop = msgs.scrollHeight; } })
+        .fromTo(heroChat, { x: from.left - to.left, y: from.top - to.top, width: from.width },
+          { x: 0, y: 0, width: to.width, duration: slow ? 1.2 : 0.6, ease: slow ? 'power2.inOut' : toKiosk, clearProps: 'transform,width' })
         .fromTo(hero.avatar, { opacity: 0 },
           { opacity: 1, duration: slow ? 1 : 0.5, ease: 'power1.inOut' }, slow ? 0.25 : 0.1);
     };
