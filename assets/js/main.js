@@ -748,13 +748,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (heroChat) {
     const area = heroChat.querySelector('.chat-messages-area');
     const chipRow = heroChat.querySelector('.chip-row');
-    const chips = [...chipRow.querySelectorAll('.chip:not(.chip--demo)')];
-    const demoChip = chipRow.querySelector('.chip--demo');
+    const chips = [...chipRow.querySelectorAll('.chip')];
+    const suggestions = chipRow.parentElement; // ("✦ Suggested next" and the chips)
     const answers = {
       'Where is the café?': 'The café is on the ground floor, just past the lobby on your left. It’s open from 7 AM to 10 PM.',
       'Any vegetarian options?': 'Yes, the menu marks vegetarian and vegan dishes with a leaf. Would you like today’s specials?',
       'Room service hours': 'Room service runs 24 hours. Dial 0 from your room, or I can place the order for you.'
     };
+    // The end of the chat, once every suggestion has been asked (user, 6 Nov)
+    const closing = 'That’s all I can show you here. For more information, the MabuhayTech team is happy to help with anything else.';
     const demoReply = 'In the live demo you can talk to me or browse topics by category. Request a demo to try it with your own questions.';
     area.setAttribute('aria-live', 'polite');
     area.addEventListener('scroll', () => area.classList.toggle('is-at-start', area.scrollTop < 1), { passive: true });
@@ -836,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cancelAnimationFrame(fitting);
       fitting = requestAnimationFrame(fit);
     });
-    const say = (question, answer, withLink) => {
+    const say = (question, answer, withLink, ending = false) => {
       if (busy) return;
       busy = true;
       chipRow.classList.add('is-busy'); // (one question at a time: the chips wait while it types)
@@ -845,31 +847,38 @@ document.addEventListener('DOMContentLoaded', () => {
         area.classList.add('is-chatting');
       }
       if (question) askRow(question);
-      const typing = row('ai', '<p class="bubble bubble--sand faq-dots" role="img" aria-label="concierge81 is typing"><i></i><i></i><i></i></p>');
-      setTimeout(() => {
-        typing.remove();
-        replyRow(answer, withLink);
-        area.scrollTo({ top: area.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
-        said.push([question, answer, !!withLink]);
-        try { sessionStorage.setItem(SAVED, JSON.stringify(said)); } catch (e) { /* storage blocked */ }
-        busy = false;
-        chipRow.classList.remove('is-busy');
-      }, motionOK ? 1100 : 300);
+      // "•••", then the answer (kept for this tab); `then`: what follows it in the same turn
+      const reply = (text, link, then) => {
+        const typing = row('ai', '<p class="bubble bubble--sand faq-dots" role="img" aria-label="concierge81 is typing"><i></i><i></i><i></i></p>');
+        setTimeout(() => {
+          typing.remove();
+          replyRow(text, link);
+          area.scrollTo({ top: area.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
+          said.push([question, text, !!link]);
+          question = null; // (a second message in the same turn answers no new question)
+          try { sessionStorage.setItem(SAVED, JSON.stringify(said)); } catch (e) { /* storage blocked */ }
+          if (then) { then(); return; }
+          busy = false;
+          chipRow.classList.remove('is-busy');
+        }, motionOK ? 1100 : 300);
+      };
+      // the last suggestion asked: its answer, then the closing message ends the chat
+      reply(answer, withLink, ending ? () => setTimeout(() => reply(closing, true), motionOK ? 600 : 0) : null);
     };
     /* A suggestion is asked once (like the FAQ's): it pops out and the others slide over into its
-       place. Once all are asked, "Request a demo ›" takes their place (the row never empties: the
-       hero card must keep its size, the opening and the move into the kiosk measure it). Hidden
-       with [hidden], not opacity: the story shows every [data-anim] part again (plainStory). */
-    const left = () => chips.filter(chip => !chip.hidden);
-    const showDemoChip = (animate) => {
-      if (left().length || !demoChip) return;
-      demoChip.hidden = false;
-      if (animate && motionOK && demoChip.animate) demoChip.animate([{ opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1 }], { duration: 380, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
-    };
+       place. Hidden with [hidden], not opacity: the story shows every [data-anim] part again
+       (plainStory). The last one stays in the row, unseen, and the suggestions fade out (the hero
+       card must keep its size: the opening and the move into the kiosk measure it); the closing
+       message then ends the chat. */
+    const asked = new Set();
+    const left = () => chips.filter(chip => !asked.has(chip));
+    const end = () => suggestions.classList.add('is-ended');
     const useUp = (chip) => {
-      const rest = left().filter(c => c !== chip);
-      if (chip.matches(':focus-visible')) (rest[0] || demoChip)?.focus({ preventScroll: true }); // (keyboard: on to the next one; a mouse click leaves no lit-up chip)
-      if (!motionOK || !chip.animate) { chip.hidden = true; showDemoChip(false); return; }
+      asked.add(chip);
+      const rest = left();
+      if (!rest.length) { chip.blur(); chip.disabled = true; end(); return; } // (its space kept, unseen)
+      if (chip.matches(':focus-visible')) rest[0].focus({ preventScroll: true }); // (keyboard: on to the next one; a mouse click leaves no lit-up chip)
+      if (!motionOK || !chip.animate) { chip.hidden = true; return; }
       chip.disabled = true;
       chip.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: 0.6 }], { duration: 220, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
         const before = rest.map(c => c.getBoundingClientRect());
@@ -883,14 +892,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const dy = before[i].top - now.top;
           if (Math.abs(dx) + Math.abs(dy) > 0.5) c.animate([{ translate: `${dx}px ${dy}px` }, { translate: '0 0' }], { duration: 300, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
         });
-        showDemoChip(true);
       };
     };
     chips.forEach(chip => chip.addEventListener('click', () => {
-      if (busy) return;
+      if (busy || asked.has(chip)) return;
       const question = chip.textContent.trim();
       useUp(chip);
-      say(question, answers[question] || demoReply);
+      say(question, answers[question] || demoReply, false, !left().length);
     }));
     heroChat.querySelector('.mic-btn')?.addEventListener('click', () => say(null, demoReply, true));
     heroChat.querySelector('.category-btn')?.addEventListener('click', () => say(null, demoReply, true));
@@ -901,9 +909,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (question) askRow(question, true);
         replyRow(answer, withLink, true);
         const used = chips.find(chip => chip.textContent.trim() === question);
-        if (used) used.hidden = true; // (asked already: its chip stays gone)
+        if (used) asked.add(used); // (asked already: its chip stays gone)
       });
-      showDemoChip(false);
+      // (all asked: the last one keeps its space, unseen, and the suggestions are gone)
+      const rest = left();
+      chips.forEach((chip) => { chip.hidden = asked.has(chip) && (rest.length || chip !== chips.find(c => asked.has(c))); });
+      if (!rest.length) { chips.forEach((chip) => { chip.disabled = true; }); end(); }
       fit();
       document.fonts?.ready.then(fit); // (measured again once the real font is in)
     }
