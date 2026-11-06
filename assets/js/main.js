@@ -747,7 +747,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const heroChat = document.querySelector('.hero-chat-interface');
   if (heroChat) {
     const area = heroChat.querySelector('.chat-messages-area');
-    const chips = [...heroChat.querySelectorAll('.chip-row .chip')];
+    const chipRow = heroChat.querySelector('.chip-row');
+    const chips = [...chipRow.querySelectorAll('.chip:not(.chip--demo)')];
+    const demoChip = chipRow.querySelector('.chip--demo');
     const answers = {
       'Where is the café?': 'The café is on the ground floor, just past the lobby on your left. It’s open from 7 AM to 10 PM.',
       'Any vegetarian options?': 'Yes, the menu marks vegetarian and vegan dishes with a leaf. Would you like today’s specials?',
@@ -837,6 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const say = (question, answer, withLink) => {
       if (busy) return;
       busy = true;
+      chipRow.classList.add('is-busy'); // (one question at a time: the chips wait while it types)
       if (!area.style.height) { // keep the card's size from here on
         fit();
         area.classList.add('is-chatting');
@@ -850,9 +853,45 @@ document.addEventListener('DOMContentLoaded', () => {
         said.push([question, answer, !!withLink]);
         try { sessionStorage.setItem(SAVED, JSON.stringify(said)); } catch (e) { /* storage blocked */ }
         busy = false;
+        chipRow.classList.remove('is-busy');
       }, motionOK ? 1100 : 300);
     };
-    chips.forEach(chip => chip.addEventListener('click', () => say(chip.textContent.trim(), answers[chip.textContent.trim()] || demoReply)));
+    /* A suggestion is asked once (like the FAQ's): it pops out and the others slide over into its
+       place. Once all are asked, "Request a demo ›" takes their place (the row never empties: the
+       hero card must keep its size, the opening and the move into the kiosk measure it). Hidden
+       with [hidden], not opacity: the story shows every [data-anim] part again (plainStory). */
+    const left = () => chips.filter(chip => !chip.hidden);
+    const showDemoChip = (animate) => {
+      if (left().length || !demoChip) return;
+      demoChip.hidden = false;
+      if (animate && motionOK && demoChip.animate) demoChip.animate([{ opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1 }], { duration: 380, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
+    };
+    const useUp = (chip) => {
+      const rest = left().filter(c => c !== chip);
+      if (chip.matches(':focus-visible')) (rest[0] || demoChip)?.focus({ preventScroll: true }); // (keyboard: on to the next one; a mouse click leaves no lit-up chip)
+      if (!motionOK || !chip.animate) { chip.hidden = true; showDemoChip(false); return; }
+      chip.disabled = true;
+      chip.animate([{ opacity: 1, scale: 1 }, { opacity: 0, scale: 0.6 }], { duration: 220, easing: 'ease-in', fill: 'forwards' }).onfinish = () => {
+        const before = rest.map(c => c.getBoundingClientRect());
+        chip.hidden = true;
+        chip.disabled = false;
+        chip.getAnimations().forEach(run => run.cancel());
+        // the others slide over into the gap (from where they were to where they are now)
+        rest.forEach((c, i) => {
+          const now = c.getBoundingClientRect();
+          const dx = before[i].left - now.left;
+          const dy = before[i].top - now.top;
+          if (Math.abs(dx) + Math.abs(dy) > 0.5) c.animate([{ translate: `${dx}px ${dy}px` }, { translate: '0 0' }], { duration: 300, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+        });
+        showDemoChip(true);
+      };
+    };
+    chips.forEach(chip => chip.addEventListener('click', () => {
+      if (busy) return;
+      const question = chip.textContent.trim();
+      useUp(chip);
+      say(question, answers[question] || demoReply);
+    }));
     heroChat.querySelector('.mic-btn')?.addEventListener('click', () => say(null, demoReply, true));
     heroChat.querySelector('.category-btn')?.addEventListener('click', () => say(null, demoReply, true));
     // A refresh: the messages sent in this tab come back at once, the newest in view
@@ -861,7 +900,10 @@ document.addEventListener('DOMContentLoaded', () => {
       said.forEach(([question, answer, withLink]) => {
         if (question) askRow(question, true);
         replyRow(answer, withLink, true);
+        const used = chips.find(chip => chip.textContent.trim() === question);
+        if (used) used.hidden = true; // (asked already: its chip stays gone)
       });
+      showDemoChip(false);
       fit();
       document.fonts?.ready.then(fit); // (measured again once the real font is in)
     }
