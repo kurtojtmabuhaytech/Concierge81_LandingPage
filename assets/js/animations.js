@@ -291,20 +291,24 @@
     if (draggingBar && scrollY < barY - 1 && !pulledBack() && !measuring && !jumping) goBack();
     barY = scrollY;
   }, { passive: true });
+  // A scene can take a scroll down for a step of its own, before the page moves (the hero's Chat
+  // mode, see the story): it then holds the page
+  const downHolds = new Set();
+  const heldDown = e => [...downHolds].some(hold => hold(e));
   const onLimitWheel = (e) => {
     if (scrollsItself(e) || e.ctrlKey) return; // (ctrl + wheel is the browser's zoom, not a scroll)
     if (e.deltaY < 0 && !jumping && !measuring) goBack();
-    if (e.deltaY > 0 && atLimit()) e.preventDefault();
+    if (e.deltaY > 0 && (heldDown(e) || atLimit())) e.preventDefault();
   };
   const onLimitKey = (e) => {
     if (e.target.closest?.('input, textarea, select, [contenteditable]')) return;
     if ((backKeys.includes(e.key) || (e.key === ' ' && e.shiftKey)) && !jumping && !measuring) goBack();
     if (downKeys.includes(e.key) && !(e.key === ' ' && e.shiftKey) && !jumping) {
-      if (atLimit()) { e.preventDefault(); return; }
+      if (e.key === ' ' && e.target.closest?.('button, a, [role="button"]')) return; // (Space presses it)
+      if (heldDown(e) || atLimit()) { e.preventDefault(); return; }
       // a long jump down glides to where the step allows, like the wheel (a native jump would snap,
       // and a section sliding in would appear at once); the arrow key's small step stays native
       if (e.key === 'ArrowDown') return;
-      if (e.key === ' ' && e.target.closest?.('button, a, [role="button"]')) return; // (Space presses it)
       e.preventDefault();
       const target = e.key === 'End' ? document.documentElement.scrollHeight : scrollY + innerHeight * 0.85;
       if (smoother) smoother.scrollTo(Math.min(target, scrollLimit()), true);
@@ -335,6 +339,7 @@
       removeEventListener('scroll', onLimitScroll);
       ScrollTrigger.removeEventListener('scrollEnd', catchUpAll);
       limits.clear();
+      downHolds.clear();
       plainables.length = 0;
       plainAtStart.length = 0;
       catchUps.clear();
@@ -1109,17 +1114,26 @@
     const toKiosk = bezier(0.115, 0, 0.002, 1.003);
     const rise = bezier(0.065, -0.01, 0.007, 1.005);
 
-    // Scrolling on from the hero's Chat mode: the hero takes its Avatar layout (the move into the
-    // kiosk is measured on it), but nothing snaps: the chat glides from its centred place to its
-    // own side and the avatar fades in, while the card already closes into the kiosk
+    // Leaving the hero's Chat mode: the hero takes its Avatar layout (the move into the kiosk is
+    // measured on it), but nothing snaps: the chat glides from its centred place to its own side
+    // and the avatar fades in. On the visitor's scroll this is a step of its own (downHolds,
+    // below): the card closes into the kiosk only on the next scroll, after it has finished
     const heroChat = $('.hero-chat-interface');
-    const leaveChatMode = () => {
-      if (!hero.surface.classList.contains('is-chat-mode')) return;
+    // (slow: the visitor's scroll step, an unhurried glide; otherwise quick, as the kiosk move runs with it)
+    const leaveChatMode = (slow = false) => {
+      if (!hero.surface.classList.contains('is-chat-mode')) return null;
       const from = heroChat.getBoundingClientRect();
+      // The chat is narrower in the Avatar layout: it narrows during the glide (not at once, which
+      // rewrapped the messages and cut the newest off), and keeps its newest message in view meanwhile
+      const msgs = heroChat.querySelector('.chat-messages-area');
+      const atNewest = msgs && msgs.scrollTop + msgs.clientHeight >= msgs.scrollHeight - 2;
       window.c81SetHeroMode?.('avatar', false);
       const to = heroChat.getBoundingClientRect();
-      gsap.fromTo(heroChat, { x: from.left - to.left, y: from.top - to.top }, { x: 0, y: 0, duration: 0.6, ease: toKiosk, clearProps: 'transform' });
-      gsap.fromTo(hero.avatar, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'none' });
+      return gsap.timeline({ onUpdate: () => { if (atNewest) msgs.scrollTop = msgs.scrollHeight; } })
+        .fromTo(heroChat, { x: from.left - to.left, y: from.top - to.top, width: from.width },
+          { x: 0, y: 0, width: to.width, duration: slow ? 1.2 : 0.6, ease: slow ? 'power2.inOut' : toKiosk, clearProps: 'transform,width' })
+        .fromTo(hero.avatar, { opacity: 0 },
+          { opacity: 1, duration: slow ? 1 : 0.5, ease: 'power1.inOut' }, slow ? 0.25 : 0.1);
     };
 
     // Tweens start at 0.01 so resting on the first step never touches the hero the opening is building
@@ -1238,6 +1252,23 @@
       isPlain: () => !!plain
     });
 
+
+    // At the hero in Chat mode, the first scroll down (wheel or keys) only takes the hero back to its
+    // Avatar layout (leaveChatMode); the page holds while it glides (downHolds), and the move into
+    // the kiosk starts on the visitor's next scroll (one scroll, one step), so the two never run at once
+    let chatLeaving = null;
+    let chatLeftAt = -1; // when the glide ended: the same fling carrying on doesn't move the story yet
+    downHolds.add(() => {
+      if (chatLeaving?.isActive()) return true;
+      if (chatLeftAt > 0) {
+        if (gestureAt <= chatLeftAt) return true;
+        chatLeftAt = -1;
+      }
+      if (plain || tl.time() > 0.001 || scrollY > 2 || !hero.surface.classList.contains('is-chat-mode')) return false;
+      chatLeaving = leaveChatMode(true);
+      chatLeaving?.eventCallback('onComplete', () => { chatLeaving = null; chatLeftAt = performance.now(); });
+      return true;
+    });
 
     // In-page links to the intro and features land on their step inside the pinned story
     const stepLinks = { '#intro': 'intro', '#features': 'fan' };
