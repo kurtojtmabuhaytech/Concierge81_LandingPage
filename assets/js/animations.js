@@ -1125,13 +1125,21 @@
       const from = heroChat.getBoundingClientRect();
       // The chat is narrower in the Avatar layout: it narrows during the glide (not at once, which
       // rewrapped the messages and cut the newest off), and keeps its newest message in view meanwhile
+      // In Chat mode the messages also fill the card's height: they shrink back to the Avatar
+      // layout's height the same way (and keep the height main.js holds for it at the end)
       const msgs = heroChat.querySelector('.chat-messages-area');
-      const atNewest = msgs && msgs.scrollTop + msgs.clientHeight >= msgs.scrollHeight - 2;
+      const atNewest = msgs.scrollTop + msgs.clientHeight >= msgs.scrollHeight - 2;
+      const fromH = msgs.offsetHeight;
       window.c81SetHeroMode?.('avatar', false);
       const to = heroChat.getBoundingClientRect();
+      const toH = msgs.offsetHeight;
+      const keptH = msgs.style.height;
+      const dur = slow ? 1.2 : 0.6;
+      const ease = slow ? 'power2.inOut' : toKiosk;
       return gsap.timeline({ onUpdate: () => { if (atNewest) msgs.scrollTop = msgs.scrollHeight; } })
-        .fromTo(heroChat, { x: from.left - to.left, y: from.top - to.top, width: from.width },
-          { x: 0, y: 0, width: to.width, duration: slow ? 1.2 : 0.6, ease: slow ? 'power2.inOut' : toKiosk, clearProps: 'transform,width' })
+        .fromTo(msgs, { height: fromH }, { height: toH, duration: dur, ease, onComplete: () => { msgs.style.height = keptH; } }, 0)
+        .fromTo(heroChat, { x: from.left - to.left, y: from.bottom - to.bottom, width: from.width }, // (both layouts sit on the card's bottom)
+          { x: 0, y: 0, width: to.width, duration: dur, ease, clearProps: 'transform,width' }, 0)
         .fromTo(hero.avatar, { opacity: 0 },
           { opacity: 1, duration: slow ? 1 : 0.5, ease: 'power1.inOut' }, slow ? 0.25 : 0.1);
     };
