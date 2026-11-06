@@ -2,6 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* The chats (FAQ, hero) keep what was said only within one visit: a refresh, or coming from
+     another page of the site (a link, the back button), shows it again. A new visit starts with
+     empty chats, also when the browser is closed and opened again and brings the tab back with
+     its saved data. A page of the site left a moment ago (pagehide) = the same visit. */
+  const LEFT_AT = 'c81:leftAt';
+  const sameVisit = (() => { try { const at = +sessionStorage.getItem(LEFT_AT); return at > 0 && Date.now() - at < 30000; } catch (e) { return false; } })();
+  addEventListener('pagehide', () => { try { sessionStorage.setItem(LEFT_AT, Date.now()); } catch (e) { /* storage blocked */ } });
+  if (!sameVisit) ['c81:faq', 'c81:hero'].forEach((key) => { try { sessionStorage.removeItem(key); } catch (e) { /* storage blocked */ } });
+
   // Single-select pill groups (mode toggle, filters, the FAQ's "helpful")
   const singleSelect = (group, activeClass = 'is-active') => {
     if (!group) return;
@@ -779,14 +788,29 @@ document.addEventListener('DOMContentLoaded', () => {
       link.textContent = 'Request a demo ›';
       a.querySelector('p').append(' ', link);
     };
-    // The story (animations.js) leaving the hero glides the chat back to its first messages, so the
+    // The story (animations.js) leaving the hero takes the chat back to its first messages, so the
     // greeting and the question sit where the move into the intro expects them; coming back to the
-    // hero glides it to the newest again
+    // hero takes it to the newest again. Never a fast scroll through the whole conversation: the
+    // chat fades out, moves while unseen, and fades back in there, unhurried
+    let swap = null;
     window.c81HeroChatTo = (where) => {
       if (!area.classList.contains('is-chatting')) return;
+      const top = where === 'start' ? 0 : area.scrollHeight;
       const box = area.getBoundingClientRect();
-      const onScreen = box.bottom > 0 && box.top < innerHeight; // (off screen the browser drops a glide: jump)
-      area.scrollTo({ top: where === 'start' ? 0 : area.scrollHeight, behavior: motionOK && onScreen ? 'smooth' : 'auto' });
+      const onScreen = box.bottom > 0 && box.top < innerHeight;
+      swap?.forEach(run => run.cancel());
+      swap = null;
+      if (!motionOK || !onScreen || !area.animate) { area.scrollTop = top; return; } // (unseen: just there)
+      const from = +getComputedStyle(area).opacity;
+      const out = area.animate([{ opacity: from }, { opacity: 0 }], { duration: 200 * from, easing: 'ease-out', fill: 'forwards' });
+      swap = [out];
+      out.onfinish = () => {
+        area.scrollTop = top;
+        const back = area.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 350, easing: 'ease-in-out' });
+        out.cancel();
+        swap = [back];
+        back.onfinish = () => { swap = null; };
+      };
     };
     // The card's size: its first messages alone, as when the chat started (measured again after a
     // resize: a size frozen at the first question was wrong on another window size)
