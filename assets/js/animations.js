@@ -395,9 +395,12 @@
   };
   ['wheel', 'keydown', 'touchmove', 'pointerdown'].forEach(type => addEventListener(type, (e) => {
     const now = performance.now();
-    if (now - inputAt > GESTURE) gestureAt = now;
+    const dir = dirOf(e);
+    // (turning the other way is a new scroll too, however quick: run together with the last one,
+    // every scroll after a quick down-up was held, and the page seemed stuck until the visitor paused)
+    if (now - inputAt > GESTURE || (dir && inputDir && dir !== inputDir)) gestureAt = now;
     inputAt = now;
-    inputDir = dirOf(e);
+    inputDir = dir;
   }, { capture: true, passive: true }));
   const movedSince = at => inputAt > at;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
@@ -724,7 +727,10 @@
     // too), not from the furthest point seen.
     limits.add(() => {
       if (plain || killed || !pin) return Infinity;
-      const at = playing ? playingTo : (follow ? followTo : tl.time());
+      // a step running back can be scrolled down into again: it plays forward from where it is,
+      // to the step it came from (as a scroll up reverses a step under way), never queued for later
+      if (follow) return toScroll(Math.max(followTo < tl.time() - 0.001 ? stepAfter(tl.time()) : followTo, firstStep()));
+      const at = playing ? playingTo : tl.time();
       // played to its end: held there until the visitor scrolls again (one scroll never finishes a
       // section and starts the next), then free
       if (at >= tl.duration() - 0.001 && !playing && !hold()) return newGesture() ? Infinity : toScroll(tl.duration());
