@@ -376,6 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // one, the restored ones, the scroll scene's demo, late fonts), and fades the top once it's full.
     // It glides only on screen: off screen (a refresh) the browser drops a glide, so it jumps.
     const follow = () => {
+      reading = false;
       thread.classList.toggle('is-overflowing', thread.scrollHeight > thread.clientHeight);
       const box = thread.getBoundingClientRect();
       const onScreen = box.bottom > 0 && box.top < innerHeight;
@@ -383,9 +384,20 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const watcher = new ResizeObserver(follow);
     [...thread.children].forEach(el => watcher.observe(el));
-    // The scroll scene moves the FAQ when it sets up (ScrollTrigger), which drops the thread back to
-    // its top without changing any size: follow again
-    thread.addEventListener('scroll', () => { if (thread.scrollTop === 0) follow(); });
+    // The scroll scene moves the FAQ in the page when it sets up (ScrollTrigger's pin), which drops
+    // the thread back to its top, often without a scroll event: whenever the chat comes into view
+    // (or is dropped to its top), it is put back on its newest message, unless the visitor has
+    // scrolled up in it themselves (the wheel, a touch or the keys scroll the conversation, like the
+    // hero chat); a new message brings it back to the newest
+    let reading = false;
+    let ownScrollAt = -1e4;
+    ['wheel', 'touchmove', 'keydown'].forEach(type => thread.addEventListener(type, () => { ownScrollAt = performance.now(); }, { passive: true }));
+    thread.addEventListener('scroll', () => {
+      thread.classList.toggle('is-at-start', thread.scrollTop < 1);
+      if (performance.now() - ownScrollAt < 1000) reading = thread.scrollTop + thread.clientHeight < thread.scrollHeight - 2;
+      else if (thread.scrollTop === 0 && !reading) follow();
+    }, { passive: true });
+    new IntersectionObserver(([entry]) => { if (entry.isIntersecting && !reading) follow(); }).observe(thread);
     // A message pops in (springs up from its tail corner)
     const pop = (el) => {
       el.hidden = false;

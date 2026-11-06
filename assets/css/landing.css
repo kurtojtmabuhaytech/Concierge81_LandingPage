@@ -3715,11 +3715,18 @@ button.chip, a.chip {
   flex-direction: column;
   gap: 0.875rem;
   max-height: clamp(16rem, 44vh, 28rem);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+.faq-thread::-webkit-scrollbar {
+  display: none;
+}
+.faq-thread {
   margin: -0.5rem;
   padding: 0.5rem;
 }
-.faq-thread.is-overflowing {
+.faq-thread.is-overflowing:not(.is-at-start) {
   mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
 }
 .faq-thread:focus-visible {
