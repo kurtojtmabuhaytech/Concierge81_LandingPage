@@ -2,6 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const motionOK = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* The chats (FAQ, hero) keep what was said only within one visit: a refresh, or coming from
+     another page of the site (a link, the back button), shows it again. A new visit starts with
+     empty chats, also when the browser is closed and opened again and brings the tab back with
+     its saved data. A page of the site left a moment ago (pagehide) = the same visit. */
+  const LEFT_AT = 'c81:leftAt';
+  const sameVisit = (() => { try { const at = +sessionStorage.getItem(LEFT_AT); return at > 0 && Date.now() - at < 30000; } catch (e) { return false; } })();
+  addEventListener('pagehide', () => { try { sessionStorage.setItem(LEFT_AT, Date.now()); } catch (e) { /* storage blocked */ } });
+  if (!sameVisit) ['c81:faq', 'c81:hero'].forEach((key) => { try { sessionStorage.removeItem(key); } catch (e) { /* storage blocked */ } });
+
   // Single-select pill groups (mode toggle, filters, the FAQ's "helpful")
   const singleSelect = (group, activeClass = 'is-active') => {
     if (!group) return;
