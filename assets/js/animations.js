@@ -202,6 +202,7 @@
      and `runs` are such animations, paused with the step while the visitor is away. */
   const PACE = 0.25; // screen heights of scrolling per second of animation
   const STEP_SPEED = 1; // steps play at the timeline's own (Figma) pace; a fast scroll never hurries them (user, 4 Nov)
+  const BACK_SPEED = 3.5; // a scroll back mid-step runs the step back 3.5x faster than it played (user, 5 Nov)
   // After a step has ended, the next one starts only on a new scroll gesture (input after a gap
   // this long): the visitor sees every finished step before the page moves on, however fast they scroll
   const GESTURE = 250; // ms
@@ -472,7 +473,7 @@
         // would then count as running for good, holding the scroll)
         if (Math.abs(tl.time() - goal) < 0.001) { follow = null; return; }
         // (a step run back or replayed ends the gesture like a step played: the next needs a new scroll)
-        follow = tl.tweenTo(goal, { duration: paceOf(Math.abs(goal - tl.time()), Math.min(goal, tl.time())), ease: 'none', onComplete: () => { follow = null; restedAt = performance.now(); } });
+        follow = tl.tweenTo(goal, { duration: paceOf(Math.abs(goal - tl.time()), Math.min(goal, tl.time())) / (goal < tl.time() ? BACK_SPEED : 1), ease: 'none', onComplete: () => { follow = null; restedAt = performance.now(); } });
         return;
       }
       build();
@@ -1108,6 +1109,19 @@
     const toKiosk = bezier(0.115, 0, 0.002, 1.003);
     const rise = bezier(0.065, -0.01, 0.007, 1.005);
 
+    // Scrolling on from the hero's Chat mode: the hero takes its Avatar layout (the move into the
+    // kiosk is measured on it), but nothing snaps: the chat glides from its centred place to its
+    // own side and the avatar fades in, while the card already closes into the kiosk
+    const heroChat = $('.hero-chat-interface');
+    const leaveChatMode = () => {
+      if (!hero.surface.classList.contains('is-chat-mode')) return;
+      const from = heroChat.getBoundingClientRect();
+      window.c81SetHeroMode?.('avatar', false);
+      const to = heroChat.getBoundingClientRect();
+      gsap.fromTo(heroChat, { x: from.left - to.left, y: from.top - to.top }, { x: 0, y: 0, duration: 0.6, ease: toKiosk, clearProps: 'transform' });
+      gsap.fromTo(hero.avatar, { opacity: 0 }, { opacity: 1, duration: 0.4, ease: 'none' });
+    };
+
     // Tweens start at 0.01 so resting on the first step never touches the hero the opening is building
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     tl.addLabel('hero', 0)
@@ -1191,10 +1205,15 @@
       ownPlain: true, // its own plain rule, below (only once the inbox has slid up over it)
       top: () => siteHeader.offsetHeight,
       tail: () => story.offsetHeight, // the inbox section slides up over the finished story
-      onUpdate: t => story.classList.toggle('is-at-hero', t < 0.001), // (the hero chat takes the wheel there)
+      onUpdate: (t) => { // (the hero chat takes the wheel there)
+        const atHero = t < 0.001;
+        if (atHero === story.classList.contains('is-at-hero')) return;
+        story.classList.toggle('is-at-hero', atHero);
+        window.c81HeroChatTo?.(atHero ? 'newest' : 'start');
+      },
       beforeMove: () => { // scrolling (or a reload restoring the scroll position) ends the opening first,
         finishOpening();
-        window.c81SetHeroMode?.('avatar', false); // and the hero has its avatar again (at once), to move into the kiosk
+        leaveChatMode(); // and the hero has its avatar again, to move into the kiosk
       },
       onRefresh: () => {
         fitTraveller();
@@ -1241,6 +1260,7 @@
       morphEdge.remove();
       story.classList.remove('is-staged');
       next.classList.remove('slides-over');
+      window.c81HeroChatTo?.('newest'); // the plain hero shows its chat as the visitor left it
     }
 
     return () => {

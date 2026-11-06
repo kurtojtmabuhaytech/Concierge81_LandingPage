@@ -372,13 +372,38 @@ document.addEventListener('DOMContentLoaded', () => {
       try { sessionStorage.setItem(SAVED, JSON.stringify(asked)); } catch (e) { /* storage blocked */ }
     };
     const wait = ms => new Promise(resolve => setTimeout(resolve, motionOK ? ms : 0));
-    // A message pops in (springs up from its tail corner); the chat follows the newest one
+    // The chat keeps its newest message in view: runs whenever a message appears or grows (a new
+    // one, the restored ones, the scroll scene's demo, late fonts), and fades the top once it's full.
+    // It glides only on screen: off screen (a refresh) the browser drops a glide, so it jumps.
+    const follow = () => {
+      reading = false;
+      thread.classList.toggle('is-overflowing', thread.scrollHeight > thread.clientHeight);
+      const box = thread.getBoundingClientRect();
+      const onScreen = box.bottom > 0 && box.top < innerHeight;
+      thread.scrollTo({ top: thread.scrollHeight, behavior: motionOK && onScreen ? 'smooth' : 'auto' });
+    };
+    const watcher = new ResizeObserver(follow);
+    [...thread.children].forEach(el => watcher.observe(el));
+    // The scroll scene moves the FAQ in the page when it sets up (ScrollTrigger's pin), which drops
+    // the thread back to its top, often without a scroll event: whenever the chat comes into view
+    // (or is dropped to its top), it is put back on its newest message, unless the visitor has
+    // scrolled up in it themselves (the wheel, a touch or the keys scroll the conversation, like the
+    // hero chat); a new message brings it back to the newest
+    let reading = false;
+    let ownScrollAt = -1e4;
+    ['wheel', 'touchmove', 'keydown'].forEach(type => thread.addEventListener(type, () => { ownScrollAt = performance.now(); }, { passive: true }));
+    thread.addEventListener('scroll', () => {
+      thread.classList.toggle('is-at-start', thread.scrollTop < 1);
+      if (performance.now() - ownScrollAt < 1000) reading = thread.scrollTop + thread.clientHeight < thread.scrollHeight - 2;
+      else if (thread.scrollTop === 0 && !reading) follow();
+    }, { passive: true });
+    new IntersectionObserver(([entry]) => { if (entry.isIntersecting && !reading) follow(); }).observe(thread);
+    // A message pops in (springs up from its tail corner)
     const pop = (el) => {
       el.hidden = false;
       el.classList.remove('is-popping');
       void el.offsetWidth; // restart the animation
       el.classList.add('is-popping');
-      thread.scrollTo({ top: thread.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
     };
     const helpful = () => {
       const row = document.createElement('div');
@@ -424,7 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (faqBox.querySelector(`.faq-ask[data-q="${q}"]`)) return; // the scroll scene asks that one
       if (pair) place(pair);
     });
-    if (saved.length) thread.scrollTop = thread.scrollHeight;
     showChips();
 
     // Asking: one question at a time, each waits for the one before it
@@ -722,31 +746,64 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const demoReply = 'In the live demo you can talk to me or browse topics by category. Request a demo to try it with your own questions.';
     area.setAttribute('aria-live', 'polite');
+    area.addEventListener('scroll', () => area.classList.toggle('is-at-start', area.scrollTop < 1), { passive: true });
     let busy = false;
-    const row = (who, html) => {
+    // The messages the visitor sent, kept for this tab: a refresh past the first page shows them
+    // again (like the FAQ). A refresh on the first page plays the opening, and the chat starts over
+    // (animations.js, savedPlace).
+    const SAVED = 'c81:hero';
+    const place = (() => { try { return JSON.parse(sessionStorage.getItem('c81:place')); } catch (e) { return null; } })();
+    const said = (() => { if (!place || place.id === '.story') return []; try { return JSON.parse(sessionStorage.getItem(SAVED)) || []; } catch (e) { return []; } })();
+    const row = (who, html, quiet = false) => {
       const el = document.createElement('div');
       el.className = `msg-row msg-row--${who} is-asked`;
       el.innerHTML = html;
-      if (motionOK) el.classList.add('is-popping');
       area.appendChild(el);
+      if (quiet) return el; // (put back after a refresh: shown at once, no pop, no glide)
+      if (motionOK) el.classList.add('is-popping');
+      el.addEventListener('animationend', () => el.classList.remove('is-popping'), { once: true }); // once popped, drop the class: its kept opacity would block the hide rule (_animations.scss)
       area.scrollTo({ top: area.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
       return el;
     };
-    // After a resize the card's size is measured again: its first messages alone, as when the
-    // chat started (a size frozen at the first question was wrong on another window size)
+    const askRow = (question, quiet) => {
+      const q = row('user', '<p class="bubble bubble--user"></p><span class="timestamp">You · 9:12 PM</span>', quiet);
+      q.querySelector('p').textContent = question;
+    };
+    const replyRow = (answer, withLink, quiet) => {
+      const a = row('ai', '<p class="bubble bubble--ai"></p><span class="timestamp">concierge81 · 9:12 PM</span>', quiet);
+      a.querySelector('p').textContent = answer;
+      if (!withLink) return;
+      const link = document.createElement('a');
+      link.href = '#contact';
+      link.className = 'hero-chat-link';
+      link.textContent = 'Request a demo ›';
+      a.querySelector('p').append(' ', link);
+    };
+    // The story (animations.js) leaving the hero glides the chat back to its first messages, so the
+    // greeting and the question sit where the move into the intro expects them; coming back to the
+    // hero glides it to the newest again
+    window.c81HeroChatTo = (where) => {
+      if (!area.classList.contains('is-chatting')) return;
+      const box = area.getBoundingClientRect();
+      const onScreen = box.bottom > 0 && box.top < innerHeight; // (off screen the browser drops a glide: jump)
+      area.scrollTo({ top: where === 'start' ? 0 : area.scrollHeight, behavior: motionOK && onScreen ? 'smooth' : 'auto' });
+    };
+    // The card's size: its first messages alone, as when the chat started (measured again after a
+    // resize: a size frozen at the first question was wrong on another window size)
+    const fit = () => {
+      const asked = [...area.querySelectorAll('.is-asked')];
+      asked.forEach((r) => { r.style.display = 'none'; });
+      area.style.height = '';
+      const h = area.offsetHeight;
+      asked.forEach((r) => { r.style.display = ''; });
+      area.style.height = `${h}px`;
+      area.scrollTop = area.scrollHeight;
+    };
     let fitting = 0;
     window.addEventListener('resize', () => {
       if (!area.style.height) return;
       cancelAnimationFrame(fitting);
-      fitting = requestAnimationFrame(() => {
-        const asked = [...area.querySelectorAll('.is-asked')];
-        asked.forEach((r) => { r.style.display = 'none'; });
-        area.style.height = '';
-        const h = area.offsetHeight;
-        asked.forEach((r) => { r.style.display = ''; });
-        area.style.height = `${h}px`;
-        area.scrollTop = area.scrollHeight;
-      });
+      fitting = requestAnimationFrame(fit);
     });
     const say = (question, answer, withLink) => {
       if (busy) return;
@@ -755,29 +812,30 @@ document.addEventListener('DOMContentLoaded', () => {
         area.style.height = `${area.offsetHeight}px`;
         area.classList.add('is-chatting');
       }
-      if (question) {
-        const q = row('user', '<p class="bubble bubble--user"></p><span class="timestamp">You · 9:12 PM</span>');
-        q.querySelector('p').textContent = question;
-      }
+      if (question) askRow(question);
       const typing = row('ai', '<p class="bubble bubble--sand faq-dots" role="img" aria-label="concierge81 is typing"><i></i><i></i><i></i></p>');
       setTimeout(() => {
         typing.remove();
-        const a = row('ai', '<p class="bubble bubble--ai"></p><span class="timestamp">concierge81 · 9:12 PM</span>');
-        a.querySelector('p').textContent = answer;
-        if (withLink) {
-          const link = document.createElement('a');
-          link.href = '#contact';
-          link.className = 'hero-chat-link';
-          link.textContent = 'Request a demo ›';
-          a.querySelector('p').append(' ', link);
-        }
-          area.scrollTo({ top: area.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
+        replyRow(answer, withLink);
+        area.scrollTo({ top: area.scrollHeight, behavior: motionOK ? 'smooth' : 'auto' });
+        said.push([question, answer, !!withLink]);
+        try { sessionStorage.setItem(SAVED, JSON.stringify(said)); } catch (e) { /* storage blocked */ }
         busy = false;
       }, motionOK ? 1100 : 300);
     };
     chips.forEach(chip => chip.addEventListener('click', () => say(chip.textContent.trim(), answers[chip.textContent.trim()] || demoReply)));
     heroChat.querySelector('.mic-btn')?.addEventListener('click', () => say(null, demoReply, true));
     heroChat.querySelector('.category-btn')?.addEventListener('click', () => say(null, demoReply, true));
+    // A refresh: the messages sent in this tab come back at once, the newest in view
+    if (said.length) {
+      area.classList.add('is-chatting');
+      said.forEach(([question, answer, withLink]) => {
+        if (question) askRow(question, true);
+        replyRow(answer, withLink, true);
+      });
+      fit();
+      document.fonts?.ready.then(fit); // (measured again once the real font is in)
+    }
   }
 
   /* Language button (header, hero, footer): a small menu of the four languages; only English is

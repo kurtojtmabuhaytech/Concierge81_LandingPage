@@ -798,12 +798,14 @@ button.chip, a.chip {
 
 .chat-messages-area.is-chatting {
   overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: none;
   overflow-x: hidden;
+  scrollbar-width: none;
 }
 .chat-messages-area.is-chatting::-webkit-scrollbar {
   display: none;
+}
+.chat-messages-area.is-chatting:not(.is-at-start) {
+  mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
 }
 
 .hero-chat-interface .is-popping {
@@ -3715,12 +3717,17 @@ button.chip, a.chip {
   max-height: clamp(16rem, 44vh, 28rem);
   overflow-y: auto;
   overflow-x: hidden;
-  margin: -0.5rem;
-  padding: 0.5rem;
   scrollbar-width: none;
 }
 .faq-thread::-webkit-scrollbar {
   display: none;
+}
+.faq-thread {
+  margin: -0.5rem;
+  padding: 0.5rem;
+}
+.faq-thread.is-overflowing:not(.is-at-start) {
+  mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
 }
 .faq-thread:focus-visible {
   outline: 2px solid #276FF8;
@@ -6091,6 +6098,12 @@ main > .blog-section:has(+ #contact) {
 }
 .story.is-staged > .section a, .story.is-staged > .section button {
   pointer-events: auto;
+}
+.story.is-staged > #hero .chat-messages-area .is-asked {
+  transition: opacity 0.3s;
+}
+.story.is-staged:not(.is-at-hero) > #hero .chat-messages-area .is-asked {
+  opacity: 0;
 }
 .story.is-staged.is-built > #features .feature-item {
   pointer-events: auto;
