@@ -2767,12 +2767,14 @@
     heading.play(tl)
       .addLabel('ask')
 
-      // Step 2 (2:18–2:24): the view moves to the topics; they and the chat with its suggestions rise in
-      .to(content, { y: follow(), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
-      .addLabel('thread', 'ask+=1.0');
+      // Step 2 (2:18–2:31): the view moves to the topics; they and the chat with its suggestions rise
+      // in, and the demo follows straight on (no scroll needed between them: a chat that stopped
+      // there looked broken, user 6 Nov)
+      .to(content, { y: follow(), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask');
+    const threadAt = tl.labels.ask + 1.0; // (the chat box is in)
     staying.add(tl.labels.ask + 0.3, gsap.timeline().to([filters, box], { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.15 }));
 
-    // Step 3 (2:24–2:31): the demo. Each question in turn is tapped: it leaves the suggestions
+    // The demo. Each question in turn is tapped: it leaves the suggestions
     // and pops into the chat, the concierge types, then the answer pops in; then "Was this
     // helpful?" and "Anything else?" (Figma)
     // (the demo is a run of its own that stays: the scroll waits for it, and a scroll back never
@@ -2792,11 +2794,11 @@
     demos.filter(d => d.helpful).forEach(d => popIn(d.helpful, after, demo));
     popIn(anything, after + 0.5, demo);
     demo.set({}, {}, after + 1.0);
-    staying.add(tl.labels.thread + 0.01, demo, chatting);
-    tl.set({}, {}, 'thread+=0.3')
-      .addLabel('demo', 'thread+=0.3')
+    staying.add(threadAt, demo, chatting);
+    tl.set({}, {}, threadAt)
+      .addLabel('demo', threadAt)
 
-      // Step 4, on a further scroll: the view moves on and "Can't find your answer?" pops in
+      // Step 3, on a further scroll: the view moves on and "Can't find your answer?" pops in
       .to(content, { y: follow(help), duration: 0.6, ease: MOTION.easeInOut }, 'demo')
       .addLabel('built', 'demo+=0.9');
     staying.add(tl.labels.demo + 0.4, gsap.timeline().to(help, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }));
