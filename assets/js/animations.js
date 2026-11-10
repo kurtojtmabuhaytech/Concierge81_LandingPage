@@ -179,6 +179,35 @@
     return { user, pill, reply, sub, start, play };
   };
 
+  /* Contents that stay (user, 6 Nov: the Team Inbox and the FAQ). A scroll back still runs the
+     scene's steps back (the view moves back, with the pause), but these contents, once they have
+     appeared, stay on screen: each plays on its own clock (a "run"), cued when the scroll timeline
+     reaches `at`, and is never run backwards; one under way plays on to its end (only paused while
+     the visitor is away, see watchView). Coming back down, nothing replays. The scroll waits for a
+     run under way before the next step (`hold`), as it waits for a step. `now()`: shown finished at
+     once instead (e.g. the FAQ already chatted with this visit). */
+  const stayingRuns = (tl) => {
+    const cues = [];
+    const add = (at, run, now = () => false) => { run.pause(); cues.push({ at, run, now }); return run; };
+    const update = time => cues.forEach(({ at, run, now }) => {
+      if (time < at - 0.001 || run.progress() > 0) return;
+      if (measuring || jumping || now()) run.progress(1); else run.play(); // (a re-measure or a link gliding past: shown finished)
+    });
+    const hold = () => cues.some(({ at, run }) => tl.time() >= at - 0.001 && run.progress() < 1);
+    const runs = () => cues.map(c => c.run);
+    // A re-measure sets every starting state again (applyStart): `save()` before it notes where each
+    // run is, `restore()` after it puts each back there (measured again), playing on if it was
+    let saved = [];
+    const save = () => { saved = cues.map(({ run }) => [run.progress(), run.isActive()]); cues.forEach(({ run }) => run.pause(0)); };
+    const restore = () => cues.forEach(({ run }, i) => {
+      const [at, active] = saved[i] || [0, false];
+      run.invalidate();
+      if (at > 0) run.progress(at);
+      if (active) run.play();
+    });
+    return { add, update, hold, runs, save, restore };
+  };
+
   // Pinned scenes sit right under the sticky header (--header-h feeds --stage-h in the CSS)
   const siteHeader = $('.site-header');
   const setHeaderHeight = () => root.style.setProperty('--header-h', `${siteHeader.offsetHeight}px`);
@@ -405,7 +434,7 @@
   const movedSince = at => inputAt > at;
   ScrollTrigger.addEventListener('refreshInit', () => { measuring = true; });
   ScrollTrigger.addEventListener('refresh', () => { requestAnimationFrame(() => { measuring = false; }); });
-  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = true, ownPlain = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, hold = () => false, runs = () => [], runBack = () => {} }) => {
+  const scrollScene = ({ trigger, tl, drift = false, seen: seenAll = false, startShown = false, followBack = true, ownPlain = false, content = trigger.querySelector(':scope > .container'), top = () => 0, tail = () => 0, beforeMove = () => {}, onUpdate = () => {}, onRefresh = () => {}, hold = () => false, runs = () => [], keepRuns = false, runBack = () => {} }) => {
     const span = () => tl.duration() * innerHeight * PACE;
     tl.pause();
     const stops = () => [...new Set([0, ...Object.values(tl.labels), tl.duration()])].sort((x, y) => x - y);
@@ -834,6 +863,7 @@
         // plays again when the visitor comes down to its step (the steps themselves run back in
         // followSeen)
         snap: () => {
+          if (keepRuns) return; // (contents that stay: never run backwards, see stayingRuns)
           const back = runs().filter(run => run.progress() > 0 && !run.reversed());
           if (!back.length) return;
           runBack(); // (the scene tidies up first, e.g. the inbox puts its questions back and locks them)
@@ -1527,9 +1557,11 @@
     // reached the card (they don't need the scroll, and the scroll never waits for them); then
     // the questions can be picked up. Built below; reset with the scene.
     let show = null;
+    let staying = null; // the card and the closing chat: they stay once in (see stayingRuns)
     const applyStart = () => {
       // (a re-measure keeps the show where it is, running the way it was: forward, or back)
       const showAt = show?.progress() ?? 0;
+      staying?.save();
       const showBack = !!show?.reversed();
       show?.pause(0);
       gsap.set(content, { y: 0 });
@@ -1550,6 +1582,7 @@
         else if (showBack) show.reverse();
         else show.play();
       }
+      staying?.restore();
     };
     applyStart();
 
@@ -1590,6 +1623,7 @@
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     tl.addLabel('enter', 0);
+    staying = stayingRuns(tl);
 
     // Step 1 (26–28s): the visitor's question pops up and is sent (grey → black), "•••" types,
     // then the answer pops in and the sub-bubble after it
@@ -1599,20 +1633,26 @@
       // Step 2 (28–30s): the view moves to the inbox and the card darkens in; once the whole card
       // is in view the rain and the demo play on their own (show)
       .to(content, { y: showCard, duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
-      .to(card, { autoAlpha: 1, duration: 0.3, ease: 'none' }, 'ask+=0.1')
-      .to(card, { backgroundColor: '#0E1013', duration: 0.6, ease: 'none' }, 'ask+=0.25')
-      .to(head, { autoAlpha: 1, duration: 0.4 }, 'ask+=0.55')
-      .addLabel('inbox', 'ask+=0.95')
+      .addLabel('inbox', 'ask+=0.95');
+    // (the card darkening in stays: never faded out again by a scroll back)
+    staying.add(tl.labels.ask + 0.1, gsap.timeline()
+      .to(card, { autoAlpha: 1, duration: 0.3, ease: 'none' }, 0)
+      .to(card, { backgroundColor: '#0E1013', duration: 0.6, ease: 'none' }, 0.15)
+      .to(head, { autoAlpha: 1, duration: 0.4 }, 0.45));
+    tl
 
       // Step 3 (34.5–36s), on the next scroll: the view moves down; "•••" types, then "Let me
       // handle the repeats." pops in and the sub-bubble after it
       .to(content, { y: showClosing, duration: MOTION.slow, ease: MOTION.easeInOut }, 'inbox');
-    closingHeading.play(tl, tl.labels.inbox + 0.2, 1.5) // (a later step, played quicker: a longer "•••")
+    // (the closing chat stays too; the step lasts as long as it, so the next one waits for it)
+    const closingChat = staying.add(tl.labels.inbox + 0.2, closingHeading.play(gsap.timeline(), 0, 1.5)); // (a later step, played quicker: a longer "•••")
+    tl.set({}, {}, tl.labels.inbox + 0.2 + closingChat.duration())
       .addLabel('repeats');
 
     // The card in full view starts the show. When the page is only re-measuring (a refresh past
     // it, a resize), or a link glides past, it is shown finished instead: it never replays.
     const startShow = (time) => {
+      staying.update(time);
       if (time < tl.labels.inbox - 0.001 || show.progress() >= 1) return;
       if (measuring || jumping) { if (show.progress() === 0) show.progress(1); return; }
       // not yet started, or run back (part-way or fully) by a scroll up: it plays (on) from where it is
@@ -1630,11 +1670,11 @@
       onUpdate: startShow,
       onRefresh: applyStart,
       // the scroll waits for the rain and the demo, which pause while the visitor is away
-      hold: () => tl.time() >= tl.labels.inbox - 0.001 && show.progress() < 1,
-      runs: () => [show],
-      // running back: the questions the visitor moved go back to the pile, and none can be picked up
-      // until the rain has played again
-      runBack: () => { inbox.putBack(); pile.classList.add('is-busy'); }
+      hold: () => (tl.time() >= tl.labels.inbox - 0.001 && show.progress() < 1) || staying.hold(),
+      runs: () => [show, ...staying.runs()],
+      // the inbox stays as it is on a scroll back: the rain and the demo play on, never backwards,
+      // and questions the visitor moved stay where they put them (user, 6 Nov)
+      keepRuns: true
     });
 
     return () => {
@@ -2680,7 +2720,7 @@
     const gap = () => parseFloat(getComputedStyle(demos[0].question.parentNode).rowGap) || 0;
     // A message pops into the thread: it makes its room, then springs up from its tail corner
     const closed = el => ({ height: 0, marginTop: -gap(), autoAlpha: 0, scale: 0.6, transformOrigin: origin(el), overflow: 'hidden' });
-    const popIn = (el, at) => tl
+    const popIn = (el, at, on = tl) => on
       .to(el, { height: 'auto', marginTop: 0, duration: 0.3, ease: MOTION.easeInOut }, at)
       .to(el, { autoAlpha: 1, scale: 1, duration: MOTION.pop + 0.08, ease: 'back.out(1.8)' }, `${at}+=0.05`)
       .set(el, { overflow: 'visible' }, `${at}+=0.3`);
@@ -2698,7 +2738,9 @@
     section.classList.add('is-staged');
     next.classList.add('slides-over');
 
+    let staying = null; // the topics, the chat and its demo, and "Can't find your answer?" (see stayingRuns)
     const applyStart = () => {
+      staying?.save();
       gsap.set(content, { y: 0, autoAlpha: 1 });
       heading.start();
       gsap.set([filters, box], { autoAlpha: 0, y: 24 });
@@ -2707,54 +2749,71 @@
         gsap.set(said, { clearProps: 'height,marginTop,opacity,visibility,transform,overflow' });
         typings.forEach(el => gsap.set(el, closed(el)));
         gsap.set(chips, { display: 'none' });
-        return;
+      } else {
+        said.forEach(el => gsap.set(el, closed(el)));
+        gsap.set(chips, { display: 'inline-flex', autoAlpha: 1, scale: 1 });
       }
-      said.forEach(el => gsap.set(el, closed(el)));
-      gsap.set(chips, { display: 'inline-flex', autoAlpha: 1, scale: 1 });
+      staying?.restore();
     };
     applyStart();
     box.classList.toggle('is-waiting', !chatting());
 
     const tl = gsap.timeline({ paused: true, defaults: { ease: MOTION.ease } });
     tl.addLabel('enter', 0);
+    staying = stayingRuns(tl);
 
     // Step 1 (2:16–2:18): the visitor's question pops up and is sent, "•••" types, then the answer
     // pops in (and the sub-bubble after it)
     heading.play(tl)
       .addLabel('ask')
 
-      // Step 2 (2:18–2:24): the view moves to the topics; they and the chat with its suggestions rise in
-      .to(content, { y: follow(), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask')
-      .to([filters, box], { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.15 }, 'ask+=0.3')
-      .addLabel('thread', 'ask+=1.0');
+      // Step 2 (2:18–2:31): the view moves to the topics; they and the chat with its suggestions rise
+      // in, and the demo follows straight on (no scroll needed between them: a chat that stopped
+      // there looked broken, user 6 Nov)
+      .to(content, { y: follow(), duration: MOTION.slow, ease: MOTION.easeInOut }, 'ask');
+    const threadAt = tl.labels.ask + 1.0; // (the chat box is in)
+    staying.add(tl.labels.ask + 0.3, gsap.timeline().to([filters, box], { autoAlpha: 1, y: 0, duration: MOTION.base, stagger: 0.15 }));
 
-    // Step 3 (2:24–2:31): the demo. Each question in turn is tapped: it leaves the suggestions
+    // The demo. Each question in turn is tapped: it leaves the suggestions
     // and pops into the chat, the concierge types, then the answer pops in; then "Was this
     // helpful?" and "Anything else?" (Figma)
+    // (the demo is a run of its own that stays: the scroll waits for it, and a scroll back never
+    // takes the conversation away; already chatted with this visit, it is shown as asked)
+    const demo = gsap.timeline({ onComplete: () => box.classList.remove('is-waiting') });
     demos.forEach(({ chip, question, typing, answer }, i) => {
-      const at = t => `thread+=${i * 2.5 + t}`;
-      tl.to(chip, { autoAlpha: 0, scale: 0.9, duration: 0.25 }, at(0))
+      const at = t => i * 2.5 + t;
+      demo.to(chip, { autoAlpha: 0, scale: 0.9, duration: 0.25 }, at(0))
         .set(chip, { display: 'none' }, at(0.25));
-      popIn(question, at(0.2));
-      popIn(typing, at(0.75));
-      tl.to(typing, { autoAlpha: 0, duration: 0.15 }, at(1.85))
+      popIn(question, at(0.2), demo);
+      popIn(typing, at(0.75), demo);
+      demo.to(typing, { autoAlpha: 0, duration: 0.15 }, at(1.85))
         .to(typing, { height: 0, marginTop: () => -gap(), duration: 0.2, ease: MOTION.easeInOut }, at(1.9));
-      popIn(answer, at(1.9));
+      popIn(answer, at(1.9), demo);
     });
     const after = (demos.length - 1) * 2.5 + 2.4;
-    demos.filter(d => d.helpful).forEach(d => popIn(d.helpful, `thread+=${after}`));
-    popIn(anything, `thread+=${after + 0.5}`);
-    tl.addLabel('demo', `thread+=${after + 1.0}`)
+    demos.filter(d => d.helpful).forEach(d => popIn(d.helpful, after, demo));
+    popIn(anything, after + 0.5, demo);
+    demo.set({}, {}, after + 1.0);
+    staying.add(threadAt, demo, chatting);
+    tl.set({}, {}, threadAt)
+      .addLabel('demo', threadAt)
 
-      // Step 4, on a further scroll: the view moves on and "Can't find your answer?" pops in
+      // Step 3, on a further scroll: the view moves on and "Can't find your answer?" pops in
       .to(content, { y: follow(help), duration: 0.6, ease: MOTION.easeInOut }, 'demo')
-      .to(help, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }, 'demo+=0.4')
       .addLabel('built', 'demo+=0.9');
+    staying.add(tl.labels.demo + 0.4, gsap.timeline().to(help, { autoAlpha: 1, scale: 1, duration: MOTION.pop, ease: 'back.out(1.8)' }));
+    tl.set({}, {}, 'built');
 
     scrollScene({
       trigger: section, tl, drift: true, tail: () => section.offsetHeight, onRefresh: applyStart,
-      // the suggestions can be tapped once the demo has been asked
-      onUpdate: t => box.classList.toggle('is-waiting', t < tl.labels.demo - 0.001 && !chatting())
+      onUpdate: (t) => {
+        staying.update(t);
+        // the suggestions can be tapped once the demo has been asked
+        box.classList.toggle('is-waiting', demo.progress() < 1 && !chatting());
+      },
+      hold: staying.hold,
+      runs: staying.runs,
+      keepRuns: true // (the FAQ stays as it is on a scroll back: user, 6 Nov)
     });
 
     return () => {
