@@ -558,6 +558,37 @@ button.chip, a.chip {
   color: #174395;
 }
 
+.hero-chat-interface .chip-row .chip {
+  text-decoration: none;
+  transition: translate 0.2s ease-out, scale 0.12s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out, filter 0.25s ease-out;
+}
+.hero-chat-interface .chip-row .chip:hover, .hero-chat-interface .chip-row .chip:focus-visible {
+  background: rgba(0, 122, 255, 0.16);
+  box-shadow: 0 6px 16px -6px rgba(0, 82, 204, 0.35);
+  translate: 0 -2px;
+}
+.hero-chat-interface .chip-row .chip:active {
+  scale: 0.96;
+}
+.hero-chat-interface .chip-row.is-busy .chip {
+  filter: opacity(0.5);
+  pointer-events: none;
+}
+
+.hero-chat-interface .chat-composer > .is-ended {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease-out, visibility 0s linear 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-chat-interface .chip-row .chip:hover, .hero-chat-interface .chip-row .chip:focus-visible {
+    translate: none;
+  }
+  .hero-chat-interface .chip-row .chip:active {
+    scale: none;
+  }
+}
 .msg-row {
   display: flex;
   flex-direction: column;

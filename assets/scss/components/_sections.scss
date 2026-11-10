@@ -221,6 +221,23 @@ main:focus { outline: none; } // the skip link's target
 }
 button.chip, a.chip { cursor: pointer; } // plain span chips are only pictures of a chat
 .chip--soft { background: $color-cobalt-soft; color: $cobalt-700; }
+// The hero chat's suggestions (main.js): they lift with a soft shadow and a deeper tint on hover,
+// press in on a click, and wait (dimmed) while the concierge types; each is asked once
+.hero-chat-interface .chip-row {
+  .chip {
+    text-decoration: none;
+    transition: translate 0.2s ease-out, scale 0.12s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out, filter 0.25s ease-out; // (no opacity: the opening fades them in)
+    &:hover, &:focus-visible { background: rgba(0, 122, 255, 0.16); box-shadow: 0 6px 16px -6px rgba(0, 82, 204, 0.35); translate: 0 -2px; }
+    &:active { scale: 0.96; }
+  }
+  &.is-busy .chip { filter: opacity(0.5); pointer-events: none; }
+}
+// Every suggestion asked: they fade out, their space kept (the card keeps its size), and the
+// concierge's closing message ends the chat (main.js)
+.hero-chat-interface .chat-composer > .is-ended { visibility: hidden; opacity: 0; transition: opacity 0.3s ease-out, visibility 0s linear 0.3s; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-chat-interface .chip-row .chip { &:hover, &:focus-visible { translate: none; } &:active { scale: none; } }
+}
 
 .msg-row { display: flex; flex-direction: column; gap: 4px; }
 .msg-row--user { align-items: flex-end; }
